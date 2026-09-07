@@ -97,6 +97,9 @@ export default function AuthRegisterPage() {
         localStorage.setItem('accessToken', data.accessToken);
         localStorage.setItem('refreshToken', data.refreshToken);
         localStorage.setItem('userRole', data.user?.role || role);
+        localStorage.setItem('userName', data.user?.name || name || 'Traveler');
+        localStorage.setItem('userEmail', data.user?.email || email);
+        window.dispatchEvent(new Event('auth-change'));
       }
 
       setSuccess(`Account registered successfully! Welcome, ${data.user?.name || name || 'Traveler'}.`);

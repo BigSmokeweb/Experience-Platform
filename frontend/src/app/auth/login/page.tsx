@@ -63,6 +63,9 @@ export default function AuthLoginPage() {
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
       localStorage.setItem('userRole', data.user?.role || role);
+      localStorage.setItem('userName', data.user?.name || (role === 'PROVIDER' ? 'Host' : 'Traveler'));
+      localStorage.setItem('userEmail', data.user?.email || email);
+      window.dispatchEvent(new Event('auth-change'));
 
       setSuccess(`Signed in as ${data.user?.name || email}! Redirecting...`);
       setTimeout(() => {
