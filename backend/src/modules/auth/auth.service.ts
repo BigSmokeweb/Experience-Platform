@@ -183,6 +183,15 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    // Role Enforcement: Ensure Travelers cannot log in as Providers and vice versa
+    if (dto.role && user.role !== dto.role && user.role !== Role.ADMIN) {
+      if (dto.role === Role.PROVIDER) {
+        throw new UnauthorizedException('This account is registered as a Traveler. Please switch to the Traveler tab to sign in.');
+      } else {
+        throw new UnauthorizedException('This account is registered as a Host Guild provider. Please switch to the Host Guild tab to sign in.');
+      }
+    }
+
     // Enforce MFA for accounts with MFA enabled
     if (user.mfaEnabled) {
       if (!dto.mfaCode) {

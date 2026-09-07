@@ -95,6 +95,7 @@ export type RegisterUserDto = z.infer<typeof RegisterUserSchema>;
 export const LoginSchema = z.object({
   email: z.string().email(),
   password: z.string(),
+  role: z.enum([Role.TRAVELER, Role.PROVIDER]).optional(),
   mfaCode: z.string().length(6).optional(),
 });
 

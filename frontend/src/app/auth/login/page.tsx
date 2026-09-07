@@ -35,6 +35,7 @@ export default function AuthLoginPage() {
         body: JSON.stringify({
           email: email.trim().toLowerCase(),
           password,
+          role,
           mfaCode: mfaCode.trim() || undefined,
         }),
       });
