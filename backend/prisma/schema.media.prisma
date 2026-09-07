@@ -1,0 +1,39 @@
+datasource db {
+  provider   = "postgresql"
+  url        = env("MEDIA_DATABASE_URL")
+  directUrl  = env("MEDIA_DIRECT_URL")
+  extensions = [uuid_ossp(map: "uuid-ossp")]
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../node_modules/@prisma/media-client"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+enum MediaCategory {
+  EXPERIENCE_HERO
+  EXPERIENCE_GALLERY
+  PROVIDER_KYC
+  PROFILE_AVATAR
+}
+
+model MediaAsset {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category     MediaCategory @default(EXPERIENCE_GALLERY)
+  title        String?
+  fileName     String        @map("file_name")
+  mimeType     String        @map("mime_type")
+  sizeBytes    Int?          @map("size_bytes")
+  publicUrl    String        @map("public_url")
+  altText      String?       @map("alt_text")
+  storageKey   String?       @map("storage_key")
+  referenceId  String?       @map("reference_id") // Experience ID or Provider ID
+  uploadedBy   String?       @map("uploaded_by")   // User ID
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @updatedAt @map("updated_at")
+
+  @@index([referenceId])
+  @@index([category])
+  @@map("media_assets")
+}
