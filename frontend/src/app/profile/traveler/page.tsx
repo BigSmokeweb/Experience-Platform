@@ -51,11 +51,17 @@ export default function TravelerProfilePage() {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to load traveler profile');
+        const errJson = await res.json().catch(() => null);
+        throw new Error(errJson?.message || `Failed to load profile (${res.status})`);
       }
 
       const json = await res.json();
-      setData(json);
+      // Handle both { user: { ... } } and direct { id, email, name, ... } responses
+      if (json.user) {
+        setData(json);
+      } else {
+        setData({ user: json });
+      }
     } catch (err: any) {
       setError(err.message || 'Error loading profile');
     } finally {
