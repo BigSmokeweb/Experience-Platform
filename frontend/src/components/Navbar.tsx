@@ -74,20 +74,6 @@ export function Navbar() {
             The Collection
           </Link>
           <Link
-            href="/#seasonal-goodies"
-            onClick={(e) => {
-              if (isHome) {
-                e.preventDefault();
-                document.getElementById('seasonal-goodies')?.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-            className={`transition-colors duration-200 ${
-              isDarkNav ? 'text-zinc-200 hover:text-white' : 'text-[#2C2C2C]/80 hover:text-[#347F8C]'
-            }`}
-          >
-            Seasonal
-          </Link>
-          <Link
             href="/#itinerary"
             onClick={(e) => {
               if (isHome) {

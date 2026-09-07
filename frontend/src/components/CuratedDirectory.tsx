@@ -79,6 +79,15 @@ const ExperienceCard = memo(function ExperienceCard({
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 }) {
+  const fallbackUrl = 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?auto=format&fit=crop&w=1000&q=80';
+  const initialUrl = (exp.mediaUrls?.[0] || fallbackUrl).replace('thumb.wikimedia.org', 'upload.wikimedia.org');
+  const [imgSrc, setImgSrc] = useState(initialUrl);
+
+  useEffect(() => {
+    const nextUrl = (exp.mediaUrls?.[0] || fallbackUrl).replace('thumb.wikimedia.org', 'upload.wikimedia.org');
+    setImgSrc(nextUrl);
+  }, [exp.mediaUrls]);
+
   const formattedPrice =
     (!exp.priceMin && !exp.priceMax) || (exp.priceMin === 0 && exp.priceMax === 0)
       ? 'Free'
@@ -101,11 +110,18 @@ const ExperienceCard = memo(function ExperienceCard({
       {/* Image Cover */}
       <div className={`relative ${compact ? 'h-48' : 'h-60'} w-full overflow-hidden bg-zinc-100`}>
         <Image
-          src={exp.mediaUrls?.[0] || 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?auto=format&fit=crop&w=1000&q=80'}
+          src={imgSrc}
           alt={exp.title}
           fill
+          unoptimized
+          referrerPolicy="no-referrer"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover"
+          onError={() => {
+            if (imgSrc !== fallbackUrl) {
+              setImgSrc(fallbackUrl);
+            }
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent opacity-80" />
 
@@ -469,13 +485,25 @@ function CuratedDirectoryContent({
 
   // 1. Filtered list based on search and category
   const filteredExperiences = useMemo(() => {
+    const EXCLUDED_CITIES = new Set(['jaipur', 'ahmedabad']);
+
     return initialExperiences.filter((exp) => {
+      // 1. Strictly exclude removed cities (Jaipur & Ahmedabad)
+      if (exp.city && EXCLUDED_CITIES.has(exp.city.toLowerCase())) {
+        return false;
+      }
+
+      // 2. Category filter
       if (activeCategory && exp.category?.toLowerCase() !== activeCategory.toLowerCase()) {
         return false;
       }
+
+      // 3. City filter
       if (selectedCity && exp.city?.toLowerCase() !== selectedCity.toLowerCase()) {
         return false;
       }
+
+      // 4. Search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchesTitle = exp.title?.toLowerCase().includes(q);

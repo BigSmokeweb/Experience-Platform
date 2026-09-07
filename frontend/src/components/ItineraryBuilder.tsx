@@ -35,12 +35,12 @@ const CITY_PRESETS: CityPreset[] = [
 ];
 
 const CURATORIAL_INTERESTS = [
-  { id: 'FOOD', label: 'The Table', desc: 'Family-run kitchens, spice masters & heritage tastings' },
-  { id: 'CULTURE', label: 'Through the Centuries', desc: 'Protected architectural walks & private shrines' },
-  { id: 'WORKSHOPS', label: 'The Maker\'s Hand', desc: 'Hands-on block printing, brass casting & miniature art' },
-  { id: 'ADVENTURE', label: 'Field Expeditions', desc: 'Dawn harbor navigations, stepwells & ridge treks' },
-  { id: 'HIDDEN_GEMS', label: 'Hidden Chapters', desc: 'Private collections & off-circuit guild houses' },
-  { id: 'NIGHTLIFE', label: 'After Dark', desc: 'Classical baithaks, rooftop poetry & lantern walks' },
+  { id: 'FOOD', label: 'Culinary & Food', desc: 'Family-run kitchens, spice masters & heritage tastings' },
+  { id: 'CULTURE', label: 'Heritage & Culture', desc: 'Protected architectural walks, temples & private shrines' },
+  { id: 'WORKSHOPS', label: 'Artisan Workshops', desc: 'Hands-on block printing, brass casting & traditional crafts' },
+  { id: 'ADVENTURE', label: 'Outdoor & Adventure', desc: 'Dawn harbor navigations, wetlands, stepwells & ridge treks' },
+  { id: 'HIDDEN_GEMS', label: 'Off the Map', desc: 'Private collections, secret viewpoints & off-circuit routes' },
+  { id: 'NIGHTLIFE', label: 'Nightlife & Music', desc: 'Classical baithaks, lantern walks & evening cultural venues' },
 ];
 
 const DURATION_PRESETS = [
@@ -71,7 +71,7 @@ export function ItineraryBuilder() {
   const [latitude, setLatitude] = useState('18.9220');
   const [longitude, setLongitude] = useState('72.8347');
   const [locationLabel, setLocationLabel] = useState('Mumbai (Colaba & Fort)');
-  const [selectedInterests, setSelectedInterests] = useState<string[]>(['FOOD', 'CULTURE', 'WORKSHOPS']);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [totalBudget, setTotalBudget] = useState('5000');
   const [durationMinutes, setDurationMinutes] = useState('180');
   const [groupSize, setGroupSize] = useState('2');
@@ -162,10 +162,7 @@ export function ItineraryBuilder() {
   };
 
   const handleBuildRoute = async () => {
-    const finalInterests = selectedInterests.length > 0 ? selectedInterests : ['FOOD', 'CULTURE', 'WORKSHOPS'];
-    if (selectedInterests.length === 0) {
-      setSelectedInterests(finalInterests);
-    }
+    const finalInterests = selectedInterests;
 
     const budgetNum = parseFloat(totalBudget) || 5000;
     if (!totalBudget) {
@@ -262,7 +259,7 @@ export function ItineraryBuilder() {
           <div className="lg:col-span-4 space-y-3">
             {[
               { num: 1, title: 'Where shall we begin?', subtitle: locationLabel || 'Select base city', icon: MapPin },
-              { num: 2, title: 'Your Interests', subtitle: `${selectedInterests.length} selected interests`, icon: Compass },
+              { num: 2, title: 'Your Interests', subtitle: selectedInterests.length === 0 ? 'All categories (optional)' : `${selectedInterests.length} selected tags`, icon: Compass },
               { num: 3, title: 'Duration & Budget', subtitle: `${parseInt(durationMinutes || '180') / 60}h · ₹${Number(totalBudget || 5000).toLocaleString()}`, icon: Wallet },
             ].map((s) => {
               const Icon = s.icon;
@@ -470,16 +467,27 @@ export function ItineraryBuilder() {
             {/* Step 2: Curatorial Interests */}
             {activeStep === 2 && (
               <div className="space-y-6">
-                <div>
-                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#347F8C] block mb-1 font-bold">
-                    Phase 02
-                  </span>
-                  <h3 className="font-manifold text-2xl tracking-wide uppercase text-[#2C2C2C] font-bold">
-                    Your Interests
-                  </h3>
-                  <p className="text-xs text-[#2C2C2C]/70 mt-1 font-light">
-                    Select the themes that will guide route stops and chronological continuity.
-                  </p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] font-mono uppercase tracking-widest text-[#347F8C] block mb-1 font-bold">
+                      Phase 02
+                    </span>
+                    <h3 className="font-manifold text-2xl tracking-wide uppercase text-[#2C2C2C] font-bold">
+                      Your Interests
+                    </h3>
+                    <p className="text-xs text-[#2C2C2C]/70 mt-1 font-light">
+                      Select tags to tailor your route, or leave unselected to explore all categories.
+                    </p>
+                  </div>
+                  {selectedInterests.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedInterests([])}
+                      className="text-[11px] font-mono text-[#347F8C] hover:underline uppercase tracking-wider font-semibold cursor-pointer"
+                    >
+                      Clear All
+                    </button>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -524,9 +532,6 @@ export function ItineraryBuilder() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (selectedInterests.length === 0) {
-                        setSelectedInterests(['FOOD', 'CULTURE', 'WORKSHOPS']);
-                      }
                       setError(null);
                       setActiveStep(3);
                     }}

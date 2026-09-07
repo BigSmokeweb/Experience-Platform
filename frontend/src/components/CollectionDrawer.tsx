@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import Link from 'next/link';
 import { X, Bookmark, Compass, Trash2, ArrowRight, Sparkles, MapPin, ExternalLink } from 'lucide-react';
@@ -14,6 +15,11 @@ interface CollectionDrawerProps {
 export function CollectionDrawer({ isOpen, onClose }: CollectionDrawerProps) {
   const { collection, count, toggle, clear } = useCollection();
   const drawerRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Close on Escape
   useEffect(() => {
@@ -30,10 +36,10 @@ export function CollectionDrawer({ isOpen, onClose }: CollectionDrawerProps) {
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-[9998] flex justify-end">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex justify-end">
       {/* Backdrop */}
       <div
         onClick={onClose}
@@ -108,6 +114,7 @@ export function CollectionDrawer({ isOpen, onClose }: CollectionDrawerProps) {
                     src={item.image}
                     alt={item.title}
                     fill
+                    unoptimized
                     sizes="80px"
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
@@ -175,6 +182,7 @@ export function CollectionDrawer({ isOpen, onClose }: CollectionDrawerProps) {
           </div>
         )}
       </aside>
-    </div>
+    </div>,
+    document.body
   );
 }

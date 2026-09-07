@@ -151,6 +151,7 @@ export default async function ExperienceDetailPage({ params }: { params: { id: s
               src={exp.mediaUrls?.[0] || 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?auto=format&fit=crop&w=1200&q=80'}
               alt={exp.title}
               fill
+              unoptimized
               priority
               sizes="(max-width: 1024px) 100vw, 58vw"
               className="object-cover"

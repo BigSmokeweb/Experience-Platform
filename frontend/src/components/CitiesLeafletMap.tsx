@@ -6,97 +6,51 @@ import { CityData } from './NearbyCitiesDropdown';
 interface CitiesLeafletMapProps {
   cities: CityData[];
   selectedCitySlug: string;
-  onSelectCity: (slug: string) => void;
+  lockedCitySlug?: string | null;
+  onSelectCity?: (slug: string) => void;
+  onCityClick?: (slug: string) => void;
+  onCityHover?: (slug: string) => void;
 }
 
-interface CityPolygonArea {
-  polygon: [number, number][];
-}
+import { CITY_BOUNDARIES } from '@/lib/city-boundaries';
 
-// Precise geographic boundary polygon coordinates for Maharashtra city zones
-const CITY_AREAS: Record<string, CityPolygonArea> = {
-  mumbai: {
-    polygon: [
-      [18.905, 72.810],
-      [18.930, 72.840],
-      [18.970, 72.855],
-      [19.015, 72.865],
-      [19.060, 72.850],
-      [19.080, 72.835],
-      [19.045, 72.815],
-      [18.980, 72.810],
-      [18.920, 72.815],
-    ],
-  },
-  thane: {
-    polygon: [
-      [19.255, 72.965],
-      [19.245, 73.005],
-      [19.200, 73.010],
-      [19.185, 72.970],
-      [19.215, 72.950],
-      [19.245, 72.955],
-    ],
-  },
-  'navi-mumbai': {
-    polygon: [
-      [19.090, 72.995],
-      [19.065, 73.005],
-      [19.035, 73.020],
-      [18.995, 73.035],
-      [19.015, 73.070],
-      [19.060, 73.060],
-      [19.095, 73.030],
-    ],
-  },
-  powai: {
-    polygon: [
-      [19.138, 72.898],
-      [19.138, 72.922],
-      [19.118, 72.925],
-      [19.105, 72.910],
-      [19.108, 72.895],
-    ],
-  },
-  'kanjur-marg': {
-    polygon: [
-      [19.142, 72.925],
-      [19.140, 72.945],
-      [19.122, 72.946],
-      [19.120, 72.926],
-    ],
-  },
-  'kalyan-dombivli': {
-    polygon: [
-      [19.265, 73.115],
-      [19.260, 73.160],
-      [19.225, 73.155],
-      [19.205, 73.125],
-      [19.225, 73.100],
-      [19.250, 73.105],
-    ],
-  },
-  panvel: {
-    polygon: [
-      [19.015, 73.090],
-      [19.018, 73.140],
-      [18.980, 73.150],
-      [18.960, 73.120],
-      [18.970, 73.085],
-    ],
-  },
-};
+// Smooth organic fallback polygon generator in case of custom city coordinates
+function generateOrganicPolygon(centerLat: number, centerLng: number, radiusKm: number = 3.2): [number, number][] {
+  const points: [number, number][] = [];
+  const steps = 24;
+  for (let i = 0; i <= steps; i++) {
+    const angle = (i * 2 * Math.PI) / steps;
+    const r = radiusKm * (1 + 0.12 * Math.sin(angle * 3) + 0.08 * Math.cos(angle * 2));
+    const latOffset = r / 111;
+    const lngOffset = r / (111 * Math.cos((centerLat * Math.PI) / 180));
+    points.push([
+      Number((centerLat + latOffset * Math.sin(angle)).toFixed(5)),
+      Number((centerLng + lngOffset * Math.cos(angle)).toFixed(5)),
+    ]);
+  }
+  return points;
+}
 
 export function CitiesLeafletMap({
   cities,
   selectedCitySlug,
+  lockedCitySlug,
   onSelectCity,
+  onCityClick,
+  onCityHover,
 }: CitiesLeafletMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const layersRef = useRef<Map<string, { polygon: any; marker: any }>>(new Map());
+  const leafletRef = useRef<any>(null);
   const onSelectCityRef = useRef(onSelectCity);
   onSelectCityRef.current = onSelectCity;
+  const onCityClickRef = useRef(onCityClick);
+  onCityClickRef.current = onCityClick;
+  const onCityHoverRef = useRef(onCityHover);
+  onCityHoverRef.current = onCityHover;
+  const lockedCitySlugRef = useRef(lockedCitySlug);
+  lockedCitySlugRef.current = lockedCitySlug;
 
   // Single mount effect: initialize map once, never rebuild on re-renders
   useEffect(() => {
@@ -107,6 +61,7 @@ export function CitiesLeafletMap({
 
       const L = (await import('leaflet')).default;
       if (!isMounted || !containerRef.current || mapRef.current) return;
+      leafletRef.current = L;
 
       // Initialize Leaflet map with OpenStreetMap centered on Mumbai Metropolitan Region
       const map = L.map(containerRef.current, {
@@ -129,19 +84,12 @@ export function CitiesLeafletMap({
       const layers = new Map<string, { polygon: any; marker: any }>();
 
       cities.forEach((city) => {
-        const areaConfig = CITY_AREAS[city.slug] || {
-          polygon: [
-            [city.lat - 0.025, city.lng - 0.025],
-            [city.lat - 0.025, city.lng + 0.025],
-            [city.lat + 0.025, city.lng + 0.025],
-            [city.lat + 0.025, city.lng - 0.025],
-          ],
-        };
+        const polygonCoords = CITY_BOUNDARIES[city.slug] || generateOrganicPolygon(city.lat, city.lng);
 
         const isSelected = city.slug === selectedCitySlug;
 
-        // 1. Highlighted City Boundary Area Polygon (solid borders, no morphing/distortion)
-        const polygon = L.polygon(areaConfig.polygon, {
+        // 1. Highlighted City Boundary Area Polygon (accurate organic municipal border)
+        const polygon = L.polygon(polygonCoords, {
           color: isSelected ? '#C4A265' : '#347F8C',
           weight: isSelected ? 3.5 : 2,
           fillColor: '#347F8C',
@@ -186,21 +134,40 @@ export function CitiesLeafletMap({
 
         // Hover events on the highlighted city area
         polygon.on('mouseover', () => {
-          onSelectCityRef.current(city.slug);
+          // When a city is locked, hovering other cities does not change the active city
+          if (lockedCitySlugRef.current) return;
+          if (onCityHoverRef.current) {
+            onCityHoverRef.current(city.slug);
+          } else if (onSelectCityRef.current) {
+            onSelectCityRef.current(city.slug);
+          }
         });
 
         marker.on('mouseover', () => {
-          onSelectCityRef.current(city.slug);
+          if (lockedCitySlugRef.current) return;
+          if (onCityHoverRef.current) {
+            onCityHoverRef.current(city.slug);
+          } else if (onSelectCityRef.current) {
+            onSelectCityRef.current(city.slug);
+          }
         });
 
-        // Click centers smoothly on city without resetting user's zoom level
+        // Click locks and centers smoothly on city without resetting user's zoom level
         polygon.on('click', () => {
-          onSelectCityRef.current(city.slug);
+          if (onCityClickRef.current) {
+            onCityClickRef.current(city.slug);
+          } else if (onSelectCityRef.current) {
+            onSelectCityRef.current(city.slug);
+          }
           map.panTo([city.lat, city.lng], { animate: true, duration: 0.4 });
         });
 
         marker.on('click', () => {
-          onSelectCityRef.current(city.slug);
+          if (onCityClickRef.current) {
+            onCityClickRef.current(city.slug);
+          } else if (onSelectCityRef.current) {
+            onSelectCityRef.current(city.slug);
+          }
           map.panTo([city.lat, city.lng], { animate: true, duration: 0.4 });
         });
 
@@ -236,9 +203,20 @@ export function CitiesLeafletMap({
     };
   }, []);
 
-  // Update styles when selectedCitySlug changes (hover or external selection)
+  // Update styles and pan map when selectedCitySlug changes (click or external selection)
+  const prevSelectedSlugRef = useRef<string>(selectedCitySlug);
+
   useEffect(() => {
     if (!mapRef.current || layersRef.current.size === 0) return;
+
+    // Pan map to active city if selection changed externally
+    if (prevSelectedSlugRef.current !== selectedCitySlug) {
+      prevSelectedSlugRef.current = selectedCitySlug;
+      const targetCity = cities.find((c) => c.slug === selectedCitySlug);
+      if (targetCity) {
+        mapRef.current.panTo([targetCity.lat, targetCity.lng], { animate: true, duration: 0.4 });
+      }
+    }
 
     layersRef.current.forEach(({ polygon, marker }, slug) => {
       const isSelected = slug === selectedCitySlug;
@@ -271,7 +249,7 @@ export function CitiesLeafletMap({
       // Update marker HTML for active glow
       const icon = marker.getIcon();
       if (icon) {
-        const L = (window as any).L;
+        const L = leafletRef.current || (typeof window !== 'undefined' ? (window as any).L : null);
         if (L) {
           const newIcon = L.divIcon({
             className: 'custom-city-leaflet-marker',

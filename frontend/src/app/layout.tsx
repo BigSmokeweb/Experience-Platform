@@ -3,7 +3,6 @@ import { Playfair_Display, Cormorant_Garamond, Source_Serif_4, JetBrains_Mono, L
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { FloatingChatSupport } from '@/components/FloatingChatSupport';
-import { ScrollFadeObserver } from '@/components/ScrollFadeObserver';
 import { PageTransition } from '@/components/PageTransition';
 import './globals.css';
 
@@ -57,6 +56,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <meta name="referrer" content="no-referrer" />
         <link
           rel="stylesheet"
           href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -66,7 +66,6 @@ export default function RootLayout({
       </head>
       <body className={`${sourceSerif.className} ${playfair.variable} ${cormorant.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} ${luxuriousScript.variable} bg-[#F5F1E6] text-[#2C2C2C] antialiased selection:bg-[#8B7355]/30 selection:text-[#2C2C2C] overflow-x-hidden`}>
         <PageTransition />
-        <ScrollFadeObserver />
         <Navbar />
         <main>{children}</main>
         <Footer />

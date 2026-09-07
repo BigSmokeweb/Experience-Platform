@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ALL_EXPERIENCES } from '@/lib/experiences-data';
 
+const EXCLUDED_CITIES = new Set(['jaipur', 'ahmedabad']);
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const city = searchParams.get('city') || '';
@@ -9,14 +11,14 @@ export async function GET(request: NextRequest) {
   const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
   const limit = Math.max(1, Math.min(50, parseInt(searchParams.get('limit') || '12', 10)));
 
-  let filtered = ALL_EXPERIENCES;
-
-  if (city) {
-    filtered = filtered.filter((exp) => exp.city?.toLowerCase() === city.toLowerCase());
-  }
+  let filtered = ALL_EXPERIENCES.filter((exp) => !EXCLUDED_CITIES.has(exp.city?.toLowerCase()));
 
   if (category) {
     filtered = filtered.filter((exp) => exp.category?.toLowerCase() === category.toLowerCase());
+  }
+
+  if (city) {
+    filtered = filtered.filter((exp) => exp.city?.toLowerCase() === city.toLowerCase());
   }
 
   if (search.trim()) {

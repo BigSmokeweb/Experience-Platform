@@ -17,7 +17,7 @@ export function ExperienceGallery({ images, title, city, area }: ExperienceGalle
   // Filter and deduplicate images
   const validImages = Array.from(
     new Set(images.filter((img) => typeof img === 'string' && img.trim().length > 0))
-  );
+  ).map((url) => url.replace('thumb.wikimedia.org', 'upload.wikimedia.org'));
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -46,6 +46,8 @@ export function ExperienceGallery({ images, title, city, area }: ExperienceGalle
     };
   }, [selectedIndex, handleKeyDown]);
 
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
+
   if (validImages.length === 0) return null;
 
   return (
@@ -67,30 +69,46 @@ export function ExperienceGallery({ images, title, city, area }: ExperienceGalle
 
       {/* Grid of 5-6 images */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {validImages.map((src, index) => (
-          <div
-            key={index}
-            onClick={() => setSelectedIndex(index)}
-            className="group relative h-36 sm:h-44 rounded-xl overflow-hidden border border-[#D4CFC0] bg-[#EAE5D6] cursor-pointer shadow-sm hover:shadow-md transition-all duration-300"
-          >
-            <Image
-              src={src}
-              alt={`${title} — Plate ${index + 1}`}
-              fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between p-2.5">
-              <span className="text-[10px] font-mono text-white/90 truncate">
-                Plate {index + 1} {area ? `• ${area}` : `• ${city}`}
-              </span>
-              <span className="bg-white/20 backdrop-blur-md p-1 rounded text-white shrink-0">
-                <Maximize2 className="w-3 h-3" />
-              </span>
+        {validImages.map((src, index) => {
+          const isFailed = failedImages[src];
+          // If this image failed, try using the first image as fallback, or show archival badge
+          const fallbackSrc = !failedImages[validImages[0]] ? validImages[0] : null;
+
+          return (
+            <div
+              key={index}
+              onClick={() => setSelectedIndex(index)}
+              className="group relative h-36 sm:h-44 rounded-xl overflow-hidden border border-[#D4CFC0] bg-[#EAE5D6] cursor-pointer shadow-sm hover:shadow-md transition-all duration-300"
+            >
+              {isFailed && !fallbackSrc ? (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-[#E0DACB] text-[#2C2C2C]/50 p-4 text-center">
+                  <Camera className="w-6 h-6 mb-1 opacity-40" />
+                  <span className="text-[10px] font-mono uppercase tracking-wider">Field Record {index + 1}</span>
+                </div>
+              ) : (
+                <Image
+                  src={isFailed && fallbackSrc ? fallbackSrc : src}
+                  alt={`${title} — Plate ${index + 1}`}
+                  fill
+                  unoptimized
+                  referrerPolicy="no-referrer"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                  loading="lazy"
+                  onError={() => setFailedImages((prev) => ({ ...prev, [src]: true }))}
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between p-2.5">
+                <span className="text-[10px] font-mono text-white/90 truncate">
+                  Plate {index + 1} {area ? `• ${area}` : `• ${city}`}
+                </span>
+                <span className="bg-white/20 backdrop-blur-md p-1 rounded text-white shrink-0">
+                  <Maximize2 className="w-3 h-3" />
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Fullscreen Lightbox Modal */}
@@ -130,9 +148,14 @@ export function ExperienceGallery({ images, title, city, area }: ExperienceGalle
             onClick={(e) => e.stopPropagation()}
           >
             <Image
-              src={validImages[selectedIndex]}
+              src={
+                failedImages[validImages[selectedIndex]] && !failedImages[validImages[0]]
+                  ? validImages[0]
+                  : validImages[selectedIndex]
+              }
               alt={`${title} — Full plate ${selectedIndex + 1}`}
               fill
+              unoptimized
               priority
               sizes="90vw"
               className="object-contain"
@@ -184,6 +207,7 @@ export function ExperienceGallery({ images, title, city, area }: ExperienceGalle
                   src={thumb}
                   alt={`Thumbnail ${idx + 1}`}
                   fill
+                  unoptimized
                   sizes="56px"
                   className="object-cover"
                 />

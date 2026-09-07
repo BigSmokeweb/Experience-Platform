@@ -70,7 +70,7 @@ export const CITIES_REGISTRY: CityData[] = [
     tagline: 'Monsoon Waterfalls, Historic Forts & Highway Dhabas',
     lat: 18.9894,
     lng: 73.1175,
-    image: 'https://images.unsplash.com/photo-1546271876-af6caec5961b?auto=format&fit=crop&w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=600&q=80',
     experienceCount: 39,
     vibe: 'Waterfalls & Heritage Trails',
   },
@@ -138,6 +138,7 @@ export function NearbyCitiesDropdown({ isHome, scrolled }: NearbyCitiesDropdownP
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'map' | 'list'>('map');
   const [selectedCitySlug, setSelectedCitySlug] = useState<string>('mumbai');
+  const [lockedCitySlug, setLockedCitySlug] = useState<string | null>(null);
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [locationStatus, setLocationStatus] = useState<string | null>(null);
@@ -232,12 +233,12 @@ export function NearbyCitiesDropdown({ isHome, scrolled }: NearbyCitiesDropdownP
 
   const nearestCity = sortedCities.length > 0 && sortedCities[0].distanceKm !== null ? sortedCities[0] : null;
 
-  // Auto-select closest city if calibrated
+  // Auto-select closest city if calibrated and no city has been explicitly chosen
   useEffect(() => {
-    if (nearestCity) {
+    if (nearestCity && !lockedCitySlug) {
       setSelectedCitySlug(nearestCity.slug);
     }
-  }, [nearestCity?.slug]);
+  }, [nearestCity?.slug, lockedCitySlug]);
 
   const activeCity = sortedCities.find((c) => c.slug === selectedCitySlug) || sortedCities[0];
 
@@ -372,7 +373,20 @@ export function NearbyCitiesDropdown({ isHome, scrolled }: NearbyCitiesDropdownP
               <CitiesLeafletMap
                 cities={sortedCities}
                 selectedCitySlug={selectedCitySlug}
-                onSelectCity={(slug) => setSelectedCitySlug(slug)}
+                lockedCitySlug={lockedCitySlug}
+                onSelectCity={(slug) => {
+                  setLockedCitySlug(slug);
+                  setSelectedCitySlug(slug);
+                }}
+                onCityClick={(slug) => {
+                  setLockedCitySlug(slug);
+                  setSelectedCitySlug(slug);
+                }}
+                onCityHover={(slug) => {
+                  if (!lockedCitySlug) {
+                    setSelectedCitySlug(slug);
+                  }
+                }}
               />
 
               {/* ─── Maharashtra City Fast Chips Bar ─── */}
@@ -384,8 +398,15 @@ export function NearbyCitiesDropdown({ isHome, scrolled }: NearbyCitiesDropdownP
                   <button
                     key={city.slug}
                     type="button"
-                    onClick={() => setSelectedCitySlug(city.slug)}
-                    onMouseEnter={() => setSelectedCitySlug(city.slug)}
+                    onClick={() => {
+                      setLockedCitySlug(city.slug);
+                      setSelectedCitySlug(city.slug);
+                    }}
+                    onMouseEnter={() => {
+                      if (!lockedCitySlug) {
+                        setSelectedCitySlug(city.slug);
+                      }
+                    }}
                     className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-medium transition-all shrink-0 cursor-pointer ${
                       selectedCitySlug === city.slug
                         ? 'bg-[#347F8C] text-[#F5F1E6] font-bold shadow-xs'

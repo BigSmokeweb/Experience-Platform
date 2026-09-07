@@ -3,6 +3,7 @@ const nextConfig = {
   reactStrictMode: false,
   transpilePackages: ['lucide-react'],
   images: {
+    unoptimized: true,
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
@@ -26,7 +27,7 @@ const nextConfig = {
           },
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
+            value: 'no-referrer',
           },
           {
             key: 'Cross-Origin-Opener-Policy',

@@ -4,8 +4,6 @@ import { HeroAnimatedTitle } from '@/components/HeroAnimatedTitle';
 import { HeroParallaxVideo } from '@/components/HeroParallaxVideo';
 import { ItineraryBuilder } from '@/components/ItineraryBuilder';
 import { CuratedDirectory } from '@/components/CuratedDirectory';
-import { SeasonalTimeBanner } from '@/components/SeasonalTimeBanner';
-import { SeasonalGoodiesSection } from '@/components/SeasonalGoodiesSection';
 import { ScrollToHeroOnRefresh } from '@/components/ScrollToHeroOnRefresh';
 import { API_BASE } from '@/lib/api-client';
 
@@ -37,6 +35,8 @@ const CITIES = [
 
 import { ALL_EXPERIENCES } from '@/lib/experiences-data';
 
+const EXCLUDED_CITIES = new Set(['jaipur', 'ahmedabad']);
+
 async function getAllExperiences() {
   try {
     const res = await fetch(`${API_BASE}/experiences/search?limit=50`, {
@@ -45,14 +45,22 @@ async function getAllExperiences() {
     if (res.ok) {
       const data = await res.json();
       if (data?.data && Array.isArray(data.data) && data.data.length > 0) {
-        const remoteIds = new Set(data.data.map((e: any) => e.id));
-        return [...data.data, ...ALL_EXPERIENCES.filter((e) => !remoteIds.has(e.id))];
+        const cleanRemote = data.data.filter(
+          (e: any) => !EXCLUDED_CITIES.has(e.city?.toLowerCase())
+        );
+        const remoteIds = new Set(cleanRemote.map((e: any) => e.id));
+        return [
+          ...cleanRemote,
+          ...ALL_EXPERIENCES.filter(
+            (e) => !remoteIds.has(e.id) && !EXCLUDED_CITIES.has(e.city?.toLowerCase())
+          ),
+        ];
       }
     }
   } catch {
     // Fallback to complete catalog
   }
-  return ALL_EXPERIENCES;
+  return ALL_EXPERIENCES.filter((e) => !EXCLUDED_CITIES.has(e.city?.toLowerCase()));
 }
 
 export default async function HomePage() {
@@ -98,11 +106,6 @@ export default async function HomePage() {
               Dawn walks through centuries-old ateliers. Culinary traditions held in family kitchens since the Mughal courts. Each experience verified in person, on site.
             </p>
           </div>
-
-          {/* Living Atmosphere & Seasonal Maharashtra Recommendations */}
-          <div className="mt-8">
-            <SeasonalTimeBanner />
-          </div>
         </section>
 
         {/* ─── Curated Directory with Instant Client-Side Category Buttons ─── */}
@@ -113,10 +116,7 @@ export default async function HomePage() {
         />
       </div>
 
-      {/* ─── SECTION 3: SEASONAL GOODIES & FESTIVE TRAILS ─── */}
-      <SeasonalGoodiesSection />
-
-      {/* ─── SECTION 4: ITINERARY BUILDER ATELIER ─── */}
+      {/* ─── SECTION 3: ITINERARY BUILDER ATELIER ─── */}
       <ItineraryBuilder />
     </div>
   );
