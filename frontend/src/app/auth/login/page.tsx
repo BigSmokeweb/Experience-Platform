@@ -7,8 +7,8 @@ import { API_BASE } from '@/lib/api-client';
 export default function AuthLoginPage() {
   const router = useRouter();
   const [role, setRole] = useState<'TRAVELER' | 'PROVIDER'>('TRAVELER');
-  const [email, setEmail] = useState('traveler@experienceplatform.in');
-  const [password, setPassword] = useState('Traveler123!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
   const [requiresMfa, setRequiresMfa] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -19,15 +19,7 @@ export default function AuthLoginPage() {
     setRole(newRole);
     setError(null);
     setSuccess(null);
-    if (newRole === 'TRAVELER') {
-      setEmail('traveler@experienceplatform.in');
-      setPassword('Traveler123!');
-      setRequiresMfa(false);
-    } else {
-      setEmail('provider@experienceplatform.in');
-      setPassword('Provider123!');
-      setRequiresMfa(false);
-    }
+    setRequiresMfa(false);
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -52,11 +44,11 @@ export default function AuthLoginPage() {
       if (!res.ok) {
         if (res.status === 403 && data.requiresMfa) {
           setRequiresMfa(true);
-          setError('6-Digit MFA code required for this account.');
+          setError('6-Digit authenticator code required for this account.');
           setIsLoading(false);
           return;
         }
-        throw new Error(data.message || 'Login failed.');
+        throw new Error(data.message || 'Invalid email or password.');
       }
 
       // Save tokens
@@ -89,9 +81,9 @@ export default function AuthLoginPage() {
           <div className="w-10 h-10 rounded-xl bg-[#F5F1E6] text-[#2C2C2C] border border-[#D4CFC0] font-extrabold flex items-center justify-center mx-auto mb-3 shadow-sm tracking-tighter">
             LX
           </div>
-          <h1 className="font-manifold text-2xl tracking-wide uppercase text-[#2C2C2C] font-bold">Access Portal</h1>
+          <h1 className="font-manifold text-2xl tracking-wide uppercase text-[#2C2C2C] font-bold">Sign In</h1>
           <p className="text-xs font-mono text-[#2C2C2C]/70 mt-1 uppercase tracking-wider">
-            Sign in to your experience credentials
+            Access your account
           </p>
         </div>
 
@@ -111,13 +103,6 @@ export default function AuthLoginPage() {
           >
             Host Guild
           </button>
-        </div>
-
-        {/* Quick Demo Info Box */}
-        <div className="mb-5 p-3.5 bg-[#F5F1E6] border border-[#D4CFC0] rounded-xl text-xs font-mono text-[#2C2C2C]">
-          <p className="font-bold text-[#347F8C] mb-1">Demo Credentials:</p>
-          <p className="text-[11px] text-[#2C2C2C]/70">Email: <span className="text-[#2C2C2C] font-semibold">{email}</span></p>
-          <p className="text-[11px] text-[#2C2C2C]/70">Key: <span className="text-[#2C2C2C] font-semibold">{password}</span></p>
         </div>
 
         {error && (
@@ -149,7 +134,7 @@ export default function AuthLoginPage() {
 
           <div>
             <label className="block text-[11px] font-mono uppercase tracking-wider text-[#2C2C2C]/70 mb-1.5 font-semibold">
-              Access Secret
+              Password
             </label>
             <input
               type="password"
@@ -185,10 +170,10 @@ export default function AuthLoginPage() {
             {isLoading ? (
               <>
                 <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Authenticating...
+                Signing In...
               </>
             ) : (
-              'Authenticate'
+              'Sign In'
             )}
           </button>
         </form>
@@ -206,7 +191,7 @@ export default function AuthLoginPage() {
         </div>
 
         <p className="text-center text-[10px] font-mono text-[#2C2C2C]/50 mt-4 uppercase tracking-wider">
-          Protected by Argon2 & Rotational JWT
+          Secured with Argon2 & PostgreSQL Storage
         </p>
       </div>
     </div>

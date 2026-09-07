@@ -307,10 +307,10 @@ export default function AuthRegisterPage() {
             {isLoading ? (
               <>
                 <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Creating Profile...
+                Creating Account...
               </>
             ) : (
-              'Create Account & Enter'
+              'Create Account'
             )}
           </button>
         </form>
