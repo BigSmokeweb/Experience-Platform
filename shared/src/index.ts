@@ -77,6 +77,21 @@ export const RegisterProviderSchema = z.object({
 
 export type RegisterProviderDto = z.infer<typeof RegisterProviderSchema>;
 
+export const RegisterUserSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  name: z.string().min(2, 'Name must be at least 2 characters').optional().default('Traveler'),
+  role: z.enum([Role.TRAVELER, Role.PROVIDER]).default(Role.TRAVELER),
+  // Optional profile fields
+  homeCity: z.string().optional(),
+  businessName: z.string().optional(),
+  businessType: z.string().optional(),
+  phone: z.string().optional(),
+  city: z.string().optional(),
+});
+
+export type RegisterUserDto = z.infer<typeof RegisterUserSchema>;
+
 export const LoginSchema = z.object({
   email: z.string().email(),
   password: z.string(),

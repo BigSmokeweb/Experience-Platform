@@ -15,6 +15,7 @@ import {
   Role,
   RegisterTravelerDto,
   RegisterProviderDto,
+  RegisterUserDto,
   LoginDto,
   AuthTokensResponse,
 } from '@experience-platform/shared';
@@ -28,7 +29,68 @@ export class AuthService {
   ) {}
 
   /**
-   * Register Traveler
+   * Unified Register (Traveler or Provider) - Option A Auto-login
+   * Ensures homeCity, businessName, phone etc. are properly persisted.
+   */
+  async register(dto: RegisterUserDto): Promise<AuthTokensResponse> {
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.email.toLowerCase() },
+    });
+    if (existing) {
+      throw new ConflictException('An account with this email already exists');
+    }
+
+    const passwordHash = await argon2.hash(dto.password);
+    const role = dto.role || Role.TRAVELER;
+    const name = dto.name || (role === Role.PROVIDER ? 'Host' : 'Traveler');
+
+    if (role === Role.PROVIDER) {
+      const mfaSecret = authenticator.generateSecret();
+      const user = await this.prisma.user.create({
+        data: {
+          email: dto.email.toLowerCase(),
+          passwordHash,
+          role: Role.PROVIDER,
+          name,
+          mfaEnabled: false, // Default to standard auth for hackathon register flow
+          mfaSecret,
+          providerProfile: {
+            create: {
+              businessName: dto.businessName || `${name}'s Experiences`,
+              businessType: dto.businessType || 'Local Host',
+              phone: dto.phone || 'Unspecified',
+              city: dto.city || dto.homeCity || 'Mumbai',
+            },
+          },
+        },
+        include: {
+          providerProfile: true,
+        },
+      });
+      return this.generateAuthTokens(user);
+    } else {
+      const user = await this.prisma.user.create({
+        data: {
+          email: dto.email.toLowerCase(),
+          passwordHash,
+          role: Role.TRAVELER,
+          name,
+          travelerProfile: {
+            create: {
+              homeCity: dto.homeCity || null,
+            },
+          },
+        },
+        include: {
+          travelerProfile: true,
+        },
+      });
+      return this.generateAuthTokens(user);
+    }
+  }
+
+  /**
+   * Register Traveler (Legacy endpoint)
    */
   async registerTraveler(dto: RegisterTravelerDto): Promise<AuthTokensResponse> {
     const existing = await this.prisma.user.findUnique({

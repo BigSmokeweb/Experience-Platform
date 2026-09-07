@@ -190,7 +190,19 @@ export default function AuthLoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-[10px] font-mono text-[#2C2C2C]/50 mt-6 uppercase tracking-wider">
+        <div className="mt-6 pt-5 border-t border-[#D4CFC0]/60 text-center">
+          <p className="text-xs font-mono text-[#2C2C2C]/70">
+            Don&apos;t have an account?{' '}
+            <a
+              href="/auth/register"
+              className="text-[#347F8C] hover:text-[#2A6772] font-semibold underline underline-offset-2 transition"
+            >
+              Register here
+            </a>
+          </p>
+        </div>
+
+        <p className="text-center text-[10px] font-mono text-[#2C2C2C]/50 mt-4 uppercase tracking-wider">
           Protected by Argon2 & Rotational JWT
         </p>
       </div>
