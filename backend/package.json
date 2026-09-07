@@ -17,7 +17,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate && prisma generate --schema=prisma/schema.media.prisma",
+    "db:push": "prisma db push",
     "db:media:push": "prisma db push --schema=prisma/schema.media.prisma",
+    "db:studio": "prisma studio",
+    "db:studio:media": "prisma studio --schema=prisma/schema.media.prisma",
     "db:seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
