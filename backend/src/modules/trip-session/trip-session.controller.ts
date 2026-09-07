@@ -52,6 +52,15 @@ export class TripSessionController {
   }
 
   /**
+   * GET /trip-sessions/history
+   * Get the caller's trip history (COMPLETED and ACTIVE sessions visually grouped).
+   */
+  @Get('history')
+  getTripHistory(@CurrentUser() user: { id: string }) {
+    return this.tripSessionService.getTripHistory(user.id);
+  }
+
+  /**
    * GET /trip-sessions/:id
    * Get a specific session by ID (ownership check enforced in service).
    */

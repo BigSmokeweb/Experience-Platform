@@ -57,6 +57,7 @@ export const RegisterTravelerSchema = z.object({
 export type RegisterTravelerDto = z.infer<typeof RegisterTravelerSchema>;
 
 export const UpdateTravelerProfileSchema = z.object({
+  name: z.string().min(2).optional(),
   homeCity: z.string().optional(),
   interests: z.array(z.nativeEnum(Category)).optional(),
   budgetBand: z.nativeEnum(BudgetBand).optional(),
@@ -64,6 +65,16 @@ export const UpdateTravelerProfileSchema = z.object({
 });
 
 export type UpdateTravelerProfileDto = z.infer<typeof UpdateTravelerProfileSchema>;
+
+export const UpdateProviderProfileSchema = z.object({
+  name: z.string().min(2).optional(),
+  businessName: z.string().min(2).optional(),
+  businessType: z.string().optional(),
+  phone: z.string().optional(),
+  city: z.string().optional(),
+});
+
+export type UpdateProviderProfileDto = z.infer<typeof UpdateProviderProfileSchema>;
 
 export const RegisterProviderSchema = z.object({
   email: z.string().email(),

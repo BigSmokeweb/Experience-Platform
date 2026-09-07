@@ -25,6 +25,9 @@ export class ProvidersService {
     const profile = await this.prisma.providerProfile.findUnique({
       where: { userId },
       include: {
+        user: {
+          select: { id: true, name: true, email: true, role: true },
+        },
         experiences: {
           take: 20,
           orderBy: { createdAt: 'desc' },
@@ -37,6 +40,33 @@ export class ProvidersService {
     }
 
     return profile;
+  }
+
+  /**
+   * Update provider profile information
+   */
+  async updateProfile(userId: string, dto: any) {
+    if (dto.name) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { name: dto.name },
+      });
+    }
+
+    return this.prisma.providerProfile.update({
+      where: { userId },
+      data: {
+        ...(dto.businessName !== undefined && { businessName: dto.businessName }),
+        ...(dto.businessType !== undefined && { businessType: dto.businessType }),
+        ...(dto.phone !== undefined && { phone: dto.phone }),
+        ...(dto.city !== undefined && { city: dto.city }),
+      },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, role: true },
+        },
+      },
+    });
   }
 
   /**

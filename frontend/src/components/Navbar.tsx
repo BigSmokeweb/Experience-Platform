@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Bookmark, User, LogOut, ChevronDown } from 'lucide-react';
+import { Bookmark, User, LogOut, ChevronDown, Compass } from 'lucide-react';
 import { NearbyCitiesDropdown } from '@/components/NearbyCitiesDropdown';
 import { CollectionDrawer } from '@/components/CollectionDrawer';
 import { useCollection } from '@/lib/collection-store';
@@ -174,11 +174,19 @@ export function Navbar() {
                     Signed in as <b className="text-[#2C2C2C] block truncate">{userName}</b>
                   </div>
                   <Link
-                    href="/trip"
+                    href="/profile"
                     onClick={() => setIsUserMenuOpen(false)}
                     className="flex items-center gap-2 px-3 py-2 text-xs rounded-xl hover:bg-[#F5F1E6] transition font-mono"
                   >
                     <User className="w-3.5 h-3.5 text-[#347F8C]" />
+                    <span>My Profile</span>
+                  </Link>
+                  <Link
+                    href="/trip"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-xs rounded-xl hover:bg-[#F5F1E6] transition font-mono"
+                  >
+                    <Compass className="w-3.5 h-3.5 text-[#347F8C]" />
                     <span>My Journey</span>
                   </Link>
                   <button

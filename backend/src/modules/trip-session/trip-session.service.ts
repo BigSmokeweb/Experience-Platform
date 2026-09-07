@@ -88,6 +88,46 @@ export class TripSessionService {
     return session;
   }
 
+  /**
+   * Get trip history for user, fetching experience titles and cities for each session.
+   */
+  async getTripHistory(userId: string) {
+    const sessions = await this.prisma.tripSession.findMany({
+      where: {
+        userId,
+        status: { in: [TripSessionStatus.COMPLETED, TripSessionStatus.ACTIVE] },
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 20,
+    });
+
+    // Resolve experiences for all sessions in parallel
+    const enhancedSessions = await Promise.all(
+      sessions.map(async (s) => {
+        let experiences: any[] = [];
+        if (s.selectedExperienceIds && s.selectedExperienceIds.length > 0) {
+          experiences = await this.prisma.experience.findMany({
+            where: { id: { in: s.selectedExperienceIds } },
+            select: { id: true, title: true, city: true, category: true, mediaUrls: true },
+          });
+        }
+        return {
+          ...s,
+          stopCount: s.selectedExperienceIds ? s.selectedExperienceIds.length : 0,
+          city: experiences[0]?.city || 'Local Journey',
+          firstExperienceImage: experiences[0]?.mediaUrls[0] || null,
+          experienceTitles: experiences.map((e) => e.title),
+        };
+      }),
+    );
+
+    return {
+      active: enhancedSessions.filter((s) => s.status === TripSessionStatus.ACTIVE),
+      completed: enhancedSessions.filter((s) => s.status === TripSessionStatus.COMPLETED),
+      total: enhancedSessions.length,
+    };
+  }
+
   async getSessionById(sessionId: string, userId: string) {
     const session = await this.prisma.tripSession.findUnique({
       where: { id: sessionId },

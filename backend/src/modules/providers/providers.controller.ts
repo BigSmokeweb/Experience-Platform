@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Body,
   UseGuards,
   UsePipes,
@@ -18,6 +19,8 @@ import {
   RequestKycUploadUrlDto,
   SubmitKycVerificationSchema,
   SubmitKycVerificationDto,
+  UpdateProviderProfileSchema,
+  UpdateProviderProfileDto,
 } from '@experience-platform/shared';
 
 @Controller('providers')
@@ -29,6 +32,15 @@ export class ProvidersController {
   @Get('me')
   async getProfile(@CurrentUser('id') userId: string) {
     return this.providersService.getProfile(userId);
+  }
+
+  @Patch('me')
+  @UsePipes(new ZodValidationPipe(UpdateProviderProfileSchema))
+  async updateProfile(
+    @CurrentUser('id') userId: string,
+    @Body() dto: UpdateProviderProfileDto,
+  ) {
+    return this.providersService.updateProfile(userId, dto);
   }
 
   @Post('kyc/upload-url')
