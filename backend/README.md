@@ -1,6 +1,11 @@
 # Backend Service — Local Experience Intelligence Platform
 
-Production-grade NestJS REST API with PostgreSQL (PostGIS), Redis, and isolated AI proxy architecture.
+Production-grade NestJS REST API with PostgreSQL (Supabase PostGIS), Redis, and isolated AI proxy architecture.
+
+## Cloud Architecture
+- **API Runtime**: Render (`https://experience-backend-k4aw.onrender.com`)
+- **Database**: Supabase PostgreSQL 15 with PostGIS extensions
+- **Frontend Client**: Vercel (`https://experience-platform-sigma.vercel.app`)
 
 ## Architecture Highlights
 - **Role-based Authentication (RBAC)**: Traveler, Provider, and Admin roles.
@@ -13,9 +18,7 @@ Production-grade NestJS REST API with PostgreSQL (PostGIS), Redis, and isolated 
 - **Security Guardrails**: Rate limiting (Redis token bucket), strict Zod schemas, UGC input sanitization (DOMPurify/sanitize-html), Helmet CSP, and IDOR protection.
 
 ## Setup & Local Development
-1. Copy `.env.example` to `.env` and configure variables.
-2. Start PostgreSQL + PostGIS and Redis via `docker-compose -f ../infra/docker-compose.yml up -d`.
-3. Run migrations: `npx prisma migrate dev`.
-4. Seed database: `npx ts-node prisma/seed.ts`.
-5. Run unit tests: `npm run test`.
-6. Start dev server: `npm run start:dev`.
+1. Configure `.env` with your Supabase connection strings (`DATABASE_URL` and `DIRECT_URL`).
+2. Run database synchronization: `npx prisma db push`.
+3. Run unit tests: `npm run test`.
+4. Start dev server: `npm run start:dev`.

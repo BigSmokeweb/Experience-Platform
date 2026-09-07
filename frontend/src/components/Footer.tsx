@@ -45,7 +45,7 @@ export function Footer() {
             Our Promise
           </h4>
           <p className="text-xs text-[#5C6460] leading-relaxed mb-3 font-light">
-            Every guide personally vetted. Every route walked. Your data handled with the discretion you'd expect.
+            Every guide personally vetted. Every route walked. Your data handled with the discretion you&apos;d expect.
           </p>
           <div className="inline-flex items-center gap-2 text-[11px] font-mono text-[#347F8C] bg-white border border-[#D4CFC0] px-3 py-1 rounded-full shadow-sm">
             <span className="w-2 h-2 rounded-full bg-[#A69B80]" />

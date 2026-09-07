@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { API_BASE } from '@/lib/api-client';
 import { ItineraryStopCard } from '@/components/ItineraryStopCard';
 import { TripAreaMap } from '@/components/TripAreaMap';
@@ -674,11 +675,13 @@ function TripSessionContent() {
                     >
                       <div className="flex gap-4 items-start">
                         {cand.mediaUrls?.[0] && (
-                          <div className="w-24 h-24 rounded-xl overflow-hidden bg-[#F5F1E6] border border-[#D4CFC0] flex-shrink-0">
-                            <img
+                          <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-[#F5F1E6] border border-[#D4CFC0] flex-shrink-0">
+                            <Image
                               src={cand.mediaUrls[0]}
                               alt={cand.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              fill
+                              sizes="96px"
+                              className="object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                           </div>
                         )}

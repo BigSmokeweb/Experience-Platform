@@ -16,6 +16,8 @@ import {
   RegisterTravelerDto,
   RegisterProviderSchema,
   RegisterProviderDto,
+  RegisterUserSchema,
+  RegisterUserDto,
   LoginSchema,
   LoginDto,
   RefreshTokenSchema,
@@ -25,6 +27,13 @@ import {
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('register')
+  @UsePipes(new ZodValidationPipe(RegisterUserSchema))
+  async register(@Body() dto: RegisterUserDto) {
+    return this.authService.register(dto);
+  }
 
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // Stricter 5 req/min rate limit on auth
   @Post('register/traveler')

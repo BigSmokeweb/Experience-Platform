@@ -645,7 +645,7 @@ function CuratedDirectoryContent({
               No matching expeditions
             </h3>
             <p className="text-[#5C6460] text-xs sm:text-sm max-w-sm mx-auto mt-2 font-light">
-              We couldn't find any journeys matching your criteria. Try adjusting your city or keyword.
+              We couldn&apos;t find any journeys matching your criteria. Try adjusting your city or keyword.
             </p>
             <button
               type="button"

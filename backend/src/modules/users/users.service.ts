@@ -28,15 +28,30 @@ export class UsersService {
 
   /**
    * Update traveler profile with IDOR protection
+   * Updates name on User and preferences on TravelerProfile atomically.
    */
   async updateProfile(userId: string, data: UpdateTravelerProfileDto) {
-    return this.prisma.travelerProfile.update({
+    if (data.name) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { name: data.name },
+      });
+    }
+
+    return this.prisma.travelerProfile.upsert({
       where: { userId },
-      data: {
-        homeCity: data.homeCity,
-        interests: data.interests,
+      create: {
+        userId,
+        homeCity: data.homeCity || null,
+        interests: data.interests || [],
         budgetBand: data.budgetBand,
-        travelStyle: data.travelStyle,
+        travelStyle: data.travelStyle || null,
+      },
+      update: {
+        ...(data.homeCity !== undefined && { homeCity: data.homeCity }),
+        ...(data.interests !== undefined && { interests: data.interests }),
+        ...(data.budgetBand !== undefined && { budgetBand: data.budgetBand }),
+        ...(data.travelStyle !== undefined && { travelStyle: data.travelStyle }),
       },
     });
   }

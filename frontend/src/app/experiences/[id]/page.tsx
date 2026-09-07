@@ -93,29 +93,62 @@ import { ExperienceGallery } from '@/components/ExperienceGallery';
 
 async function getExperience(id: string) {
   const localMatch = ALL_EXPERIENCES.find((e) => e.id === id);
+  let rawExp: any = null;
   try {
     const res = await fetch(`${API_BASE}/experiences/${id}`, {
       cache: 'no-store',
     });
-    if (!res.ok) return localMatch || FALLBACK_DIRECTORY[id] || FALLBACK_DIRECTORY['exp-1'];
-    const data = await res.json();
-    return {
-      ...(localMatch || {}),
-      ...(data || {}),
-      mediaUrls:
-        localMatch?.mediaUrls && localMatch.mediaUrls.length > 1
-          ? localMatch.mediaUrls
-          : data?.mediaUrls?.length
-          ? data.mediaUrls
-          : localMatch?.mediaUrls || [],
-      images:
-        localMatch?.images && localMatch.images.length > 0
-          ? localMatch.images
-          : data?.images || localMatch?.mediaUrls || [],
-    };
+    if (res.ok) {
+      const data = await res.json();
+      rawExp = {
+        ...(localMatch || {}),
+        ...(data || {}),
+      };
+    }
   } catch {
-    return localMatch || FALLBACK_DIRECTORY[id] || FALLBACK_DIRECTORY['exp-1'];
+    // ignore network errors and use local match
   }
+
+  if (!rawExp) {
+    rawExp = localMatch || FALLBACK_DIRECTORY[id] || FALLBACK_DIRECTORY['exp-1'];
+  }
+
+  if (!rawExp) return null;
+
+  const mediaList =
+    localMatch?.mediaUrls && localMatch.mediaUrls.length > 0
+      ? localMatch.mediaUrls
+      : rawExp.mediaUrls && rawExp.mediaUrls.length > 0
+      ? rawExp.mediaUrls
+      : localMatch?.images && localMatch.images.length > 0
+      ? localMatch.images
+      : rawExp.images && rawExp.images.length > 0
+      ? rawExp.images
+      : ['https://images.unsplash.com/photo-1596178065887-1198b6148b2b?auto=format&fit=crop&w=1200&q=80'];
+
+  const imagesList =
+    localMatch?.images && localMatch.images.length > 0
+      ? localMatch.images
+      : rawExp.images && rawExp.images.length > 0
+      ? rawExp.images
+      : mediaList;
+
+  return {
+    ...rawExp,
+    title: rawExp.title || rawExp.name || 'Local Experience',
+    description:
+      rawExp.description ||
+      rawExp.humanTip ||
+      rawExp.mustTry ||
+      'Authentic regional immersion hosted by generational craft and heritage lineage keepers.',
+    priceMin: rawExp.priceMin ?? rawExp.entryFee ?? 0,
+    priceMax: rawExp.priceMax ?? rawExp.activityCost ?? 0,
+    durationMinutes: rawExp.durationMinutes ?? 120,
+    ratingAverage: rawExp.ratingAverage ?? 4.9,
+    authenticityRating: rawExp.authenticityRating ?? rawExp.authenticityScore ?? 0.95,
+    mediaUrls: mediaList,
+    images: imagesList,
+  };
 }
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {

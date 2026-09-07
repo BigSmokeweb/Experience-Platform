@@ -166,7 +166,6 @@ export default async function CityDiscoveryPage({ params }: { params: { slug: st
             (<AnimatedCounter target={experiences.length} /> Verified Listings)
           </span>
         </div>
-
         {/* Grid */}
         <CityExperiencesGrid experiences={experiences} heroImage={city.heroImage} />
 

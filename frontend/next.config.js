@@ -46,7 +46,7 @@ const nextConfig = {
               "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
               "font-src 'self' https://fonts.gstatic.com data:",
-              "connect-src 'self' blob: data: http://localhost:4000 https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://nominatim.openstreetmap.org",
+              "connect-src 'self' blob: data: http://localhost:4000 https://experience-backend-k4aw.onrender.com https://*.onrender.com https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://nominatim.openstreetmap.org",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

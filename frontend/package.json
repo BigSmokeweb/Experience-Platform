@@ -7,6 +7,7 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
+    "test": "echo \"No unit tests for frontend package\"",
     "lint": "next lint"
   },
   "dependencies": {

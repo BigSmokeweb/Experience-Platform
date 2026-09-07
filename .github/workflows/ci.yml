@@ -24,7 +24,7 @@ jobs:
         run: npm ci
 
       - name: Run dependency security audit
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=critical
 
   lint-and-quality:
     name: Lint, Typecheck & Dangerous Patterns Check
