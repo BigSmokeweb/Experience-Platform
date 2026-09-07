@@ -50,7 +50,18 @@ export default function ProviderProfilePage() {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to load host profile');
+        if (res.status === 401) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('userRole');
+          localStorage.removeItem('userName');
+          localStorage.removeItem('userEmail');
+          window.dispatchEvent(new Event('auth-change'));
+          router.push('/auth/login?redirect=/profile/provider');
+          return;
+        }
+        const errJson = await res.json().catch(() => null);
+        throw new Error(errJson?.message || `Failed to load host profile (${res.status})`);
       }
 
       const json = await res.json();
@@ -115,19 +126,47 @@ export default function ProviderProfilePage() {
   }
 
   if (error || !data) {
+    const isAuthErr = error?.toLowerCase().includes('unauthorized') || error?.includes('401');
     return (
       <div className="min-h-screen bg-neutral-50/50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl p-8 border border-neutral-200 max-w-md text-center space-y-4 shadow-sm">
-          <p className="text-sm text-red-600">{error || 'Unable to load host profile'}</p>
-          <button
-            onClick={() => {
-              setLoading(true);
-              fetchProviderProfile();
-            }}
-            className="px-4 py-2 rounded-xl bg-neutral-900 text-white text-xs font-semibold"
-          >
-            Retry
-          </button>
+        <div className="bg-white rounded-2xl p-8 border border-neutral-200 max-w-md w-full text-center space-y-4 shadow-sm">
+          <div className="w-12 h-12 mx-auto rounded-full bg-red-50 text-red-500 flex items-center justify-center font-bold text-lg">
+            !
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-neutral-900">
+              {isAuthErr ? 'Session Expired' : 'Unable to Load Host Profile'}
+            </h3>
+            <p className="text-xs text-neutral-500 mt-1">
+              {isAuthErr
+                ? 'Your host session has expired or is invalid. Please sign in again to access your host workspace.'
+                : error || 'An unexpected error occurred while loading your host profile.'}
+            </p>
+          </div>
+          <div className="flex items-center justify-center gap-2 pt-2">
+            {isAuthErr ? (
+              <button
+                onClick={() => {
+                  localStorage.removeItem('accessToken');
+                  localStorage.removeItem('refreshToken');
+                  router.push('/auth/login?redirect=/profile/provider');
+                }}
+                className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 text-xs font-semibold shadow-sm transition-all"
+              >
+                Sign In Again
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setLoading(true);
+                  fetchProviderProfile();
+                }}
+                className="px-5 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-semibold shadow-sm transition-all"
+              >
+                Retry
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
