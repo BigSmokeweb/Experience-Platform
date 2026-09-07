@@ -13,16 +13,6 @@ backend/dist/
 shared/dist/
 *.tsbuildinfo
 
-# Environment & Secrets (CRITICAL)
-.env
-.env*.local
-.env.production
-.env.staging
-*.env
-backend/.env
-!.env.example
-!backend/.env.example
-
 # Coverage & Tests
 coverage/
 .nyc_output
