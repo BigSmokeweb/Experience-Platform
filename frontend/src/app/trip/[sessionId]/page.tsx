@@ -45,9 +45,11 @@ function TripSessionContent() {
     return null;
   };
 
-  const loadSessionAndRecommendations = useCallback(async () => {
+  const loadSessionAndRecommendations = useCallback(async (showFullLoader = false) => {
     if (!sessionId) return;
-    setIsLoading(true);
+    if (showFullLoader) {
+      setIsLoading(true);
+    }
     setErrorMessage(null);
 
     try {
@@ -61,7 +63,7 @@ function TripSessionContent() {
           saveLocalSession(decoded);
           setSession(decoded);
           setIsCompleted(true);
-          setIsLoading(false);
+          if (showFullLoader) setIsLoading(false);
           return;
         }
       }
@@ -71,7 +73,7 @@ function TripSessionContent() {
 
       if (sessionData.status === 'COMPLETED') {
         setIsCompleted(true);
-        setIsLoading(false);
+        if (showFullLoader) setIsLoading(false);
         return;
       }
 
@@ -84,12 +86,14 @@ function TripSessionContent() {
     } catch (err: any) {
       setErrorMessage(err.message || 'Error loading route candidates.');
     } finally {
-      setIsLoading(false);
+      if (showFullLoader) {
+        setIsLoading(false);
+      }
     }
   }, [sessionId, searchParams]);
 
   useEffect(() => {
-    loadSessionAndRecommendations();
+    loadSessionAndRecommendations(true);
   }, [loadSessionAndRecommendations]);
 
   // Generate clean, short shareable URL for travelling companions
@@ -133,7 +137,6 @@ function TripSessionContent() {
 
   // Handler: Add selection
   async function handleSelect(cand: RecommendationItem) {
-    setIsActionLoading(true);
     setErrorMessage(null);
 
     try {
@@ -166,9 +169,12 @@ function TripSessionContent() {
         ],
       };
 
+      // 1. Instant optimistic update: update session & immediately remove card from candidates
       saveLocalSession(updated);
       setSession(updated);
+      setRecommendations((prev) => prev.filter((r) => r.id !== cand.id));
 
+      // 2. Background sync with backend if available
       const token = getAuthToken();
       if (token) {
         fetch(`${API_BASE}/trip-sessions/${sessionId}/select`, {
@@ -187,17 +193,21 @@ function TripSessionContent() {
         }).catch(() => {});
       }
 
-      await loadSessionAndRecommendations();
+      // 3. Fetch fresh recommendations for next steps smoothly in background
+      const recData = await fetchRecommendations(sessionId, updated);
+      if (recData?.recommendations) {
+        setRecommendations(recData.recommendations);
+      }
+      setStopCondition(recData.sessionState?.stopCondition || null);
+      setWrapUpPrompt(recData.wrapUpPrompt || null);
+      setWeatherAdaptPrompt(recData.weatherAdaptPrompt || null);
     } catch (err: any) {
       setErrorMessage(err.message);
-    } finally {
-      setIsActionLoading(false);
     }
   }
 
   // Handler: Reject candidate
   async function handleReject(cand: RecommendationItem) {
-    setIsActionLoading(true);
     setErrorMessage(null);
 
     try {
@@ -207,8 +217,10 @@ function TripSessionContent() {
         rejectedExperienceIds: [...(current.rejectedExperienceIds || []), cand.id],
       };
 
+      // Instant optimistic removal from list
       saveLocalSession(updated);
       setSession(updated);
+      setRecommendations((prev) => prev.filter((r) => r.id !== cand.id));
 
       const token = getAuthToken();
       if (token) {
@@ -225,17 +237,17 @@ function TripSessionContent() {
         }).catch(() => {});
       }
 
-      await loadSessionAndRecommendations();
+      const recData = await fetchRecommendations(sessionId, updated);
+      if (recData?.recommendations) {
+        setRecommendations(recData.recommendations);
+      }
     } catch (err: any) {
       setErrorMessage(err.message);
-    } finally {
-      setIsActionLoading(false);
     }
   }
 
   // Handler: Remove a stop
   async function handleRemoveStop(experienceId: string) {
-    setIsActionLoading(true);
     setErrorMessage(null);
 
     try {
@@ -263,11 +275,12 @@ function TripSessionContent() {
         }).catch(() => {});
       }
 
-      await loadSessionAndRecommendations();
+      const recData = await fetchRecommendations(sessionId, updated);
+      if (recData?.recommendations) {
+        setRecommendations(recData.recommendations);
+      }
     } catch (err: any) {
       setErrorMessage(err.message);
-    } finally {
-      setIsActionLoading(false);
     }
   }
 
@@ -716,17 +729,15 @@ function TripSessionContent() {
                       <div className="mt-4 pt-3 border-t border-[#D4CFC0] flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleReject(cand)}
-                          disabled={isActionLoading}
-                          className="px-3 py-1.5 text-xs font-mono uppercase tracking-wider text-[#2C2C2C]/50 hover:text-red-500 hover:bg-red-50 border border-[#D4CFC0] rounded-xl transition disabled:opacity-30"
+                          className="px-3 py-1.5 text-xs font-mono uppercase tracking-wider text-[#2C2C2C]/50 hover:text-red-500 hover:bg-red-50 border border-[#D4CFC0] rounded-xl transition cursor-pointer active:scale-95"
                         >
                           Dismiss
                         </button>
                         <button
                           onClick={() => handleSelect(cand)}
-                          disabled={isActionLoading}
-                          className="px-4 py-1.5 text-xs font-mono uppercase font-bold tracking-wider bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] rounded-xl shadow-sm transition disabled:opacity-30 flex items-center gap-1.5"
+                          className="px-4 py-1.5 text-xs font-mono uppercase font-bold tracking-wider bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] rounded-xl shadow-sm transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
                         >
-                          {isActionLoading ? 'Updating...' : '+ Add Stop'}
+                          + Add Stop
                         </button>
                       </div>
                     </div>

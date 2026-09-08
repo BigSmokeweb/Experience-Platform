@@ -11,8 +11,27 @@ export function HeroParallaxVideo() {
     const video = videoRef.current;
     if (!container || !video) return;
 
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) {
+      video.style.transform = 'scale(1) translateZ(0)';
+      video.style.opacity = '1';
+      return;
+    }
+
     let rafId: number | null = null;
     let isObserving = false;
+
+    const updateTransform = (progress: number) => {
+      // Cinematic depth pull: scale 1.0 -> 1.15
+      const clampedProgress = Math.min(1, Math.max(0, progress));
+      const scale = 1.0 + clampedProgress * 0.15;
+      
+      // Smooth cinematic fade out
+      const opacity = Math.max(0, 1.0 - Math.pow(clampedProgress, 0.9) * 1.05);
+
+      video.style.transform = `scale(${scale.toFixed(4)}) translate3d(0, ${(clampedProgress * 40).toFixed(2)}px, 0)`;
+      video.style.opacity = `${opacity.toFixed(4)}`;
+    };
 
     const handleScroll = () => {
       if (rafId !== null) return;
@@ -26,17 +45,12 @@ export function HeroParallaxVideo() {
 
         // Progress: 0 at top of hero, 1 when scrolled completely past hero
         const progress = Math.min(1, Math.max(0, -rect.top / height));
-
-        // Subtle scale (1.0 -> 1.08)
-        const scale = 1.0 + progress * 0.08;
-
-        // Opacity smoothly fades only when scrolling down into page 2
-        const opacity = Math.max(0, 1.0 - progress * 1.05);
-
-        video.style.transform = `scale(${scale.toFixed(4)}) translateZ(0)`;
-        video.style.opacity = `${opacity.toFixed(4)}`;
+        updateTransform(progress);
       });
     };
+
+    // Fine-grained thresholds for responsive IntersectionObserver tracking
+    const thresholds = Array.from({ length: 41 }, (_, i) => i / 40);
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -51,7 +65,12 @@ export function HeroParallaxVideo() {
             isObserving = true;
             window.addEventListener('scroll', handleScroll, { passive: true });
           }
-          handleScroll();
+
+          // Calculate progress directly from bounding rect and intersection
+          const rect = entry.boundingClientRect;
+          const height = rect.height || window.innerHeight;
+          const progress = Math.min(1, Math.max(0, -rect.top / height));
+          updateTransform(progress);
         } else {
           if (isObserving) {
             isObserving = false;
@@ -68,7 +87,7 @@ export function HeroParallaxVideo() {
       },
       {
         root: null,
-        threshold: [0, 0.25, 0.5, 0.75, 1.0],
+        threshold: thresholds,
       }
     );
 

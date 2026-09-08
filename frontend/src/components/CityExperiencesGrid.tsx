@@ -34,23 +34,30 @@ export function CityExperiencesGrid({ experiences, heroImage }: CityExperiencesG
     observerRef.current = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
+          const id = entry.target.getAttribute('data-exp-id');
+          if (!id) return;
+
           if (entry.isIntersecting) {
-            const id = entry.target.getAttribute('data-exp-id');
-            if (id) {
-              setVisibleIds((prev) => {
-                if (prev.has(id)) return prev;
-                const next = new Set(prev);
-                next.add(id);
-                return next;
-              });
-            }
-            observerRef.current?.unobserve(entry.target);
+            setVisibleIds((prev) => {
+              if (prev.has(id)) return prev;
+              const next = new Set(prev);
+              next.add(id);
+              return next;
+            });
+          } else if (entry.boundingClientRect.top > 0) {
+            // Scrolled back up above the card -> reset visibility so it fades up again when scrolling down
+            setVisibleIds((prev) => {
+              if (!prev.has(id)) return prev;
+              const next = new Set(prev);
+              next.delete(id);
+              return next;
+            });
           }
         });
       },
       {
         root: null,
-        threshold: 0.08,
+        threshold: 0.15,
         rootMargin: '0px 0px -30px 0px',
       }
     );

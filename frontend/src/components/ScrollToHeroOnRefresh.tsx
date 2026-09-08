@@ -15,18 +15,8 @@ export function ScrollToHeroOnRefresh() {
         window.history.replaceState(null, '', window.location.pathname + window.location.search);
       }
 
-      // Immediate scroll to top hero
+      // Immediate scroll to top hero only on fresh load
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-
-      // Before page unloads on F5/refresh, reset scroll offset to 0
-      const onBeforeUnload = () => {
-        window.scrollTo(0, 0);
-      };
-      window.addEventListener('beforeunload', onBeforeUnload);
-
-      return () => {
-        window.removeEventListener('beforeunload', onBeforeUnload);
-      };
     } catch {
       // Fallback in case history API is restricted
     }

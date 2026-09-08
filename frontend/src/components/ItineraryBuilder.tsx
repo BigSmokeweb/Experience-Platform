@@ -197,8 +197,21 @@ export function ItineraryBuilder() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 z-[99999] bg-[#F5F1E6] text-[#2C2C2C] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-2 border-[#347F8C] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-[#2C2C2C]/70 font-mono text-xs uppercase tracking-widest">
+            Scoring candidates for route continuity...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <section id="itinerary" className="relative scroll-mt-20 pt-24 pb-36 border-t border-[#D4CFC0] bg-[#F5F1E6] text-[#2C2C2C] z-10">
+    <section id="itinerary" data-no-fade="true" className="itinerary-builder relative scroll-mt-20 pt-24 pb-36 border-t border-[#D4CFC0] bg-[#F5F1E6] text-[#2C2C2C] z-10">
       {/* Ambient background glow */}
       <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-[#A69B80]/10 blur-[140px] rounded-full pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#8B7355]/10 blur-[140px] rounded-full pointer-events-none" />
