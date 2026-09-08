@@ -16,24 +16,6 @@ Journi is a full-stack, AI-powered experience discovery and itinerary planning p
 
 ---
 
-## Table of Contents
-
-- [Overview](#overview)
-- [Architecture](#architecture)
-- [Monorepo Structure](#monorepo-structure)
-- [Tech Stack](#tech-stack)
-- [Key Features](#key-features)
-- [Getting Started](#getting-started)
-- [Environment Variables](#environment-variables)
-- [Database](#database)
-- [API Reference](#api-reference)
-- [Frontend Pages & Routes](#frontend-pages--routes)
-- [Backend Modules](#backend-modules)
-- [Deployment](#deployment)
-- [Scripts Reference](#scripts-reference)
-
----
-
 ## Overview
 
 Journi operates as a **two-sided marketplace**:
