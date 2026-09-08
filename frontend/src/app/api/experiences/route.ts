@@ -1,50 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ALL_EXPERIENCES } from '@/lib/experiences-data';
-
-const EXCLUDED_CITIES = new Set(['jaipur', 'ahmedabad']);
+import { API_BASE } from '@/lib/api-client';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const city = searchParams.get('city') || '';
   const category = searchParams.get('category') || '';
   const search = searchParams.get('search') || '';
-  const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
-  const limit = Math.max(1, Math.min(50, parseInt(searchParams.get('limit') || '12', 10)));
+  const page = searchParams.get('page') || '1';
+  const limit = searchParams.get('limit') || '50';
 
-  let filtered = ALL_EXPERIENCES.filter((exp) => !EXCLUDED_CITIES.has(exp.city?.toLowerCase()));
+  // Build backend query
+  const params = new URLSearchParams();
+  if (city) params.set('city', city);
+  if (category) params.set('category', category);
+  if (search) params.set('search', search);
+  params.set('page', page);
+  params.set('limit', limit);
 
-  if (category) {
-    filtered = filtered.filter((exp) => exp.category?.toLowerCase() === category.toLowerCase());
+  try {
+    const res = await fetch(`${API_BASE}/experiences/catalog?${params}`, {
+      next: { revalidate: 60 }, // ISR: revalidate every 60s
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return NextResponse.json(data, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+        },
+      });
+    }
+  } catch {
+    // Backend unreachable
   }
 
-  if (city) {
-    filtered = filtered.filter((exp) => exp.city?.toLowerCase() === city.toLowerCase());
-  }
-
-  if (search.trim()) {
-    const q = search.toLowerCase().trim();
-    filtered = filtered.filter(
-      (exp) =>
-        exp.title?.toLowerCase().includes(q) ||
-        exp.description?.toLowerCase().includes(q) ||
-        exp.city?.toLowerCase().includes(q) ||
-        exp.category?.toLowerCase().includes(q)
-    );
-  }
-
-  const total = filtered.length;
-  const startIndex = (page - 1) * limit;
-  const paginated = filtered.slice(startIndex, startIndex + limit);
-  const hasMore = startIndex + limit < total;
-
+  // Fallback: empty result
   return NextResponse.json({
-    data: paginated,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-      hasMore,
-    },
+    data: [],
+    pagination: { page: 1, limit: 50, total: 0, totalPages: 0, hasMore: false },
   });
 }

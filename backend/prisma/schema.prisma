@@ -150,6 +150,8 @@ model Experience {
   reviewCount        Int                                  @default(0) @map("review_count")
   authenticityRating Float                                @default(0.85) @map("authenticity_rating")
   weatherTag         WeatherTag                           @default(WEATHER_DEPENDENT) @map("weather_tag")
+  area               String?                              @map("area")
+  metadata           Json?                                @map("metadata")
   isActive           Boolean                              @default(true) @map("is_active")
   published          Boolean                              @default(true) @map("published")
   createdAt          DateTime                             @default(now()) @map("created_at")

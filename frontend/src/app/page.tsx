@@ -33,34 +33,36 @@ const CITIES = [
   { label: 'Kanjur Marg', value: 'Kanjur Marg' },
 ];
 
-import { ALL_EXPERIENCES } from '@/lib/experiences-data';
+import type { ExperienceData } from '@/types/experience';
 
 const EXCLUDED_CITIES = new Set(['jaipur', 'ahmedabad']);
 
-async function getAllExperiences() {
+async function getAllExperiences(): Promise<ExperienceData[]> {
   try {
-    const res = await fetch(`${API_BASE}/experiences/search?limit=50`, {
-      cache: 'no-store',
+    const res = await fetch(`${API_BASE}/experiences/catalog?limit=100`, {
+      next: { revalidate: 60 },
     });
     if (res.ok) {
       const data = await res.json();
-      if (data?.data && Array.isArray(data.data) && data.data.length > 0) {
-        const cleanRemote = data.data.filter(
-          (e: any) => !EXCLUDED_CITIES.has(e.city?.toLowerCase())
-        );
-        const remoteIds = new Set(cleanRemote.map((e: any) => e.id));
-        return [
-          ...cleanRemote,
-          ...ALL_EXPERIENCES.filter(
-            (e) => !remoteIds.has(e.id) && !EXCLUDED_CITIES.has(e.city?.toLowerCase())
-          ),
-        ];
+      if (data?.data && Array.isArray(data.data)) {
+        return data.data
+          .filter((e: any) => !EXCLUDED_CITIES.has(e.city?.toLowerCase()))
+          .map((e: any) => ({
+            ...e,
+            title: e.title || e.name || 'Local Experience',
+            provider: e.provider
+              ? {
+                  businessName: e.provider.businessName ?? undefined,
+                  verificationStatus: e.provider.verificationStatus ?? undefined,
+                }
+              : undefined,
+          }));
       }
     }
-  } catch {
-    // Fallback to complete catalog
+  } catch (err) {
+    console.error('Failed to fetch catalog experiences:', err);
   }
-  return ALL_EXPERIENCES.filter((e) => !EXCLUDED_CITIES.has(e.city?.toLowerCase()));
+  return [];
 }
 
 export default async function HomePage() {

@@ -273,6 +273,19 @@ export class ExperiencesService {
       ...(query.minRating && { ratingAverage: { gte: query.minRating } }),
     };
 
+    // Text search support
+    if ((query as any).search) {
+      const searchTerm = (query as any).search.trim();
+      if (searchTerm) {
+        whereClause.OR = [
+          { title: { contains: searchTerm, mode: 'insensitive' } },
+          { description: { contains: searchTerm, mode: 'insensitive' } },
+          { city: { contains: searchTerm, mode: 'insensitive' } },
+          { area: { contains: searchTerm, mode: 'insensitive' } },
+        ];
+      }
+    }
+
     const [total, data] = await Promise.all([
       this.prisma.experience.count({ where: whereClause }),
       this.prisma.experience.findMany({
@@ -293,6 +306,113 @@ export class ExperiencesService {
 
     return {
       data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  /**
+   * Catalog endpoint: returns ALL experiences as lightweight card data.
+   * Supports city/category filtering. Returns all fields needed by the frontend.
+   * Uses server-side caching via ISR on the Next.js side.
+   */
+  async catalogExperiences(params: {
+    city?: string;
+    category?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResult<any>> {
+    const page = params.page || 1;
+    const limit = Math.min(params.limit || 50, 100);
+    const offset = (page - 1) * limit;
+
+    const whereClause: any = {
+      isActive: true,
+      published: true,
+    };
+
+    if (params.city) {
+      whereClause.city = { equals: params.city, mode: 'insensitive' };
+    }
+    if (params.category) {
+      whereClause.category = params.category;
+    }
+    if (params.search) {
+      const s = params.search.trim();
+      if (s) {
+        whereClause.OR = [
+          { title: { contains: s, mode: 'insensitive' } },
+          { description: { contains: s, mode: 'insensitive' } },
+          { city: { contains: s, mode: 'insensitive' } },
+          { area: { contains: s, mode: 'insensitive' } },
+        ];
+      }
+    }
+
+    const [total, data] = await Promise.all([
+      this.prisma.experience.count({ where: whereClause }),
+      this.prisma.experience.findMany({
+        where: whereClause,
+        skip: offset,
+        take: limit,
+        orderBy: { ratingAverage: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          category: true,
+          city: true,
+          state: true,
+          area: true,
+          latitude: true,
+          longitude: true,
+          address: true,
+          priceMin: true,
+          priceMax: true,
+          budgetBand: true,
+          durationMinutes: true,
+          ratingAverage: true,
+          reviewCount: true,
+          authenticityRating: true,
+          mediaUrls: true,
+          weatherTag: true,
+          metadata: true,
+          provider: {
+            select: {
+              businessName: true,
+              verificationStatus: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const mapped = data.map((exp: any) => {
+      const meta = (exp.metadata as any) || {};
+      return {
+        ...exp,
+        candidateLat: exp.latitude,
+        candidateLng: exp.longitude,
+        cover: meta.cover || exp.mediaUrls?.[0] || '',
+        categoryLabel: meta.categoryLabel || exp.category,
+        humanTip: meta.humanTip || '',
+        bestTime: meta.bestTime || '',
+        vibe: meta.vibe || '',
+        tags: meta.tags || [],
+        mustTry: meta.mustTry || '',
+        operatingHours: meta.operatingHours || '',
+        closedDays: meta.closedDays || '',
+        bookingType: meta.bookingType || '',
+        accessibilityNotes: meta.accessibilityNotes || '',
+        bestFor: meta.bestFor || '',
+      };
+    });
+
+    return {
+      data: mapped,
       total,
       page,
       limit,
@@ -332,7 +452,24 @@ export class ExperiencesService {
       throw new NotFoundException('Experience not found');
     }
 
-    return experience;
+    const meta = (experience.metadata as any) || {};
+    return {
+      ...experience,
+      candidateLat: experience.latitude,
+      candidateLng: experience.longitude,
+      cover: meta.cover || experience.mediaUrls?.[0] || '',
+      categoryLabel: meta.categoryLabel || experience.category,
+      humanTip: meta.humanTip || '',
+      bestTime: meta.bestTime || '',
+      vibe: meta.vibe || '',
+      tags: meta.tags || [],
+      mustTry: meta.mustTry || '',
+      operatingHours: meta.operatingHours || '',
+      closedDays: meta.closedDays || '',
+      bookingType: meta.bookingType || '',
+      accessibilityNotes: meta.accessibilityNotes || '',
+      bestFor: meta.bestFor || '',
+    };
   }
 
   /**

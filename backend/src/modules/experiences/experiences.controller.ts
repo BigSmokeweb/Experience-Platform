@@ -44,6 +44,28 @@ export class ExperiencesController {
   }
 
   /**
+   * Public catalog endpoint: lightweight card data for frontend pages.
+   * No auth required. Supports ?city=X&category=Y&search=Z&page=1&limit=50
+   */
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @Get('catalog')
+  async catalog(
+    @Query('city') city?: string,
+    @Query('category') category?: string,
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.experiencesService.catalogExperiences({
+      city: city || undefined,
+      category: category || undefined,
+      search: search || undefined,
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 50,
+    });
+  }
+
+  /**
    * Provider: fetch own listings (drafts + published) with nudges.
    * Traveler-facing search never includes this endpoint.
    */

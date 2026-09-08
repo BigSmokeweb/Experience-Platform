@@ -75,9 +75,9 @@ export interface RecommendApiResponse {
   } | null;
 }
 
-import { ALL_EXPERIENCES } from './experiences-data';
+import { SEED_EXPERIENCES } from './seed-catalog';
 
-export const CATALOG_EXPERIENCES: RecommendationItem[] = ALL_EXPERIENCES.map((e, idx) => ({
+export const CATALOG_EXPERIENCES: RecommendationItem[] = SEED_EXPERIENCES.map((e, idx) => ({
   id: e.id,
   title: e.title || e.name || 'Local Experience',
   category: e.category,
@@ -92,6 +92,38 @@ export const CATALOG_EXPERIENCES: RecommendationItem[] = ALL_EXPERIENCES.map((e,
   candidateLng: e.candidateLng,
   mediaUrls: e.mediaUrls,
 }));
+
+// Asynchronously hydrate CATALOG_EXPERIENCES with fresh items from API if available
+if (typeof window !== 'undefined') {
+  fetch('/api/experiences?limit=100')
+    .then((r) => (r.ok ? r.json() : null))
+    .then((res) => {
+      if (res?.data && Array.isArray(res.data)) {
+        const existingIds = new Set(CATALOG_EXPERIENCES.map((c) => c.id));
+        for (const exp of res.data) {
+          if (!existingIds.has(exp.id)) {
+            CATALOG_EXPERIENCES.push({
+              id: exp.id,
+              title: exp.title || exp.name || 'Local Experience',
+              category: exp.category,
+              city: exp.city,
+              distanceKm: 1.0,
+              priceMin: exp.priceMin ?? 0,
+              priceMax: exp.priceMax ?? 0,
+              durationMinutes: exp.durationMinutes ?? 90,
+              ratingAverage: exp.ratingAverage ?? 4.5,
+              authenticityRating: exp.authenticityRating ?? 0.9,
+              candidateLat: exp.candidateLat ?? exp.latitude,
+              candidateLng: exp.candidateLng ?? exp.longitude,
+              mediaUrls: exp.mediaUrls || [],
+            });
+            existingIds.add(exp.id);
+          }
+        }
+      }
+    })
+    .catch(() => {});
+}
 
 // Guarantee accurate land coordinates for any experience (never in water)
 export function sanitizeExperienceCoordinates(exp: {
@@ -534,7 +566,7 @@ export function decodeShareableTrip(shareStr: string, cityParam?: string | null)
       const cityName = cityParam || 'Mumbai';
 
       for (const id of stopIds) {
-        const found = ALL_EXPERIENCES.find((c) => c.id === id) || CATALOG_EXPERIENCES.find((c) => c.id === id);
+        const found = CATALOG_EXPERIENCES.find((c) => c.id === id);
         if (found) {
           const coords = sanitizeExperienceCoordinates(found);
           matchedExperiences.push({

@@ -88,48 +88,36 @@ At 5:30 AM, witness the vibrant arrival of Bombay's indigenous Koli fishing traw
   },
 };
 
-import { ALL_EXPERIENCES } from '@/lib/experiences-data';
 import { ExperienceGallery } from '@/components/ExperienceGallery';
 
 async function getExperience(id: string) {
-  const localMatch = ALL_EXPERIENCES.find((e) => e.id === id);
   let rawExp: any = null;
   try {
     const res = await fetch(`${API_BASE}/experiences/${id}`, {
-      cache: 'no-store',
+      next: { revalidate: 60 },
     });
     if (res.ok) {
-      const data = await res.json();
-      rawExp = {
-        ...(localMatch || {}),
-        ...(data || {}),
-      };
+      rawExp = await res.json();
     }
   } catch {
-    // ignore network errors and use local match
+    // ignore network errors and use fallback
   }
 
   if (!rawExp) {
-    rawExp = localMatch || FALLBACK_DIRECTORY[id] || FALLBACK_DIRECTORY['exp-1'];
+    rawExp = FALLBACK_DIRECTORY[id] || FALLBACK_DIRECTORY['exp-1'];
   }
 
   if (!rawExp) return null;
 
   const mediaList =
-    localMatch?.mediaUrls && localMatch.mediaUrls.length > 0
-      ? localMatch.mediaUrls
-      : rawExp.mediaUrls && rawExp.mediaUrls.length > 0
+    rawExp.mediaUrls && rawExp.mediaUrls.length > 0
       ? rawExp.mediaUrls
-      : localMatch?.images && localMatch.images.length > 0
-      ? localMatch.images
       : rawExp.images && rawExp.images.length > 0
       ? rawExp.images
       : ['https://images.unsplash.com/photo-1596178065887-1198b6148b2b?auto=format&fit=crop&w=1200&q=80'];
 
   const imagesList =
-    localMatch?.images && localMatch.images.length > 0
-      ? localMatch.images
-      : rawExp.images && rawExp.images.length > 0
+    rawExp.images && rawExp.images.length > 0
       ? rawExp.images
       : mediaList;
 
