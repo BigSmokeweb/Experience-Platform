@@ -18,9 +18,7 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@shared/*": ["./src/lib/shared"],
-      "@experience-platform/shared": ["./src/lib/shared"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

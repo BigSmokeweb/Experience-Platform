@@ -2,7 +2,7 @@
 // Production build deployment configuration
 const nextConfig = {
   reactStrictMode: false,
-  transpilePackages: ['lucide-react'],
+  transpilePackages: ['lucide-react', '@experience-platform/shared'],
   images: {
     unoptimized: true,
     formats: ['image/avif', 'image/webp'],
