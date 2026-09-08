@@ -69,14 +69,14 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="font-playfair text-xl text-[#2C2C2C] mb-3">5. Your Rights</h2>
             <p className="text-sm text-[#5C6460] leading-relaxed font-light">
-              You may request deletion of your account and associated data at any time by contacting us. As a student project, data retention follows best-effort practices rather than a formal DPDP-compliant framework — we aim to comply with the spirit of India's Digital Personal Data Protection Act 2023.
+              You may request deletion of your account and associated data at any time by contacting us. As a student project, data retention follows best-effort practices rather than a formal DPDP-compliant framework — we aim to comply with the spirit of India&apos;s Digital Personal Data Protection Act 2023.
             </p>
           </section>
 
           <section>
             <h2 className="font-playfair text-xl text-[#2C2C2C] mb-3">6. Contact</h2>
             <p className="text-sm text-[#5C6460] leading-relaxed font-light">
-              For any privacy-related queries, contact the Journi team via the Partner Portal or through your institution's project contact channel.
+              For any privacy-related queries, contact the Journi team via the Partner Portal or through your institution&apos;s project contact channel.
             </p>
           </section>
         </div>

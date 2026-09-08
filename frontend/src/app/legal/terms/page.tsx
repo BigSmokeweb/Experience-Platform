@@ -35,7 +35,7 @@ export default function TermsOfServicePage() {
             <ul className="space-y-2 text-sm text-[#5C6460] font-light list-disc list-inside">
               <li>Provide accurate information when creating your account and traveller profile.</li>
               <li>Use the platform only for lawful purposes — discovering and planning real travel experiences.</li>
-              <li>Do not attempt to access other users' accounts, scrape the platform, or reverse-engineer the recommendation engine.</li>
+              <li>Do not attempt to access other users&apos; accounts, scrape the platform, or reverse-engineer the recommendation engine.</li>
               <li>Understand that recommendations are algorithmically generated suggestions — they are not endorsements, and Journi cannot guarantee the quality, safety, or availability of any listed experience.</li>
             </ul>
           </section>
