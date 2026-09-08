@@ -51,7 +51,7 @@ export function PageTransition() {
       <div className="relative flex flex-col items-center">
         <div className="relative px-5 py-2.5 rounded-2xl bg-[#FFFDF8] flex items-center justify-center border border-[#C4A265]/40 shadow-xl shadow-[#C4A265]/20">
           <Image
-            src="/images/journi-logo.jpg"
+            src="/images/Journi-bg-rm.png"
             alt="Journi"
             width={160}
             height={55}
