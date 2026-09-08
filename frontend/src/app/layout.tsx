@@ -48,8 +48,8 @@ export const metadata: Metadata = {
   description: 'Journi — Smarter journeys. Better choices. Deterministic discovery platform for authentic culinary, cultural, artisan, and adventure experiences across India.',
   keywords: ['Journi', 'Maharashtra Travel', 'Local Experiences', 'Authentic Food Tours', 'Artisan Workshops', 'Culture Walk', 'Mumbai', 'Thane', 'Navi Mumbai', 'Panvel', 'Powai'],
   icons: {
-    icon: '/images/journi-logo.jpg',
-    apple: '/images/journi-logo.jpg',
+    icon: '/images/Journi-bg-rm.png',
+    apple: '/images/Journi-bg-rm.png',
   },
 };
 

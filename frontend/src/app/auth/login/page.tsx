@@ -83,7 +83,7 @@ export default function AuthLoginPage() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center mb-3 bg-[#FFFDF8] px-3 py-1.5 rounded-xl border border-[#D4CFC0]/60 shadow-xs">
             <Image
-              src="/images/journi-logo.jpg"
+              src="/images/Journi-bg-rm.png"
               alt="Journi"
               width={130}
               height={40}
