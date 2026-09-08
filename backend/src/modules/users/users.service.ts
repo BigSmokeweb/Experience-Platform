@@ -50,7 +50,7 @@ export class UsersService {
       update: {
         ...(data.homeCity !== undefined && { homeCity: data.homeCity }),
         ...(data.interests !== undefined && { interests: data.interests }),
-        ...(data.budgetBand !== undefined && { budgetBand: data.budgetBand }),
+        ...(data.budgetBand != null && { budgetBand: data.budgetBand }),
         ...(data.travelStyle !== undefined && { travelStyle: data.travelStyle }),
       },
     });

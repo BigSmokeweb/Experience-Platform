@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run build --workspace=@experience-platform/shared && npm run build --workspace=@experience-platform/frontend",
-  "installCommand": "npm install",
+  "installCommand": "sasxcaawsasccnpm install",
   "outputDirectory": ".next",
   "framework": "nextjs"
 }
