@@ -44,7 +44,7 @@ export class UsersService {
         userId,
         homeCity: data.homeCity || null,
         interests: data.interests || [],
-        budgetBand: data.budgetBand,
+        budgetBand: data.budgetBand ?? undefined,
         travelStyle: data.travelStyle || null,
       },
       update: {
