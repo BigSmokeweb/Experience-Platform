@@ -30,6 +30,7 @@ const CITIES = [
 ];
 
 import type { ExperienceData } from '@/types/experience';
+import catalogDataset from '@/lib/catalog-dataset.json';
 
 const EXCLUDED_CITIES = new Set(['jaipur', 'ahmedabad']);
 
@@ -40,7 +41,7 @@ async function getAllExperiences(): Promise<ExperienceData[]> {
     });
     if (res.ok) {
       const data = await res.json();
-      if (data?.data && Array.isArray(data.data)) {
+      if (data?.data && Array.isArray(data.data) && data.data.length > 0) {
         return data.data
           .filter((e: any) => !EXCLUDED_CITIES.has(e.city?.toLowerCase()))
           .map((e: any) => ({
@@ -56,9 +57,22 @@ async function getAllExperiences(): Promise<ExperienceData[]> {
       }
     }
   } catch (err) {
-    console.error('Failed to fetch catalog experiences in explore:', err);
+    // Remote backend not reachable (e.g. on Vercel)
   }
-  return [];
+
+  // Server-side dataset fallback (instant on Vercel, zero client bundle bloat)
+  return (catalogDataset as any[])
+    .filter((e) => !EXCLUDED_CITIES.has(e.city?.toLowerCase()))
+    .map((e) => ({
+      ...e,
+      title: e.title || e.name || 'Local Experience',
+      provider: e.provider
+        ? {
+            businessName: e.provider.businessName ?? undefined,
+            verificationStatus: e.provider.verificationStatus ?? undefined,
+          }
+        : undefined,
+    }));
 }
 
 export default async function ExplorePage() {

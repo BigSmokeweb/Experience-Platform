@@ -81,6 +81,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   };
 }
 
+import catalogDataset from '@/lib/catalog-dataset.json';
+
 async function getCityExperiences(cityName: string, fallbackList: any[]) {
   try {
     const res = await fetch(`${API_BASE}/experiences/catalog?city=${encodeURIComponent(cityName)}&limit=100`, {
@@ -93,8 +95,17 @@ async function getCityExperiences(cityName: string, fallbackList: any[]) {
       }
     }
   } catch (err) {
-    console.error(`Failed to fetch experiences for city ${cityName}:`, err);
+    // Remote backend not reachable
   }
+
+  // Server-side dataset fallback (instant on Vercel)
+  const localCity = (catalogDataset as any[]).filter(
+    (e) => e.city?.toLowerCase() === cityName.toLowerCase()
+  );
+  if (localCity.length > 0) {
+    return localCity;
+  }
+
   return fallbackList || [];
 }
 

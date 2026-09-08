@@ -89,6 +89,7 @@ At 5:30 AM, witness the vibrant arrival of Bombay's indigenous Koli fishing traw
 };
 
 import { ExperienceGallery } from '@/components/ExperienceGallery';
+import catalogDataset from '@/lib/catalog-dataset.json';
 
 async function getExperience(id: string) {
   let rawExp: any = null;
@@ -101,6 +102,13 @@ async function getExperience(id: string) {
     }
   } catch {
     // ignore network errors and use fallback
+  }
+
+  if (!rawExp) {
+    const foundInDataset = (catalogDataset as any[]).find((e) => e.id === id);
+    if (foundInDataset) {
+      rawExp = foundInDataset;
+    }
   }
 
   if (!rawExp) {
