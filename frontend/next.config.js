@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// Production build deployment configuration
 const nextConfig = {
   reactStrictMode: false,
   transpilePackages: ['lucide-react'],
