@@ -104,7 +104,8 @@ export function FloatingRobotCanvas({
         blueBackLight.position.set(-2, -1, -2);
         scene.add(blueBackLight);
 
-        clock = new THREE.Clock();
+        let lastTime = performance.now();
+        const startTime = performance.now();
 
         // Load GLTF Model
         const loader = new GLTFLoader();
@@ -175,8 +176,10 @@ export function FloatingRobotCanvas({
         // Render loop
         const animate = () => {
           reqId = requestAnimationFrame(animate);
-          const delta = clock ? clock.getDelta() : 0.016;
-          const time = clock ? clock.getElapsedTime() : 0;
+          const now = performance.now();
+          const delta = Math.min((now - lastTime) / 1000, 0.1);
+          const time = (now - startTime) / 1000;
+          lastTime = now;
 
           if (mixer) mixer.update(delta);
 

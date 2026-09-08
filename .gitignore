@@ -32,3 +32,11 @@ Thumbs.db
  
 # Office temp files..
 ~$\*
+*.docx
+*.pptx
+
+# Raw data scrapes and scratch dumps
+all_experiences*.json
+all_data*.json
+experience_data_full*.json
+new data*.json
