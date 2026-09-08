@@ -9,7 +9,7 @@ services:
     buildCommand: npm install && npm run build --workspace=@experience-platform/shared && npm run build --workspace=@experience-platform/backend
     startCommand: node backend/dist/main
 
-    # Free tier — upgrade to Standard for persistent disk / better cold starts
+    # Free tier — upgrade to Standard for persistent disk / better cold starts...
     plan: free
 
     healthCheckPath: /api/v1/health
