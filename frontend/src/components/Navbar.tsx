@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Bookmark, User, LogOut, ChevronDown, Compass } from 'lucide-react';
+import { Bookmark, User, LogOut, ChevronDown, Compass, Handshake, LogIn } from 'lucide-react';
 import { NearbyCitiesDropdown } from '@/components/NearbyCitiesDropdown';
 import { CollectionDrawer } from '@/components/CollectionDrawer';
 import { useCollection } from '@/lib/collection-store';
@@ -48,14 +48,16 @@ export function Navbar() {
   const isDarkNav = isHome && !scrolled;
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isDarkNav
-          ? 'bg-transparent border-b border-transparent py-4 text-white'
-          : 'bg-[#F5F1E6]/95 backdrop-blur-2xl border-b border-[#C4A265] py-2 shadow-md shadow-[#2C2C2C]/5 text-[#2C2C2C]'
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+    <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none px-3 sm:px-6 pt-3 sm:pt-4">
+      {/* Floating Capsule Bar */}
+      <div
+        className={`pointer-events-auto max-w-6xl mx-auto rounded-full px-4 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-3 sm:gap-4 transition-all duration-300 ${
+          isDarkNav
+            ? 'bg-white/10 backdrop-blur-xl border border-white/25 text-white shadow-xl shadow-black/20'
+            : 'bg-[#F5F1E6]/75 backdrop-blur-xl border border-[#C4A265]/40 text-[#2C2C2C] shadow-lg shadow-stone-900/10'
+        }`}
+      >
+        {/* Left: Brand Logo (Transparent background, no opaque box) */}
         <Link
           href="/"
           onClick={(e) => {
@@ -64,21 +66,23 @@ export function Navbar() {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }
           }}
-          className="flex items-center space-x-2.5 group"
+          className="flex items-center group shrink-0"
+          aria-label="Journi Home"
         >
-          <div className="relative h-10 sm:h-11 px-2.5 py-1 rounded-xl bg-[#FFFDF8]/90 backdrop-blur-md border border-[#D4CFC0]/60 shadow-xs flex items-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-md">
+          <div className="relative h-8 sm:h-9 flex items-center transition-transform duration-300 group-hover:scale-105">
             <Image
               src="/images/Journi-bg-rm.png"
-              alt="Journi — Smarter journeys. Better choices."
-              width={140}
-              height={44}
+              alt="Journi"
+              width={125}
+              height={38}
               priority
-              className="h-7 sm:h-8 w-auto object-contain"
+              className="h-7 sm:h-8 w-auto object-contain drop-shadow-xs"
             />
           </div>
         </Link>
 
-        <nav className="flex items-center space-x-7 text-xs sm:text-sm font-semibold tracking-wider uppercase font-cormorant">
+        {/* Center: Navigation Links */}
+        <nav className="hidden lg:flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium">
           <Link
             href="/#curated-experiences"
             onClick={(e) => {
@@ -87,32 +91,28 @@ export function Navbar() {
                 document.getElementById('curated-experiences')?.scrollIntoView({ behavior: 'smooth' });
               }
             }}
-            className={`transition-colors duration-200 ${
-              isDarkNav ? 'text-zinc-200 hover:text-white' : 'text-[#2C2C2C]/80 hover:text-[#347F8C]'
+            className={`px-3.5 py-1.5 rounded-full transition-all duration-200 ${
+              isDarkNav
+                ? 'text-white/85 hover:text-white hover:bg-white/15'
+                : 'text-[#2C2C2C]/80 hover:text-[#1F2937] hover:bg-black/5'
             }`}
           >
             The Collection
           </Link>
-          <Link
-            href="/#itinerary"
-            onClick={(e) => {
-              if (isHome) {
-                e.preventDefault();
-                document.getElementById('itinerary')?.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-            className={`flex items-center gap-1.5 transition-colors duration-200 ${
-              isDarkNav ? 'text-sky-300 hover:text-white' : 'text-[#347F8C] hover:text-[#2A6772]'
-            }`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isDarkNav ? 'bg-sky-300' : 'bg-[#347F8C]'}`} />
-            Your Journey
-          </Link>
+
+          {/* Cities Dropdown */}
+          <div className="inline-flex items-center">
+            <NearbyCitiesDropdown isHome={isHome} scrolled={scrolled} />
+          </div>
+
+          {/* Travel Journal Slide-over trigger */}
           <button
             type="button"
             onClick={() => setIsJournalOpen(true)}
-            className={`relative flex items-center gap-1.5 transition-colors duration-200 cursor-pointer ${
-              isDarkNav ? 'text-zinc-200 hover:text-white' : 'text-[#2C2C2C]/80 hover:text-[#347F8C]'
+            className={`relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer ${
+              isDarkNav
+                ? 'text-white/85 hover:text-white hover:bg-white/15'
+                : 'text-[#2C2C2C]/80 hover:text-[#1F2937] hover:bg-black/5'
             }`}
             title="Open Travel Journal"
           >
@@ -124,37 +124,60 @@ export function Navbar() {
               </span>
             )}
           </button>
-          <div className="hidden sm:inline-block">
-            <NearbyCitiesDropdown isHome={isHome} scrolled={scrolled} />
-          </div>
+        </nav>
+
+        {/* Right: Pill Actions (Matching reference layout) */}
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          {/* Action 1: Dark Solid Pill with Icon (Plan Journey) */}
+          <Link
+            href="/#itinerary"
+            onClick={(e) => {
+              if (isHome) {
+                e.preventDefault();
+                document.getElementById('itinerary')?.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-semibold text-white bg-[#1A2536] hover:bg-[#24334a] border border-white/15 shadow-sm transition-all duration-200 active:scale-95"
+          >
+            <Compass className="w-3.5 h-3.5 text-sky-400" />
+            <span className="hidden sm:inline">Plan</span>
+            <span>Journey</span>
+          </Link>
+
+          {/* Action 2: Outlined Pill (Partner With Us) */}
           <Link
             href="/provider/portal"
-            className={`transition-colors duration-200 hidden md:inline-block ${
-              isDarkNav ? 'text-zinc-200 hover:text-white' : 'text-[#2C2C2C]/80 hover:text-[#347F8C]'
+            className={`hidden md:flex items-center gap-1.5 px-3.5 py-1.5 sm:py-2 rounded-full text-xs font-medium transition-all duration-200 active:scale-95 border ${
+              isDarkNav
+                ? 'border-white/30 text-white hover:bg-white/15'
+                : 'border-stone-400/60 text-[#2C2C2C] hover:bg-stone-200/50'
             }`}
           >
-            Partner With Us
+            <Handshake className="w-3.5 h-3.5 text-amber-500/90" />
+            <span>Partner With Us</span>
           </Link>
+
+          {/* Action 3: Outlined Pill (Login / User Profile Menu) */}
           {userName ? (
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full font-bold transition-all duration-300 active:scale-95 text-xs shadow-sm cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-full text-xs font-medium transition-all duration-200 active:scale-95 border cursor-pointer ${
                   isDarkNav
-                    ? 'border border-white/30 bg-white/10 text-white backdrop-blur-sm hover:bg-white hover:text-black'
-                    : 'border border-[#347F8C] bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6]'
+                    ? 'border-white/30 text-white hover:bg-white/15'
+                    : 'border-stone-400/60 text-[#2C2C2C] hover:bg-stone-200/50'
                 }`}
               >
-                <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-mono uppercase font-bold">
-                  {userName.charAt(0)}
-                </span>
-                <span className="max-w-[90px] truncate">{userName}</span>
+                <div className="w-5 h-5 rounded-full bg-[#1A2536] text-white flex items-center justify-center text-[10px] font-mono font-bold">
+                  {userName.charAt(0).toUpperCase()}
+                </div>
+                <span className="max-w-[80px] sm:max-w-[100px] truncate">{userName}</span>
                 <ChevronDown className={`w-3 h-3 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isUserMenuOpen && (
-                <div className="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-[#D4CFC0] p-1.5 text-[#2C2C2C] z-50 animate-in fade-in duration-200">
+                <div className="absolute right-0 mt-2.5 w-48 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-[#D4CFC0] p-1.5 text-[#2C2C2C] z-50 animate-in fade-in zoom-in-95 duration-200">
                   <div className="px-3 py-2 border-b border-[#D4CFC0]/50 text-[11px] font-mono text-[#2C2C2C]/60 truncate">
                     Signed in as <b className="text-[#2C2C2C] block truncate">{userName}</b>
                   </div>
@@ -197,16 +220,17 @@ export function Navbar() {
           ) : (
             <Link
               href="/auth/login"
-              className={`px-4 py-1.5 rounded-full font-bold transition-all duration-300 active:scale-95 text-xs shadow-sm ${
+              className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-medium transition-all duration-200 active:scale-95 border ${
                 isDarkNav
-                  ? 'border border-white/30 bg-white/10 hover:bg-white hover:text-black text-white backdrop-blur-sm'
-                  : 'border border-[#347F8C] bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6]'
+                  ? 'border-white/30 text-white hover:bg-white/15'
+                  : 'border-stone-400/60 text-[#2C2C2C] hover:bg-stone-200/50'
               }`}
             >
-              Login
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Login</span>
             </Link>
           )}
-        </nav>
+        </div>
       </div>
 
       {/* Travel Journal Slide-Over Drawer */}

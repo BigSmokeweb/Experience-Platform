@@ -2,10 +2,15 @@ import type { Metadata } from 'next';
 import { Playfair_Display, Cormorant_Garamond, Source_Serif_4, JetBrains_Mono, Luxurious_Script } from 'next/font/google';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { FloatingChatSupport } from '@/components/FloatingChatSupport';
+import dynamic from 'next/dynamic';
 import { PageTransition } from '@/components/PageTransition';
 import { ScrollFadeUpObserver } from '@/components/ScrollFadeUpObserver';
 import './globals.css';
+
+const FloatingChatSupport = dynamic(
+  () => import('@/components/FloatingChatSupport').then((mod) => mod.FloatingChatSupport),
+  { ssr: false }
+);
 
 const playfair = Playfair_Display({
   subsets: ['latin'],

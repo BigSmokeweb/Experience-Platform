@@ -1,8 +1,13 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { FloatingRobotCanvas } from './FloatingRobotCanvas';
+import dynamic from 'next/dynamic';
 import { Send, X, Compass, Sparkles, ArrowRight } from 'lucide-react';
+
+const FloatingRobotCanvas = dynamic(
+  () => import('./FloatingRobotCanvas').then((mod) => mod.FloatingRobotCanvas),
+  { ssr: false }
+);
 import { API_BASE } from '@/lib/api-client';
 import { usePathname } from 'next/navigation';
 
