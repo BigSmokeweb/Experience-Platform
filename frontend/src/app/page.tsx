@@ -8,8 +8,8 @@ import { ScrollToHeroOnRefresh } from '@/components/ScrollToHeroOnRefresh';
 import { API_BASE } from '@/lib/api-client';
 
 export const metadata: Metadata = {
-  title: 'Experience Platform — Discover Authentic India',
-  description: 'Verified culinary walks, master artisan workshops, and historic trails across India.',
+  title: 'Journi — Smarter Journeys. Better Choices.',
+  description: 'Verified culinary walks, master artisan workshops, and historic trails across India with Journi.',
 };
 
 const CATEGORIES = [

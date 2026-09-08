@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Bookmark, User, LogOut, ChevronDown, Compass } from 'lucide-react';
@@ -65,18 +66,16 @@ export function Navbar() {
           }}
           className="flex items-center space-x-2.5 group"
         >
-          <div className={`rounded-lg font-extrabold text-xs flex items-center justify-center transition-all duration-300 group-hover:scale-105 ${
-            isDarkNav
-              ? 'bg-white text-black shadow-lg shadow-black/20'
-              : 'bg-[#2C2C2C] text-[#F5F1E6] shadow-sm shadow-[#2C2C2C]/10'
-          } ${scrolled ? 'w-7 h-7 text-[11px]' : 'w-8 h-8 text-xs'}`}>
-            C
+          <div className="relative h-10 sm:h-11 px-2.5 py-1 rounded-xl bg-[#FFFDF8] border border-[#D4CFC0]/60 shadow-xs flex items-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-md">
+            <Image
+              src="/images/journi-logo.jpg"
+              alt="Journi — Smarter journeys. Better choices."
+              width={140}
+              height={44}
+              priority
+              className="h-7 sm:h-8 w-auto object-contain"
+            />
           </div>
-          <span className={`font-manifold uppercase transition-all duration-300 ${
-            isDarkNav ? 'text-white' : 'text-[#2C2C2C]'
-          } ${scrolled ? 'text-[14px] tracking-[0.11em]' : 'text-base tracking-[0.18em]'}`}>
-            Celeste
-          </span>
         </Link>
 
         <nav className="flex items-center space-x-7 text-xs sm:text-sm font-semibold tracking-wider uppercase font-cormorant">
