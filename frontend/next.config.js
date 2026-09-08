@@ -2,7 +2,7 @@
 // Production build deployment configuration
 const nextConfig = {
   reactStrictMode: false,
-  transpilePackages: ['lucide-react', '@experience-platform/shared'],
+  transpilePackages: ['lucide-react'],
   images: {
     unoptimized: true,
     formats: ['image/avif', 'image/webp'],
@@ -101,6 +101,11 @@ const nextConfig = {
         ],
       },
     ];
+  },
+  webpack(config) {
+    config.resolve.alias['@experience-platform/shared'] =
+      require('path').resolve(__dirname, '../shared/src/index.ts');
+    return config;
   },
 };
 
