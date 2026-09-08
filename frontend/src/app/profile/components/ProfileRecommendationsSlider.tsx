@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, memo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, memo, Component, ErrorInfo, ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Star, Clock, ShieldCheck, Sparkles, SlidersHorizontal } from 'lucide-react';
@@ -45,7 +45,7 @@ interface ScoredExperience extends RawExperience {
 
 interface ProfileRecommendationsSliderProps {
   preferences?: TravelerPreferencesSummary | null;
-  userName?: string;
+  userName?: string | null;
   onOpenPreferences?: () => void;
 }
 
@@ -58,28 +58,30 @@ function scoreExperience(exp: RawExperience, prefs: TravelerPreferencesSummary |
   let score = 50; // base score
   const highlights: string[] = [];
 
-  const homeCity = prefs?.homeCity?.trim().toLowerCase();
-  const interests = (prefs?.interests || []).map((i) => i.trim().toUpperCase());
-  const budgetBand = prefs?.budgetBand?.trim().toUpperCase();
-  const travelStyle = prefs?.travelStyle?.trim().toUpperCase();
+  const homeCity = typeof prefs?.homeCity === 'string' ? prefs.homeCity.trim().toLowerCase() : '';
+  const interests = Array.isArray(prefs?.interests)
+    ? prefs.interests.filter((i): i is string => typeof i === 'string' && Boolean(i.trim())).map((i) => i.trim().toUpperCase())
+    : [];
+  const budgetBand = typeof prefs?.budgetBand === 'string' ? prefs.budgetBand.trim().toUpperCase() : '';
+  const travelStyle = typeof prefs?.travelStyle === 'string' ? prefs.travelStyle.trim().toUpperCase() : '';
 
-  const expCity = (exp.city || '').toLowerCase();
-  const expCategory = (exp.category || '').toUpperCase();
-  const expTags = (exp.tags || []).map((t) => t.toLowerCase());
-  const expDesc = (exp.description || '').toLowerCase();
-  const expVibe = (exp.vibe || '').toLowerCase();
+  const expCity = typeof exp?.city === 'string' ? exp.city.toLowerCase() : '';
+  const expCategory = typeof exp?.category === 'string' ? exp.category.toUpperCase() : '';
+  const expTags = Array.isArray(exp?.tags) ? exp.tags.filter((t): t is string => typeof t === 'string').map((t) => t.toLowerCase()) : [];
+  const expDesc = typeof exp?.description === 'string' ? exp.description.toLowerCase() : '';
+  const expVibe = typeof exp?.vibe === 'string' ? exp.vibe.toLowerCase() : '';
 
   // 1. Location / Home City Match
   if (homeCity) {
     if (expCity === homeCity) {
       score += 28;
-      highlights.push(`In ${exp.city}`);
+      highlights.push(`In ${exp.city || prefs?.homeCity}`);
     } else if (
       (homeCity.includes('mumbai') && ['thane', 'navi mumbai', 'powai', 'panvel', 'kanjur marg'].includes(expCity)) ||
       (homeCity.includes('thane') && ['mumbai', 'powai', 'kalyan-dombivli'].includes(expCity))
     ) {
       score += 15;
-      highlights.push(`Near ${prefs?.homeCity}`);
+      highlights.push(`Near ${prefs?.homeCity || 'your city'}`);
     }
   }
 
@@ -90,7 +92,7 @@ function scoreExperience(exp: RawExperience, prefs: TravelerPreferencesSummary |
     // Check direct category match
     if (interests.includes(expCategory)) {
       score += 25;
-      highlights.push(exp.category.replace(/_/g, ' '));
+      highlights.push(expCategory.replace(/_/g, ' '));
       interestMatched = true;
     }
 
@@ -114,12 +116,12 @@ function scoreExperience(exp: RawExperience, prefs: TravelerPreferencesSummary |
 
   // 3. Budget Tier Fit
   if (budgetBand) {
-    if (exp.budgetBand?.toUpperCase() === budgetBand) {
+    const expBudget = typeof exp?.budgetBand === 'string' ? exp.budgetBand.toUpperCase() : '';
+    if (expBudget === budgetBand) {
       score += 16;
       highlights.push(`${budgetBand.toLowerCase()} tier`);
     } else {
-      // Estimate based on priceMin
-      const p = exp.priceMin ?? 0;
+      const p = typeof exp?.priceMin === 'number' ? exp.priceMin : 0;
       if (budgetBand === 'BUDGET' && p <= 500) {
         score += 12;
       } else if (budgetBand === 'MODERATE' && p >= 300 && p <= 1500) {
@@ -137,7 +139,7 @@ function scoreExperience(exp: RawExperience, prefs: TravelerPreferencesSummary |
   // 4. Travel Style Fit
   if (travelStyle) {
     if (travelStyle === 'OFF_BEAT') {
-      if (expCategory === 'HIDDEN_GEMS' || (exp.authenticityRating && exp.authenticityRating >= 0.85)) {
+      if (expCategory === 'HIDDEN_GEMS' || (typeof exp?.authenticityRating === 'number' && exp.authenticityRating >= 0.85)) {
         score += 16;
         highlights.push('Off the beaten path');
       }
@@ -147,17 +149,17 @@ function scoreExperience(exp: RawExperience, prefs: TravelerPreferencesSummary |
         highlights.push('Cultural immersion');
       }
     } else if (travelStyle === 'FAST_PACED') {
-      if (exp.durationMinutes && exp.durationMinutes <= 60) {
+      if (typeof exp?.durationMinutes === 'number' && exp.durationMinutes <= 60) {
         score += 14;
         highlights.push('Quick pace');
       }
     } else if (travelStyle === 'RELAXED') {
-      if ((exp.durationMinutes && exp.durationMinutes >= 90) || expCategory === 'FOOD') {
+      if ((typeof exp?.durationMinutes === 'number' && exp.durationMinutes >= 90) || expCategory === 'FOOD') {
         score += 14;
         highlights.push('Leisurely pace');
       }
     } else if (travelStyle === 'FAMILY_FRIENDLY') {
-      if (exp.bestFor?.some((b) => b.toLowerCase().includes('famil'))) {
+      if (Array.isArray(exp?.bestFor) && exp.bestFor.some((b) => typeof b === 'string' && b.toLowerCase().includes('famil'))) {
         score += 14;
         highlights.push('Family friendly');
       }
@@ -165,10 +167,10 @@ function scoreExperience(exp: RawExperience, prefs: TravelerPreferencesSummary |
   }
 
   // 5. Quality and Authenticity
-  if (exp.ratingAverage && exp.ratingAverage >= 4.5) {
+  if (typeof exp?.ratingAverage === 'number' && exp.ratingAverage >= 4.5) {
     score += Math.round((exp.ratingAverage - 4.0) * 10);
   }
-  if (exp.authenticityRating && exp.authenticityRating >= 0.8) {
+  if (typeof exp?.authenticityRating === 'number' && exp.authenticityRating >= 0.8) {
     score += Math.round(exp.authenticityRating * 8);
   }
 
@@ -204,20 +206,33 @@ const RecommendationCard = memo(function RecommendationCard({
   onMouseLeave: () => void;
 }) {
   const fallbackUrl = 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?auto=format&fit=crop&w=1000&q=80';
-  const initialUrl = (exp.mediaUrls?.[0] || fallbackUrl).replace('thumb.wikimedia.org', 'upload.wikimedia.org');
+  const rawUrl = Array.isArray(exp?.mediaUrls) && typeof exp.mediaUrls[0] === 'string' && exp.mediaUrls[0].trim()
+    ? exp.mediaUrls[0].trim()
+    : fallbackUrl;
+  const initialUrl = rawUrl.replace('thumb.wikimedia.org', 'upload.wikimedia.org');
   const [imgSrc, setImgSrc] = useState(initialUrl);
 
   useEffect(() => {
-    const nextUrl = (exp.mediaUrls?.[0] || fallbackUrl).replace('thumb.wikimedia.org', 'upload.wikimedia.org');
-    setImgSrc(nextUrl);
-  }, [exp.mediaUrls]);
+    const nextRaw = Array.isArray(exp?.mediaUrls) && typeof exp.mediaUrls[0] === 'string' && exp.mediaUrls[0].trim()
+      ? exp.mediaUrls[0].trim()
+      : fallbackUrl;
+    setImgSrc(nextRaw.replace('thumb.wikimedia.org', 'upload.wikimedia.org'));
+  }, [exp?.mediaUrls]);
 
+  const pMin = typeof exp?.priceMin === 'number' ? exp.priceMin : 0;
+  const pMax = typeof exp?.priceMax === 'number' ? exp.priceMax : 0;
   const formattedPrice =
-    (!exp.priceMin && !exp.priceMax) || (exp.priceMin === 0 && exp.priceMax === 0)
+    (pMin === 0 && pMax === 0)
       ? 'Free'
-      : exp.priceMin === 0
-      ? `Free – ₹${exp.priceMax?.toLocaleString()}`
-      : `₹${exp.priceMin?.toLocaleString()} – ₹${exp.priceMax?.toLocaleString()}`;
+      : pMin === 0
+      ? `Free – ₹${pMax.toLocaleString()}`
+      : pMax > pMin
+      ? `₹${pMin.toLocaleString()} – ₹${pMax.toLocaleString()}`
+      : `₹${pMin.toLocaleString()}`;
+
+  const rating = typeof exp?.ratingAverage === 'number' && !isNaN(exp.ratingAverage)
+    ? exp.ratingAverage.toFixed(2)
+    : '4.80';
 
   return (
     <article
@@ -235,7 +250,7 @@ const RecommendationCard = memo(function RecommendationCard({
       <div className="relative h-48 w-full overflow-hidden bg-zinc-100">
         <Image
           src={imgSrc}
-          alt={exp.title}
+          alt={exp?.title || 'Experience'}
           fill
           unoptimized
           referrerPolicy="no-referrer"
@@ -252,10 +267,10 @@ const RecommendationCard = memo(function RecommendationCard({
         {/* Top Badges: City + Match Score Pill */}
         <div className="absolute top-3 left-3 flex items-center gap-1.5">
           <span className="bg-white/95 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-mono tracking-wider text-[#2C2C2C] font-bold border border-[#D4CFC0] uppercase shadow-sm">
-            {exp.city}
+            {exp?.city || 'Local'}
           </span>
           <span className="bg-[#347F8C] text-[#F5F1E6] backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] font-mono tracking-wider font-bold shadow-xs">
-            {exp.matchScore}% Match
+            {exp?.matchScore ?? 90}% Match
           </span>
         </div>
 
@@ -264,7 +279,7 @@ const RecommendationCard = memo(function RecommendationCard({
           <BookmarkButton experience={exp} size="sm" />
           <div className="bg-white/95 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-medium text-[#2C2C2C] border border-[#D4CFC0] flex items-center gap-1 shadow-sm font-bold">
             <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-            <span>{Number(exp.ratingAverage || 4.8).toFixed(2)}</span>
+            <span>{rating}</span>
           </div>
         </div>
 
@@ -273,12 +288,12 @@ const RecommendationCard = memo(function RecommendationCard({
           <span className="text-[10px] font-mono text-zinc-200 flex items-center gap-1 font-medium truncate max-w-[65%]">
             <ShieldCheck className="w-3.5 h-3.5 text-[#8B7355] shrink-0" />
             <span className="truncate">
-              {exp.provider?.businessName ? `Listed by ${exp.provider.businessName}` : 'Listed by Local Expert'}
+              {exp?.provider?.businessName || 'Listed by Local Expert'}
             </span>
           </span>
           <span className="text-[10px] font-mono text-zinc-200 flex items-center gap-1 shrink-0">
             <Clock className="w-3 h-3 text-zinc-300" />
-            {exp.durationMinutes || 60}m
+            {exp?.durationMinutes || 60}m
           </span>
         </div>
       </div>
@@ -288,9 +303,9 @@ const RecommendationCard = memo(function RecommendationCard({
         <div>
           <div className="flex items-center justify-between gap-1 mb-1.5">
             <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#347F8C] block font-bold">
-              {exp.category}
+              {exp?.category || 'CURATED'}
             </span>
-            {exp.matchHighlights.length > 0 && (
+            {Array.isArray(exp?.matchHighlights) && exp.matchHighlights.length > 0 && (
               <span className="text-[9px] font-mono text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded text-right truncate max-w-[130px]">
                 {exp.matchHighlights[0]}
               </span>
@@ -298,11 +313,11 @@ const RecommendationCard = memo(function RecommendationCard({
           </div>
 
           <h3 className="font-cormorant font-bold normal-case text-lg sm:text-xl line-clamp-2 tracking-normal text-[#2C2C2C] group-hover:text-[#347F8C] transition-colors leading-snug">
-            {exp.title}
+            {exp?.title || 'Local Experience'}
           </h3>
 
           <p className="text-[#5C6460] text-xs line-clamp-2 mt-2 leading-relaxed font-light">
-            {exp.description || 'Authentic regional immersion hosted by verified local guides and heritage custodians.'}
+            {exp?.description || 'Authentic regional immersion hosted by verified local guides and heritage custodians.'}
           </p>
         </div>
 
@@ -316,7 +331,7 @@ const RecommendationCard = memo(function RecommendationCard({
             </p>
           </div>
           <Link
-            href={`/experiences/${exp.id}`}
+            href={`/experiences/${exp?.id || ''}`}
             className="group/btn inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[#F5F1E6] bg-[#347F8C] hover:bg-[#2A6772] font-bold px-3.5 py-1.5 rounded-lg transition-all duration-300 active:scale-95 shadow-md shadow-[#347F8C]/20"
           >
             <span>Explore</span>
@@ -330,7 +345,27 @@ const RecommendationCard = memo(function RecommendationCard({
   );
 });
 
-export function ProfileRecommendationsSlider({
+// React Error Boundary to catch any unpredictable runtime crashes gracefully
+class SliderErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('SliderErrorBoundary caught an error:', error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return null; // Return null so profile page renders smoothly even if slider encounters unexpected error
+    }
+    return this.props.children;
+  }
+}
+
+function ProfileRecommendationsSliderInner({
   preferences,
   userName = 'Traveler',
   onOpenPreferences,
@@ -341,7 +376,10 @@ export function ProfileRecommendationsSlider({
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'CITY' | string>('ALL');
   const [loading, setLoading] = useState(true);
 
-  // Load catalog dataset
+  const safeUserName = typeof userName === 'string' && userName.trim() ? userName.trim() : 'Traveler';
+  const safeHomeCity = typeof preferences?.homeCity === 'string' && preferences.homeCity.trim() ? preferences.homeCity.trim() : '';
+
+  // Load catalog dataset safely
   useEffect(() => {
     let isMounted = true;
     const loadData = async () => {
@@ -350,7 +388,9 @@ export function ProfileRecommendationsSlider({
         if (res.ok) {
           const json = await res.json();
           if (json?.data && Array.isArray(json.data) && json.data.length > 0 && isMounted) {
-            setAllExperiences(json.data.filter((e: any) => !EXCLUDED_CITIES.has(e.city?.toLowerCase())));
+            setAllExperiences(
+              json.data.filter((e: any) => typeof e?.city === 'string' && !EXCLUDED_CITIES.has(e.city.toLowerCase()))
+            );
             setLoading(false);
             return;
           }
@@ -361,7 +401,7 @@ export function ProfileRecommendationsSlider({
 
       if (isMounted) {
         const localData = (catalogDataset as any[]).filter(
-          (e) => !EXCLUDED_CITIES.has(e.city?.toLowerCase())
+          (e) => typeof e?.city === 'string' && !EXCLUDED_CITIES.has(e.city.toLowerCase())
         );
         setAllExperiences(localData);
         setLoading(false);
@@ -376,7 +416,7 @@ export function ProfileRecommendationsSlider({
 
   // Compute scored recommendations based on profile preferences
   const scoredRecommendations = useMemo(() => {
-    if (!allExperiences.length) return [];
+    if (!allExperiences || !allExperiences.length) return [];
     return allExperiences
       .map((exp) => scoreExperience(exp, preferences))
       .sort((a, b) => b.matchScore - a.matchScore);
@@ -388,55 +428,58 @@ export function ProfileRecommendationsSlider({
       { key: 'ALL', label: 'All Top Matches', count: scoredRecommendations.length },
     ];
 
-    if (preferences?.homeCity) {
+    if (safeHomeCity) {
       const cityCount = scoredRecommendations.filter(
-        (e) => e.city.toLowerCase() === preferences.homeCity?.toLowerCase()
+        (e) => typeof e?.city === 'string' && e.city.toLowerCase() === safeHomeCity.toLowerCase()
       ).length;
       if (cityCount > 0) {
         opts.push({
           key: 'CITY',
-          label: `In ${preferences.homeCity}`,
+          label: `In ${safeHomeCity}`,
           count: cityCount,
         });
       }
     }
 
-    if (preferences?.interests && preferences.interests.length > 0) {
-      preferences.interests.forEach((interest) => {
-        const catCount = scoredRecommendations.filter(
-          (e) => e.category.toUpperCase() === interest.toUpperCase()
-        ).length;
-        if (catCount > 0) {
-          opts.push({
-            key: `CAT_${interest}`,
-            label: interest.replace(/_/g, ' '),
-            count: catCount,
-          });
-        }
-      });
+    if (Array.isArray(preferences?.interests) && preferences.interests.length > 0) {
+      preferences.interests
+        .filter((i): i is string => typeof i === 'string' && Boolean(i.trim()))
+        .forEach((interest) => {
+          const interestUpper = interest.trim().toUpperCase();
+          const catCount = scoredRecommendations.filter(
+            (e) => typeof e?.category === 'string' && e.category.toUpperCase() === interestUpper
+          ).length;
+          if (catCount > 0) {
+            opts.push({
+              key: `CAT_${interestUpper}`,
+              label: interestUpper.replace(/_/g, ' '),
+              count: catCount,
+            });
+          }
+        });
     }
 
     return opts;
-  }, [scoredRecommendations, preferences]);
+  }, [scoredRecommendations, safeHomeCity, preferences]);
 
   // Filtered recommendations for the slider
   const displayedRecommendations = useMemo(() => {
     if (activeFilter === 'ALL') {
       return scoredRecommendations.slice(0, 36);
     }
-    if (activeFilter === 'CITY' && preferences?.homeCity) {
+    if (activeFilter === 'CITY' && safeHomeCity) {
       return scoredRecommendations
-        .filter((e) => e.city.toLowerCase() === preferences.homeCity?.toLowerCase())
+        .filter((e) => typeof e?.city === 'string' && e.city.toLowerCase() === safeHomeCity.toLowerCase())
         .slice(0, 36);
     }
     if (activeFilter.startsWith('CAT_')) {
-      const cat = activeFilter.replace('CAT_', '');
+      const cat = activeFilter.replace('CAT_', '').toUpperCase();
       return scoredRecommendations
-        .filter((e) => e.category.toUpperCase() === cat.toUpperCase())
+        .filter((e) => typeof e?.category === 'string' && e.category.toUpperCase() === cat)
         .slice(0, 36);
     }
     return scoredRecommendations.slice(0, 36);
-  }, [scoredRecommendations, activeFilter, preferences]);
+  }, [scoredRecommendations, activeFilter, safeHomeCity]);
 
   // Horizontal wheel scroll handler
   useEffect(() => {
@@ -465,14 +508,14 @@ export function ProfileRecommendationsSlider({
   };
 
   const hasPreferences =
-    Boolean(preferences?.homeCity) ||
-    (preferences?.interests && preferences.interests.length > 0) ||
+    Boolean(safeHomeCity) ||
+    (Array.isArray(preferences?.interests) && preferences.interests.length > 0) ||
     Boolean(preferences?.budgetBand) ||
     Boolean(preferences?.travelStyle);
 
-  const headlineTitle = preferences?.homeCity
-    ? `ALL ${preferences.homeCity.toUpperCase()} & CURATED EXPERIENCES (${displayedRecommendations.length})`
-    : `RECOMMENDED EXPERIENCES FOR ${userName.toUpperCase()} (${displayedRecommendations.length})`;
+  const headlineTitle = safeHomeCity
+    ? `ALL ${safeHomeCity.toUpperCase()} & CURATED EXPERIENCES (${displayedRecommendations.length})`
+    : `RECOMMENDED EXPERIENCES FOR ${safeUserName.toUpperCase()} (${displayedRecommendations.length})`;
 
   return (
     <section className="space-y-4">
@@ -489,7 +532,7 @@ export function ProfileRecommendationsSlider({
             </div>
             <p className="text-[11px] font-mono text-[#5C6460]">
               {hasPreferences
-                ? `Algorithmically ranked by your base (${preferences?.homeCity || 'Nearby'}), budget (${preferences?.budgetBand || 'standard'}), and vibe preferences.`
+                ? `Algorithmically ranked by your base (${safeHomeCity || 'Nearby'}), budget (${preferences?.budgetBand || 'standard'}), and vibe preferences.`
                 : 'Showing top curated experiences. Customize your preferences anytime for tailored recommendations.'}
             </p>
           </div>
@@ -596,7 +639,7 @@ export function ProfileRecommendationsSlider({
           >
             {displayedRecommendations.map((exp) => (
               <div
-                key={exp.id}
+                key={exp?.id || Math.random()}
                 className="w-[calc(25%-12px)] min-w-[270px] max-w-[320px] shrink-0 snap-start p-2.5"
                 style={{
                   contentVisibility: 'auto',
@@ -605,9 +648,9 @@ export function ProfileRecommendationsSlider({
               >
                 <RecommendationCard
                   exp={exp}
-                  isHovered={hoveredCardId === exp.id}
-                  isFaded={hoveredCardId !== null && hoveredCardId !== exp.id}
-                  onMouseEnter={() => setHoveredCardId(exp.id)}
+                  isHovered={hoveredCardId === exp?.id}
+                  isFaded={hoveredCardId !== null && hoveredCardId !== exp?.id}
+                  onMouseEnter={() => setHoveredCardId(exp?.id || null)}
                   onMouseLeave={() => setHoveredCardId(null)}
                 />
               </div>
@@ -616,5 +659,13 @@ export function ProfileRecommendationsSlider({
         )}
       </div>
     </section>
+  );
+}
+
+export function ProfileRecommendationsSlider(props: ProfileRecommendationsSliderProps) {
+  return (
+    <SliderErrorBoundary>
+      <ProfileRecommendationsSliderInner {...props} />
+    </SliderErrorBoundary>
   );
 }
