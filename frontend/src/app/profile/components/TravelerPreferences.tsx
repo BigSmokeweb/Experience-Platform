@@ -81,8 +81,14 @@ export function TravelerPreferences({ initialData, onSuccess }: TravelerPreferen
       });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || 'Failed to update preferences');
+        const errBody = await res.json().catch(() => ({}));
+        // NestJS ZodValidationPipe returns { message: 'Validation failed', errors: [{field, message}] }
+        // Extract the first field-level error for a useful message
+        const firstFieldErr = errBody?.errors?.[0];
+        const detail = firstFieldErr
+          ? `${firstFieldErr.field}: ${firstFieldErr.message}`
+          : (typeof errBody?.message === 'string' ? errBody.message : 'Failed to update preferences');
+        throw new Error(detail);
       }
 
       setSaved(true);
@@ -147,7 +153,7 @@ export function TravelerPreferences({ initialData, onSuccess }: TravelerPreferen
                     : 'bg-neutral-50 border-neutral-200 text-neutral-600 hover:bg-neutral-100 hover:border-neutral-300'
                 }`}
               >
-                {tag.replace('_', ' ')}
+                {tag.replace(/_/g, ' ')}
               </button>
             );
           })}
