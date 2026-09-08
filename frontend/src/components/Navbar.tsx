@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Bookmark, User, LogOut, ChevronDown, Compass, Handshake, LogIn } from 'lucide-react';
+import { Bookmark, User, LogOut, ChevronDown, Compass, Handshake, LogIn, Menu, X } from 'lucide-react';
 import { NearbyCitiesDropdown } from '@/components/NearbyCitiesDropdown';
 import { CollectionDrawer } from '@/components/CollectionDrawer';
 import { useCollection } from '@/lib/collection-store';
@@ -13,6 +13,7 @@ export function Navbar() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [isJournalOpen, setIsJournalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { count } = useCollection();
@@ -44,6 +45,11 @@ export function Navbar() {
     };
   }, []);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
   const isHome = pathname === '/';
   const isDarkNav = isHome && !scrolled;
 
@@ -54,10 +60,10 @@ export function Navbar() {
         className={`pointer-events-auto max-w-6xl mx-auto rounded-full px-4 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-3 sm:gap-4 transition-all duration-300 ${
           isDarkNav
             ? 'bg-transparent text-white'
-            : 'bg-[#F5F1E6]/85 backdrop-blur-xl border border-[#C4A265]/40 text-[#2C2C2C] shadow-lg shadow-stone-900/10'
+            : 'bg-[#F5F1E6]/95 backdrop-blur-xl border border-[#C4A265]/40 text-[#2C2C2C] shadow-lg shadow-stone-900/10'
         }`}
       >
-        {/* Left: Brand Logo (Transparent background, no opaque box) */}
+        {/* Left: Brand Logo */}
         <Link
           href="/"
           onClick={(e) => {
@@ -81,7 +87,7 @@ export function Navbar() {
           </div>
         </Link>
 
-        {/* Center: Navigation Links */}
+        {/* Center: Desktop Navigation Links */}
         <nav className="hidden lg:flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium">
           <Link
             href="/#curated-experiences"
@@ -126,7 +132,7 @@ export function Navbar() {
           </button>
         </nav>
 
-        {/* Right: Pill Actions (Matching reference layout) */}
+        {/* Right: Pill Actions & Mobile Hamburger */}
         <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
           {/* Action 1: Transparent Pill (Plan Journey) */}
           <Link
@@ -137,7 +143,7 @@ export function Navbar() {
                 document.getElementById('itinerary')?.scrollIntoView({ behavior: 'smooth' });
               }
             }}
-            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-semibold transition-all duration-200 active:scale-95 border ${
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-semibold transition-all duration-200 active:scale-95 border ${
               isDarkNav
                 ? 'bg-transparent border-white/40 text-white hover:bg-white/15'
                 : 'bg-transparent border-[#1A2536]/40 text-[#1A2536] hover:bg-[#1A2536]/10'
@@ -148,7 +154,7 @@ export function Navbar() {
             <span>Journey</span>
           </Link>
 
-          {/* Action 2: Outlined Pill (Partner With Us) */}
+          {/* Action 2: Outlined Pill (Partner With Us) - Desktop */}
           <Link
             href="/provider/portal"
             className={`hidden md:flex items-center gap-1.5 px-3.5 py-1.5 sm:py-2 rounded-full text-xs font-medium transition-all duration-200 active:scale-95 border ${
@@ -176,7 +182,7 @@ export function Navbar() {
                 <div className="w-5 h-5 rounded-full bg-[#1A2536] text-white flex items-center justify-center text-[10px] font-mono font-bold">
                   {userName.charAt(0).toUpperCase()}
                 </div>
-                <span className="max-w-[80px] sm:max-w-[100px] truncate">{userName}</span>
+                <span className="max-w-[70px] sm:max-w-[100px] truncate">{userName}</span>
                 <ChevronDown className={`w-3 h-3 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
@@ -224,7 +230,7 @@ export function Navbar() {
           ) : (
             <Link
               href="/auth/login"
-              className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-medium transition-all duration-200 active:scale-95 border ${
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-medium transition-all duration-200 active:scale-95 border ${
                 isDarkNav
                   ? 'border-white/30 text-white hover:bg-white/15'
                   : 'border-stone-400/60 text-[#2C2C2C] hover:bg-stone-200/50'
@@ -234,8 +240,95 @@ export function Navbar() {
               <span>Login</span>
             </Link>
           )}
+
+          {/* Action 4: Mobile Hamburger Menu Toggle Button (Visible on screens < lg) */}
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={isMobileMenuOpen}
+            className={`lg:hidden flex items-center justify-center w-8 h-8 rounded-full transition-all duration-200 border cursor-pointer ${
+              isDarkNav
+                ? 'border-white/30 text-white hover:bg-white/15'
+                : 'border-stone-400/60 text-[#2C2C2C] hover:bg-stone-200/50'
+            }`}
+          >
+            {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile Menu Dropdown Panel */}
+      {isMobileMenuOpen && (
+        <div
+          style={{ WebkitOverflowScrolling: 'touch' }}
+          className="pointer-events-auto lg:hidden max-w-6xl mx-auto mt-2 bg-[#F5F1E6]/95 backdrop-blur-xl border border-[#C4A265]/40 rounded-2xl p-4 shadow-xl text-[#2C2C2C] max-h-[calc(100dvh-5rem)] overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200"
+        >
+          <div className="flex flex-col space-y-2">
+            <Link
+              href="/#curated-experiences"
+              onClick={(e) => {
+                setIsMobileMenuOpen(false);
+                if (isHome) {
+                  e.preventDefault();
+                  document.getElementById('curated-experiences')?.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="flex items-center justify-between px-4 py-2.5 rounded-xl hover:bg-black/5 text-sm font-medium transition-colors"
+            >
+              <span>The Collection</span>
+              <span className="text-[10px] font-mono text-[#5C6460]">Experiences</span>
+            </Link>
+
+            <Link
+              href="/explore"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center justify-between px-4 py-2.5 rounded-xl hover:bg-black/5 text-sm font-medium transition-colors"
+            >
+              <span>Explore All</span>
+              <span className="text-[10px] font-mono text-[#5C6460]">Directory</span>
+            </Link>
+
+            <div className="px-4 py-1.5 flex items-center justify-between">
+              <span className="text-sm font-medium text-[#2C2C2C]">Cities & Enclaves</span>
+              <NearbyCitiesDropdown isHome={false} scrolled={true} />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setIsJournalOpen(true);
+              }}
+              className="flex items-center justify-between px-4 py-2.5 rounded-xl hover:bg-black/5 text-sm font-medium transition-colors text-left w-full cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <Bookmark className={`w-4 h-4 ${count > 0 ? 'fill-[#C4A265] text-[#C4A265]' : 'text-[#347F8C]'}`} />
+                <span>Travel Journal</span>
+              </div>
+              {count > 0 ? (
+                <span className="px-2 py-0.5 rounded-full bg-[#C4A265] text-[#2C2C2C] text-[10px] font-mono font-bold">
+                  {count} saved
+                </span>
+              ) : (
+                <span className="text-[10px] font-mono text-[#5C6460]">0 saved</span>
+              )}
+            </button>
+
+            <Link
+              href="/provider/portal"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/15 text-sm font-medium text-amber-900 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Handshake className="w-4 h-4 text-amber-600" />
+                <span>Partner With Us</span>
+              </div>
+              <span className="text-[10px] font-mono text-amber-700">Provider Portal</span>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Travel Journal Slide-Over Drawer */}
       <CollectionDrawer isOpen={isJournalOpen} onClose={() => setIsJournalOpen(false)} />

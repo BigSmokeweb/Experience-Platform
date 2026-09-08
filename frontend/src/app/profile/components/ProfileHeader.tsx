@@ -84,25 +84,6 @@ export function ProfileHeader({
 
   return (
     <div className="bg-white/80 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-neutral-200/80 shadow-sm relative">
-      {/* Edit preferences button at the top-right of header card */}
-      {onTogglePreferences && (
-        <div className="absolute top-6 right-6">
-          <button
-            type="button"
-            onClick={onTogglePreferences}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border ${
-              isPreferencesOpen
-                ? 'bg-neutral-900 text-white border-neutral-900 shadow-sm'
-                : 'bg-white hover:bg-neutral-50 text-neutral-700 border-neutral-200 shadow-sm hover:border-neutral-300'
-            }`}
-            title={isPreferencesOpen ? 'Close Preferences' : 'Edit Preferences'}
-          >
-            <Edit2 className="w-3.5 h-3.5 text-amber-500" />
-            <span>{isPreferencesOpen ? 'Close' : 'Edit Preferences'}</span>
-          </button>
-        </div>
-      )}
-
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
         {/* Avatar */}
         <div className="relative group shrink-0">
@@ -112,57 +93,76 @@ export function ProfileHeader({
         </div>
 
         {/* Profile Info */}
-        <div className="flex-1 text-center sm:text-left space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 pr-24 sm:pr-28">
-            {isEditing ? (
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={draftName}
-                  onChange={(e) => setDraftName(e.target.value)}
-                  className="px-3 py-1.5 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-neutral-900 font-semibold text-lg"
-                  autoFocus
-                  disabled={isSaving}
-                />
-                <button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="p-1.5 rounded-lg bg-amber-500 text-neutral-950 hover:bg-amber-400 transition-colors disabled:opacity-50"
-                  title="Save"
-                >
-                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                </button>
-                <button
-                  onClick={handleCancel}
-                  disabled={isSaving}
-                  className="p-1.5 rounded-lg bg-neutral-200 text-neutral-700 hover:bg-neutral-300 transition-colors"
-                  title="Cancel"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center sm:justify-start gap-2">
-                <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 tracking-tight">
-                  {name}
-                </h1>
-                {onUpdateName && (
+        <div className="flex-1 text-center sm:text-left space-y-3 w-full">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+              {isEditing ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={draftName}
+                    onChange={(e) => setDraftName(e.target.value)}
+                    className="px-3 py-1.5 rounded-lg border border-neutral-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-neutral-900 font-semibold text-lg max-w-[200px]"
+                    autoFocus
+                    disabled={isSaving}
+                  />
                   <button
-                    onClick={() => {
-                      setDraftName(name);
-                      setIsEditing(true);
-                    }}
-                    className="p-1 text-neutral-400 hover:text-amber-600 transition-colors rounded-md"
-                    title="Edit Name"
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="p-1.5 rounded-lg bg-amber-500 text-neutral-950 hover:bg-amber-400 transition-colors disabled:opacity-50"
+                    title="Save"
                   >
-                    <Edit2 className="w-4 h-4" />
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                   </button>
-                )}
-              </div>
+                  <button
+                    onClick={handleCancel}
+                    disabled={isSaving}
+                    className="p-1.5 rounded-lg bg-neutral-200 text-neutral-700 hover:bg-neutral-300 transition-colors"
+                    title="Cancel"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center sm:justify-start gap-2">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-neutral-900 tracking-tight">
+                    {name}
+                  </h1>
+                  {onUpdateName && (
+                    <button
+                      onClick={() => {
+                        setDraftName(name);
+                        setIsEditing(true);
+                      }}
+                      className="p-1 text-neutral-400 hover:text-amber-600 transition-colors rounded-md"
+                      title="Edit Name"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              )}
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200 uppercase tracking-wide">
+                {role}
+              </span>
+            </div>
+
+            {/* Edit preferences button */}
+            {onTogglePreferences && (
+              <button
+                type="button"
+                onClick={onTogglePreferences}
+                className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border shrink-0 mx-auto sm:mx-0 ${
+                  isPreferencesOpen
+                    ? 'bg-neutral-900 text-white border-neutral-900 shadow-sm'
+                    : 'bg-white hover:bg-neutral-50 text-neutral-700 border-neutral-200 shadow-sm hover:border-neutral-300'
+                }`}
+                title={isPreferencesOpen ? 'Close Preferences' : 'Edit Preferences'}
+              >
+                <Edit2 className="w-3.5 h-3.5 text-amber-500" />
+                <span>{isPreferencesOpen ? 'Close' : 'Edit Preferences'}</span>
+              </button>
             )}
-            <span className="inline-flex self-center sm:self-auto items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-neutral-100 text-neutral-700 border border-neutral-200 uppercase tracking-wide">
-              {role}
-            </span>
           </div>
 
           {error && <p className="text-xs text-red-500">{error}</p>}

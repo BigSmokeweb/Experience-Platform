@@ -86,7 +86,7 @@ export default async function HomePage() {
     <div className="bg-[#F5F1E6] text-[#2C2C2C] min-h-screen selection:bg-[#8B7355]/30 selection:text-[#2C2C2C]">
       <ScrollToHeroOnRefresh />
       {/* ─── SECTION 1: FULLSCREEN CINEMATIC HERO ─── */}
-      <section id="hero" className="relative w-screen h-screen min-h-[680px] overflow-hidden flex flex-col items-center justify-center select-none">
+      <section id="hero" className="relative w-screen h-screen min-h-screen min-h-[100dvh] overflow-hidden flex flex-col items-center justify-center select-none">
         {/* Parallax Background Video (scale 1.0 -> 1.15 and cinematic fade out via IntersectionObserver + CSS transform) */}
         <HeroParallaxVideo />
 

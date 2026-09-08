@@ -185,6 +185,7 @@ code, kbd, samp, pre, .font-mono, [data-tag] {
 .leaflet-container {
   font-family: inherit !important;
   background-color: #F5F1E6 !important;
+  -webkit-overflow-scrolling: touch !important;
 }
 
 .leaflet-popup-content-wrapper {
