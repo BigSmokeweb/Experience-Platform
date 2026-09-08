@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const category = searchParams.get('category') || '';
   const search = searchParams.get('search') || '';
   const page = parseInt(searchParams.get('page') || '1', 10);
-  const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 100);
+  const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 500);
 
   // 1. If remote backend API is available, try it first
   if (API_BASE && !API_BASE.includes('localhost')) {

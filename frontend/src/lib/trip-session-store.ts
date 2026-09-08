@@ -95,7 +95,7 @@ export const CATALOG_EXPERIENCES: RecommendationItem[] = SEED_EXPERIENCES.map((e
 
 // Asynchronously hydrate CATALOG_EXPERIENCES with fresh items from API if available
 if (typeof window !== 'undefined') {
-  fetch('/api/experiences?limit=100')
+  fetch('/api/experiences?limit=500')
     .then((r) => (r.ok ? r.json() : null))
     .then((res) => {
       if (res?.data && Array.isArray(res.data)) {

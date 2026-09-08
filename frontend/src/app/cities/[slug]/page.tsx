@@ -85,7 +85,7 @@ import catalogDataset from '@/lib/catalog-dataset.json';
 
 async function getCityExperiences(cityName: string, fallbackList: any[]) {
   try {
-    const res = await fetch(`${API_BASE}/experiences/catalog?city=${encodeURIComponent(cityName)}&limit=100`, {
+    const res = await fetch(`${API_BASE}/experiences/catalog?city=${encodeURIComponent(cityName)}&limit=500`, {
       next: { revalidate: 60 },
     });
     if (res.ok) {
