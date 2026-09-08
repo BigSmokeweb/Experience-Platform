@@ -76,8 +76,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const city = CITY_DATA[params.slug.toLowerCase()];
   if (!city) return { title: 'City Not Found' };
   return {
-    title: `Authentic Experiences in ${city.name} — Experience Platform`,
-    description: `Discover verified food walks, heritage tours, and artisan workshops in ${city.name}, ${city.state}.`,
+    title: `Authentic Experiences in ${city.name} — Journi`,
+    description: `Discover verified food walks, heritage tours, and artisan workshops in ${city.name}, ${city.state} with Journi.`,
   };
 }
 

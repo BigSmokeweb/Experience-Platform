@@ -13,13 +13,14 @@ export interface SavedCollectionItem {
   savedAt: number;
 }
 
-const STORAGE_KEY = 'celeste_private_collection_v1';
-const UPDATE_EVENT = 'celeste:collection_updated';
+const STORAGE_KEY = 'journi_private_collection_v1';
+const LEGACY_STORAGE_KEY = 'celeste_private_collection_v1';
+const UPDATE_EVENT = 'journi:collection_updated';
 
 export function getSavedCollection(): SavedCollectionItem[] {
   if (typeof window === 'undefined') return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];

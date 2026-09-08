@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
 import { API_BASE } from '@/lib/api-client';
 
 export default function AuthLoginPage() {
@@ -79,12 +81,19 @@ export default function AuthLoginPage() {
     <div className="min-h-screen bg-[#F5F1E6] text-[#2C2C2C] pt-28 pb-20 flex items-center justify-center px-4 selection:bg-[#8B7355]/30 selection:text-[#2C2C2C]">
       <div className="w-full max-w-md bg-white p-8 sm:p-10 rounded-3xl border border-[#D4CFC0] shadow-lg">
         <div className="text-center mb-8">
-          <div className="w-10 h-10 rounded-xl bg-[#F5F1E6] text-[#2C2C2C] border border-[#D4CFC0] font-extrabold flex items-center justify-center mx-auto mb-3 shadow-sm tracking-tighter">
-            LX
+          <div className="inline-flex items-center justify-center mb-3 bg-[#FFFDF8] px-3 py-1.5 rounded-xl border border-[#D4CFC0]/60 shadow-xs">
+            <Image
+              src="/images/journi-logo.jpg"
+              alt="Journi"
+              width={130}
+              height={40}
+              priority
+              className="h-8 w-auto object-contain"
+            />
           </div>
           <h1 className="font-manifold text-2xl tracking-wide uppercase text-[#2C2C2C] font-bold">Sign In</h1>
           <p className="text-xs font-mono text-[#2C2C2C]/70 mt-1 uppercase tracking-wider">
-            Access your account
+            Access your Journi account
           </p>
         </div>
 

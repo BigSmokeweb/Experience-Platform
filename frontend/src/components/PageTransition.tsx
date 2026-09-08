@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
+import Image from 'next/image';
 
 const INDIA_QUOTES = [
   '“India will teach you not to judge, to be patient, and to cherish every fleeting encounter.”',
@@ -48,15 +49,16 @@ export function PageTransition() {
 
       {/* Brand Monogram Seal */}
       <div className="relative flex flex-col items-center">
-        <div className="relative w-14 h-14 rounded-2xl bg-[#2C2C2C] text-[#F5F1E6] flex items-center justify-center font-serif text-xl font-bold border-2 border-[#C4A265] shadow-xl shadow-[#C4A265]/20">
-          <span>C</span>
-          {/* Subtle spinning ring accent */}
-          <div className="absolute -inset-1.5 rounded-2xl border border-[#C4A265]/40 animate-pulse pointer-events-none" />
+        <div className="relative px-5 py-2.5 rounded-2xl bg-[#FFFDF8] flex items-center justify-center border border-[#C4A265]/40 shadow-xl shadow-[#C4A265]/20">
+          <Image
+            src="/images/journi-logo.jpg"
+            alt="Journi"
+            width={160}
+            height={55}
+            priority
+            className="h-11 w-auto object-contain"
+          />
         </div>
-
-        <span className="font-manifold uppercase tracking-[0.28em] text-xs text-[#2C2C2C] font-bold mt-3">
-          Celeste
-        </span>
       </div>
 
       {/* Single-Line Serif Quote about India */}

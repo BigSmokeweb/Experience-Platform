@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 
 export function Footer() {
   return (
@@ -8,12 +9,15 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-12 text-sm">
         <div>
           <div className="flex items-center space-x-3 mb-4">
-            <div className="w-7 h-7 rounded-lg bg-[#2C2C2C] text-[#F5F1E6] flex items-center justify-center font-extrabold text-xs shadow-md shadow-[#2C2C2C]/15">
-              C
+            <div className="bg-[#FFFDF8] px-2.5 py-1 rounded-xl border border-[#D4CFC0]/60 shadow-xs inline-flex items-center">
+              <Image
+                src="/images/journi-logo.jpg"
+                alt="Journi"
+                width={130}
+                height={40}
+                className="h-8 w-auto object-contain"
+              />
             </div>
-            <span className="font-manifold text-sm tracking-[0.18em] text-[#2C2C2C] uppercase">
-              Celeste
-            </span>
           </div>
           <p className="text-[#5C6460] text-xs leading-relaxed max-w-xs font-light">
             Authentic India, thoughtfully presented. Each experience handpicked and verified by our team on the ground.
@@ -54,7 +58,7 @@ export function Footer() {
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-6 border-t border-[#C4A265]/40 flex flex-col sm:flex-row items-center justify-between text-[11px] text-[#7C8581] gap-4">
-        <span>© {new Date().getFullYear()} Celeste. All rights reserved.</span>
+        <span>© {new Date().getFullYear()} Journi. All rights reserved.</span>
         <div className="flex items-center space-x-6">
           <Link href="/explore" className="hover:text-[#2C2C2C] transition-colors">The Collection</Link>
           <Link href="/#itinerary" className="hover:text-[#2C2C2C] transition-colors">Your Journey</Link>

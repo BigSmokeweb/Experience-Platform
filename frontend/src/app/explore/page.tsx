@@ -4,8 +4,8 @@ import { CuratedDirectory } from '@/components/CuratedDirectory';
 import { API_BASE } from '@/lib/api-client';
 
 export const metadata: Metadata = {
-  title: 'Curated Directory — Experience Platform',
-  description: 'Verified culinary walks, master artisan workshops, and historic trails across India.',
+  title: 'Curated Directory — Journi',
+  description: 'Verified culinary walks, master artisan workshops, and historic trails across India with Journi.',
 };
 
 const CATEGORIES = [

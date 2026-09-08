@@ -42,11 +42,15 @@ const luxuriousScript = Luxurious_Script({
 export const metadata: Metadata = {
   metadataBase: new URL('https://experienceplatform.in'),
   title: {
-    default: 'Experience Platform — Discover Authentic India',
-    template: '%s | Experience Platform',
+    default: 'Journi — Smarter Journeys. Better Choices.',
+    template: '%s | Journi',
   },
-  description: 'Deterministic discovery platform for authentic culinary, cultural, artisan, and adventure experiences across India.',
-  keywords: ['Maharashtra Travel', 'Local Experiences', 'Authentic Food Tours', 'Artisan Workshops', 'Culture Walk', 'Mumbai', 'Thane', 'Navi Mumbai', 'Panvel', 'Powai'],
+  description: 'Journi — Smarter journeys. Better choices. Deterministic discovery platform for authentic culinary, cultural, artisan, and adventure experiences across India.',
+  keywords: ['Journi', 'Maharashtra Travel', 'Local Experiences', 'Authentic Food Tours', 'Artisan Workshops', 'Culture Walk', 'Mumbai', 'Thane', 'Navi Mumbai', 'Panvel', 'Powai'],
+  icons: {
+    icon: '/images/journi-logo.jpg',
+    apple: '/images/journi-logo.jpg',
+  },
 };
 
 export default function RootLayout({

@@ -145,7 +145,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     return { title: 'Experience Not Found' };
   }
   return {
-    title: `${experience.title} — ${experience.city} | Experience Platform`,
+    title: `${experience.title} — ${experience.city} | Journi`,
     description: experience.description?.substring(0, 160),
   };
 }
@@ -356,7 +356,7 @@ export default async function ExperienceDetailPage({ params }: { params: { id: s
               </h3>
               <p className="text-xs font-mono text-[#2C2C2C]/60 mt-1">Based in {exp.provider?.city || exp.city}</p>
               <div className="mt-4 pt-4 border-t border-[#D4CFC0] text-xs text-[#2C2C2C]/75 leading-relaxed font-light">
-                Verified through the Celeste spatial integrity network. On-site audits conducted for authentic historical and craft preservation.
+                Verified through the Journi spatial integrity network. On-site audits conducted for authentic historical and craft preservation.
               </div>
             </div>
           </div>
