@@ -11,7 +11,7 @@ export function Footer() {
           <div className="flex items-center space-x-3 mb-4">
             <div className="bg-[#FFFDF8] px-2.5 py-1 rounded-xl border border-[#D4CFC0]/60 shadow-xs inline-flex items-center">
               <Image
-                src="/images/journi-logo.jpg"
+                src="/images/Journi-bg-rm.png"
                 alt="Journi"
                 width={130}
                 height={40}

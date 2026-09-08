@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { HeroAnimatedTitle } from '@/components/HeroAnimatedTitle';
 import { HeroParallaxVideo } from '@/components/HeroParallaxVideo';
 import { ItineraryBuilder } from '@/components/ItineraryBuilder';
@@ -89,6 +90,20 @@ export default async function HomePage() {
       <section id="hero" className="relative w-screen h-screen min-h-[680px] overflow-hidden flex flex-col items-center justify-center select-none">
         {/* Parallax Background Video (scale 1.0 -> 1.15 and cinematic fade out via IntersectionObserver + CSS transform) */}
         <HeroParallaxVideo />
+
+        {/* Official Brand Logo */}
+        <div className="relative z-10 flex flex-col items-center justify-center mb-4 sm:mb-6">
+          <div className="relative w-56 sm:w-72 md:w-80 h-20 sm:h-24 md:h-28 px-5 py-2 rounded-2xl bg-white/90 backdrop-blur-md border border-white/60 shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-105 hover:bg-white">
+            <Image
+              src="/images/Journi-bg-rm.png"
+              alt="Journi — Smarter journeys. Better choices."
+              width={300}
+              height={110}
+              priority
+              className="w-auto h-full object-contain"
+            />
+          </div>
+        </div>
 
         {/* Animated Title in "Corn Font" Style */}
         <div className="relative z-10 w-full flex items-center justify-center">

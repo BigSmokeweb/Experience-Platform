@@ -66,9 +66,9 @@ export function Navbar() {
           }}
           className="flex items-center space-x-2.5 group"
         >
-          <div className="relative h-10 sm:h-11 px-2.5 py-1 rounded-xl bg-[#FFFDF8] border border-[#D4CFC0]/60 shadow-xs flex items-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-md">
+          <div className="relative h-10 sm:h-11 px-2.5 py-1 rounded-xl bg-[#FFFDF8]/90 backdrop-blur-md border border-[#D4CFC0]/60 shadow-xs flex items-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-md">
             <Image
-              src="/images/journi-logo.jpg"
+              src="/images/Journi-bg-rm.png"
               alt="Journi — Smarter journeys. Better choices."
               width={140}
               height={44}

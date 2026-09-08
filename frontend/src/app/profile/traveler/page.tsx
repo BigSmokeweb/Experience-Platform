@@ -6,6 +6,7 @@ import { API_BASE } from '@/lib/api-client';
 import { ProfileHeader } from '../components/ProfileHeader';
 import { TravelerPreferences } from '../components/TravelerPreferences';
 import { TripHistoryList } from '../components/TripHistoryList';
+import { ProfileRecommendationsSlider } from '../components/ProfileRecommendationsSlider';
 import { Compass, Sparkles } from 'lucide-react';
 
 interface TravelerData {
@@ -186,7 +187,7 @@ export default function TravelerProfilePage() {
       {/* Ambient background decoration */}
       <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-amber-100/40 via-neutral-50/20 to-transparent -z-10 pointer-events-none" />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 space-y-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 space-y-8">
         {/* Profile Header with integrated Edit Preferences button and summary chips */}
         <ProfileHeader
           initialName={data.user.name || 'Traveler'}
@@ -215,6 +216,13 @@ export default function TravelerProfilePage() {
             onClose={() => setIsPreferencesOpen(false)}
           />
         </div>
+
+        {/* Dynamic Recommendation Slider Based on Traveler Preferences */}
+        <ProfileRecommendationsSlider
+          preferences={data.user.travelerProfile}
+          userName={data.user.name}
+          onOpenPreferences={() => setIsPreferencesOpen(true)}
+        />
 
         {/* Trip History & Active Sessions */}
         <TripHistoryList />
