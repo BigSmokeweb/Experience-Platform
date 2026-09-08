@@ -10,7 +10,10 @@ import { ZodSchema, ZodError } from 'zod';
 export class ZodValidationPipe implements PipeTransform {
   constructor(private schema: ZodSchema) {}
 
-  transform(value: unknown, _metadata: ArgumentMetadata) {
+  transform(value: unknown, metadata: ArgumentMetadata) {
+    // Only validate body parameters — skip @Param(), @Query(), and @CurrentUser() (custom)
+    if (metadata.type !== 'body') return value;
+
     try {
       const parsedValue = this.schema.parse(value);
       return parsedValue;
