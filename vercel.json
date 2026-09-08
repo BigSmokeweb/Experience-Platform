@@ -1,6 +1,9 @@
 {
   "buildCommand": "npm run build --workspace=@experience-platform/shared && npm run build --workspace=@experience-platform/frontend",
-  "installCommand": "sasxcaawsasccnpm install",
+  "installCommand": "npm install",
   "outputDirectory": ".next",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "env": {
+    "NEXT_PUBLIC_API_BASE_URL": "https://experience-backend-k4aw.onrender.com/api/v1"
+  }
 }

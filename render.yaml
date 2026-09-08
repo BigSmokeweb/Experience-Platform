@@ -1,0 +1,93 @@
+services:
+  - type: web
+    name: experience-backend
+    runtime: node
+    region: oregon
+
+    # Build from monorepo root so workspace linking works
+    rootDir: .
+    buildCommand: npm install && npm run build --workspace=@experience-platform/shared && npm run build --workspace=@experience-platform/backend
+    startCommand: node backend/dist/main
+
+    # Free tier — upgrade to Standard for persistent disk / better cold starts
+    plan: free
+
+    healthCheckPath: /api/v1/health
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+
+      # ── Supabase (main DB) ─────────────────────────────────────────────────
+      # Transaction pooler — used for runtime queries (pgbouncer=true)
+      - key: DATABASE_URL
+        sync: false   # Set in Render dashboard → Secret
+
+      # Session pooler / direct URL — used by Prisma migrations
+      - key: DIRECT_URL
+        sync: false
+
+      # ── Supabase (media DB) ───────────────────────────────────────────────
+      - key: MEDIA_DATABASE_URL
+        sync: false
+
+      - key: MEDIA_DIRECT_URL
+        sync: false
+
+      # ── Redis (Upstash or Render Redis) ───────────────────────────────────
+      - key: REDIS_HOST
+        sync: false
+      - key: REDIS_PORT
+        value: "6379"
+      - key: REDIS_PASSWORD
+        sync: false
+
+      # ── JWT ───────────────────────────────────────────────────────────────
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_EXPIRATION
+        value: "15m"
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_EXPIRATION
+        value: "7d"
+
+      # ── Storage (S3-compatible / Supabase Storage) ─────────────────────────
+      - key: STORAGE_ENDPOINT
+        sync: false
+      - key: STORAGE_ACCESS_KEY
+        sync: false
+      - key: STORAGE_SECRET_KEY
+        sync: false
+      - key: STORAGE_PUBLIC_BUCKET
+        value: experience-public-media
+      - key: STORAGE_PRIVATE_KYC_BUCKET
+        value: provider-kyc-documents-restricted
+      - key: STORAGE_SIGNED_URL_EXPIRY_SECONDS
+        value: "900"
+
+      # ── AI ────────────────────────────────────────────────────────────────
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: AI_SERVICE_ENABLED
+        value: "true"
+
+      # ── CORS (comma-separated allowed origins) ────────────────────────────
+      - key: CORS_ORIGIN
+        value: "https://experience-platform-sigma.vercel.app"
+
+      # ── Rate Limiting ─────────────────────────────────────────────────────
+      - key: RATE_LIMIT_GLOBAL_TTL
+        value: "60"
+      - key: RATE_LIMIT_GLOBAL_LIMIT
+        value: "100"
+      - key: RATE_LIMIT_AUTH_LIMIT
+        value: "5"
+      - key: RATE_LIMIT_SEARCH_LIMIT
+        value: "30"
+
+      # ── Session Privacy ───────────────────────────────────────────────────
+      - key: SESSION_ABANDON_HOURS
+        value: "6"
