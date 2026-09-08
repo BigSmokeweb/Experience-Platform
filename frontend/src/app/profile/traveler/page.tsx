@@ -29,6 +29,7 @@ export default function TravelerProfilePage() {
   const [data, setData] = useState<TravelerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
 
   const fetchProfile = async () => {
     try {
@@ -186,19 +187,34 @@ export default function TravelerProfilePage() {
       <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-amber-100/40 via-neutral-50/20 to-transparent -z-10 pointer-events-none" />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 space-y-8">
-        {/* Profile Header */}
+        {/* Profile Header with integrated Edit Preferences button and summary chips */}
         <ProfileHeader
           initialName={data.user.name || 'Traveler'}
           email={data.user.email}
           role="TRAVELER"
           onUpdateName={handleUpdateName}
+          preferences={data.user.travelerProfile}
+          isPreferencesOpen={isPreferencesOpen}
+          onTogglePreferences={() => setIsPreferencesOpen((prev) => !prev)}
         />
 
-        {/* Travel Preferences */}
-        <TravelerPreferences
-          initialData={data.user.travelerProfile || {}}
-          onSuccess={fetchProfile}
-        />
+        {/* Collapsible Travel Preferences Panel */}
+        <div
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            isPreferencesOpen
+              ? 'max-h-[1600px] opacity-100'
+              : 'max-h-0 opacity-0 pointer-events-none'
+          }`}
+        >
+          <TravelerPreferences
+            initialData={data.user.travelerProfile || {}}
+            onSuccess={async () => {
+              await fetchProfile();
+              setIsPreferencesOpen(false);
+            }}
+            onClose={() => setIsPreferencesOpen(false)}
+          />
+        </div>
 
         {/* Trip History & Active Sessions */}
         <TripHistoryList />

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Sparkles, MapPin, Compass, DollarSign, Save, Loader2, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Sparkles, MapPin, Compass, DollarSign, Save, Loader2, Check, X } from 'lucide-react';
 import { API_BASE } from '@/lib/api-client';
 
 const INTEREST_OPTIONS = [
@@ -38,13 +38,22 @@ interface TravelerPreferencesProps {
     travelStyle?: string | null;
   };
   onSuccess?: () => void;
+  onClose?: () => void;
 }
 
-export function TravelerPreferences({ initialData, onSuccess }: TravelerPreferencesProps) {
+export function TravelerPreferences({ initialData, onSuccess, onClose }: TravelerPreferencesProps) {
   const [homeCity, setHomeCity] = useState(initialData.homeCity || '');
   const [interests, setInterests] = useState<string[]>(initialData.interests || []);
   const [budgetBand, setBudgetBand] = useState<string>(initialData.budgetBand || 'MODERATE');
   const [travelStyle, setTravelStyle] = useState<string>(initialData.travelStyle || 'RELAXED');
+
+  // Keep fields synchronized when initialData updates from server
+  useEffect(() => {
+    setHomeCity(initialData.homeCity || '');
+    setInterests(initialData.interests || []);
+    setBudgetBand(initialData.budgetBand || 'MODERATE');
+    setTravelStyle(initialData.travelStyle || 'RELAXED');
+  }, [initialData]);
 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -102,15 +111,27 @@ export function TravelerPreferences({ initialData, onSuccess }: TravelerPreferen
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-neutral-200/80 shadow-sm space-y-8">
-      <div>
-        <h2 className="text-xl font-bold text-neutral-900 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-amber-500" />
-          Travel Profile & Preferences
-        </h2>
-        <p className="text-sm text-neutral-500 mt-1">
-          Customize your travel identity. Our discovery algorithms tailor recommendations and AI suggestions to match your pace and taste.
-        </p>
+    <div className="bg-white/80 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-neutral-200/80 shadow-sm space-y-8 relative">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-neutral-900 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-amber-500" />
+            Travel Profile & Preferences
+          </h2>
+          <p className="text-sm text-neutral-500 mt-1">
+            Customize your travel identity. Our discovery algorithms tailor recommendations and AI suggestions to match your pace and taste.
+          </p>
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors"
+            title="Close panel"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {error && (
@@ -216,30 +237,44 @@ export function TravelerPreferences({ initialData, onSuccess }: TravelerPreferen
       </div>
 
       {/* Actions */}
-      <div className="pt-4 flex items-center gap-4">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-semibold text-sm transition-all shadow-md shadow-amber-500/20 disabled:opacity-50"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Saving Preferences...
-            </>
-          ) : saved ? (
-            <>
-              <Check className="w-4 h-4 text-neutral-950" />
-              Saved!
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4" />
-              Save Preferences
-            </>
+      <div className="pt-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-semibold text-sm transition-all shadow-md shadow-amber-500/20 disabled:opacity-50"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Saving Preferences...
+              </>
+            ) : saved ? (
+              <>
+                <Check className="w-4 h-4 text-neutral-950" />
+                Saved!
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                Save Preferences
+              </>
+            )}
+          </button>
+
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="px-4 py-2.5 rounded-xl text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 font-medium text-sm transition-colors"
+            >
+              Cancel
+            </button>
           )}
-        </button>
+        </div>
+
         {saved && (
           <span className="text-xs font-semibold text-emerald-600 animate-fade-in">
             Preferences updated successfully!
