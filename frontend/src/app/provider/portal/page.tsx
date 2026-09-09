@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import ListingForm from '../components/ListingForm';
 import NudgesPanel from '../components/NudgesPanel';
+import { getHostListings, HOST_LISTINGS_UPDATED_EVENT } from '@/lib/host-listings-store';
 
 interface PortalListing {
   id: string;
@@ -54,17 +55,34 @@ export default function ProviderPortalPage() {
 
   const fetchListings = async () => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
-    if (!token) { setListingsLoading(false); return; }
+    const localHostListings = getHostListings();
+
+    if (!token) {
+      setListings(localHostListings as PortalListing[]);
+      setListingsLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(`${API_BASE}/experiences/my-listings`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const data = await res.json();
-        setListings(Array.isArray(data) ? data : data.data || []);
+        const apiListings = Array.isArray(data) ? data : data.data || [];
+        if (apiListings.length > 0) {
+          // Merge API listings with local store items (avoiding duplicate IDs)
+          const seenIds = new Set(apiListings.map((l: any) => l.id));
+          const extraLocal = localHostListings.filter((l) => !seenIds.has(l.id));
+          setListings([...apiListings, ...extraLocal] as PortalListing[]);
+        } else {
+          setListings(localHostListings as PortalListing[]);
+        }
+      } else {
+        setListings(localHostListings as PortalListing[]);
       }
     } catch {
-      // silently ignore
+      setListings(localHostListings as PortalListing[]);
     } finally {
       setListingsLoading(false);
     }
@@ -72,6 +90,15 @@ export default function ProviderPortalPage() {
 
   useEffect(() => {
     fetchListings();
+
+    const handleUpdate = () => {
+      fetchListings();
+    };
+
+    window.addEventListener(HOST_LISTINGS_UPDATED_EVENT, handleUpdate);
+    return () => {
+      window.removeEventListener(HOST_LISTINGS_UPDATED_EVENT, handleUpdate);
+    };
   }, []);
 
   const handleUploadSubmit = (e: React.FormEvent) => {
@@ -272,7 +299,7 @@ export default function ProviderPortalPage() {
               <span className="text-[10px] font-mono uppercase tracking-widest text-[#347F8C] font-bold block mb-1">Progressive Listing Creation</span>
               <h2 className="font-manifold text-2xl sm:text-3xl text-[#2C2C2C] font-bold uppercase tracking-wide">Create a New Experience</h2>
               <p className="text-xs font-mono text-[#5C6460] mt-1">
-                Save as draft at any step. Publish once minimum fields are complete. Match preview updates live as you type.
+                Save as draft at any step. Publish once minimum required fields are complete.
               </p>
             </div>
             <ListingForm

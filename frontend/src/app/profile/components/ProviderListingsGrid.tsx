@@ -2,49 +2,76 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Eye, MapPin, DollarSign, Clock, Layers, ArrowUpRight } from 'lucide-react';
+import Image from 'next/image';
+import { Plus, MapPin, Clock, Layers, ArrowUpRight } from 'lucide-react';
 import { API_BASE } from '@/lib/api-client';
+import { getHostListings, HOST_LISTINGS_UPDATED_EVENT } from '@/lib/host-listings-store';
 
 interface ExperienceListing {
   id: string;
   title: string;
   category: string;
   city: string;
-  price: number;
-  durationMins: number;
+  price?: number;
+  priceMin?: number;
+  priceMax?: number;
+  durationMins?: number;
+  durationMinutes?: number;
   status: string; // 'PUBLISHED' | 'DRAFT' | etc.
-  mediaCount?: number;
+  mediaUrls?: string[];
   createdAt: string;
 }
 
 export function ProviderListingsGrid() {
   const [listings, setListings] = useState<ExperienceListing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  const fetchListings = async () => {
+    const localStore = getHostListings();
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+
+    if (!token) {
+      setListings(localStore as any[]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/experiences/my-listings`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const apiListings = Array.isArray(data) ? data : data.data || [];
+        if (apiListings.length > 0) {
+          const seen = new Set(apiListings.map((l: any) => l.id));
+          const extra = localStore.filter((l) => !seen.has(l.id));
+          setListings([...apiListings, ...extra] as any[]);
+        } else {
+          setListings(localStore as any[]);
+        }
+      } else {
+        setListings(localStore as any[]);
+      }
+    } catch {
+      setListings(localStore as any[]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchListings() {
-      try {
-        const token = localStorage.getItem('accessToken');
-        if (!token) return;
-
-        const res = await fetch(`${API_BASE}/experiences/my-listings`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!res.ok) {
-          throw new Error('Failed to load listings');
-        }
-
-        const data = await res.json();
-        setListings(Array.isArray(data) ? data : data.data || []);
-      } catch (err: any) {
-        setError(err.message || 'Error fetching listings');
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchListings();
+
+    const handleUpdate = () => {
+      fetchListings();
+    };
+
+    window.addEventListener(HOST_LISTINGS_UPDATED_EVENT, handleUpdate);
+    return () => {
+      window.removeEventListener(HOST_LISTINGS_UPDATED_EVENT, handleUpdate);
+    };
   }, []);
 
   if (loading) {
@@ -70,7 +97,7 @@ export function ProviderListingsGrid() {
         </div>
 
         <Link
-          href="/experiences/create"
+          href="/provider/portal"
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-semibold text-xs transition-all shadow-sm shadow-amber-500/20 shrink-0 self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
@@ -90,7 +117,7 @@ export function ProviderListingsGrid() {
             </p>
           </div>
           <Link
-            href="/experiences/create"
+            href="/provider/portal"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 text-xs font-semibold shadow-sm transition-all"
           >
             <Plus className="w-4 h-4" />
@@ -104,10 +131,21 @@ export function ProviderListingsGrid() {
               key={item.id}
               className="group bg-white rounded-2xl border border-neutral-200/80 overflow-hidden shadow-sm hover:shadow-md hover:border-neutral-300 transition-all flex flex-col"
             >
+              {item.mediaUrls?.[0] && (
+                <div className="relative w-full h-44 bg-neutral-100 overflow-hidden">
+                  <Image
+                    src={item.mediaUrls[0]}
+                    alt={item.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+              )}
               <div className="p-5 flex-1 space-y-3">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                    {item.category.replace('_', ' ')}
+                    {item.category?.replace('_', ' ') || 'EXPERIENCE'}
                   </span>
                   <span
                     className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
@@ -131,11 +169,11 @@ export function ProviderListingsGrid() {
                   </span>
                   <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-neutral-400" />
-                    {item.durationMins}m
+                    {item.durationMinutes || item.durationMins || 120}m
                   </span>
                   <span className="flex items-center gap-1 font-semibold text-neutral-900">
-                    <DollarSign className="w-3.5 h-3.5 text-neutral-400" />
-                    ${item.price}
+                    ₹{item.priceMin ?? item.price ?? 0}
+                    {item.priceMax && item.priceMax > (item.priceMin ?? 0) ? ` – ₹${item.priceMax}` : ''}
                   </span>
                 </div>
               </div>

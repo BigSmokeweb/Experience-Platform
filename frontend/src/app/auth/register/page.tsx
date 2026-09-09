@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { API_BASE } from '@/lib/api-client';
+import { initializeHostListingsIfEmpty } from '@/lib/host-listings-store';
 
 export default function AuthRegisterPage() {
   const router = useRouter();
@@ -100,6 +101,9 @@ export default function AuthRegisterPage() {
         localStorage.setItem('userRole', data.user?.role || role);
         localStorage.setItem('userName', data.user?.name || name || 'Traveler');
         localStorage.setItem('userEmail', data.user?.email || email);
+        if (role === 'PROVIDER') {
+          initializeHostListingsIfEmpty();
+        }
         window.dispatchEvent(new Event('auth-change'));
       }
 
