@@ -186,17 +186,23 @@ export default function ListingForm({ token, onDraftSaved, onPublished }: Listin
     setSaving(true);
     setPublishError(null);
     try {
+      const payload = buildPayload();
       const res = await fetch(`${API_BASE}/experiences`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(buildPayload()),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err?.message || `Publish failed (${res.status})`);
+        console.error('Publish experiences response error:', res.status, err);
+        const detailedMsg = err?.errors?.map((e: any) => `${e.field}: ${e.message}`).join(', ') 
+          || err?.message 
+          || `Server error (${res.status})`;
+        throw new Error(detailedMsg);
       }
       onPublished?.();
     } catch (err: any) {
+      console.error('Publish error:', err);
       setPublishError(err.message || 'Failed to publish. Please try again.');
     } finally {
       setSaving(false);

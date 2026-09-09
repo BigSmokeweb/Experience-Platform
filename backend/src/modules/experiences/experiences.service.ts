@@ -66,43 +66,48 @@ export class ExperiencesService {
     });
 
     // Using parameterized query for PostGIS geography Point creation
-    const experience = await this.prisma.$queryRawUnsafe<any[]>(
-      `
-      INSERT INTO "experiences" (
-        "id", "provider_id", "title", "description", "category",
-        "location", "latitude", "longitude", "address", "city", "state", "country",
-        "price_min", "price_max", "currency", "budget_band", "accessibility_tags",
-        "media_urls", "availability_rules", "duration_minutes", "published", "updated_at"
-      ) VALUES (
-        gen_random_uuid(), $1::uuid, $2, $3, $4::"Category",
-        ST_SetSRID(ST_MakePoint($5, $6), 4326)::geography, $6, $5, $7, $8, $9, $10,
-        $11, $12, $13, $14::"BudgetBand", $15::text[],
-        $16::text[], $17::jsonb, $18, $19, NOW()
-      )
-      RETURNING *;
-      `,
-      provider.id,
-      sanitizedTitle,
-      sanitizedDescription,
-      dto.category,
-      dto.location.longitude,
-      dto.location.latitude,
-      dto.address,
-      dto.city,
-      dto.state,
-      dto.country,
-      dto.priceMin,
-      dto.priceMax,
-      dto.currency,
-      dto.budgetBand,
-      dto.accessibilityTags,
-      dto.mediaUrls,
-      JSON.stringify(dto.availabilityRules),
-      dto.durationMinutes,
-      published,
-    );
+    try {
+      const experience = await this.prisma.$queryRawUnsafe<any[]>(
+        `
+        INSERT INTO "experiences" (
+          "id", "provider_id", "title", "description", "category",
+          "location", "latitude", "longitude", "address", "city", "state", "country",
+          "price_min", "price_max", "currency", "budget_band", "accessibility_tags",
+          "media_urls", "availability_rules", "duration_minutes", "published", "updated_at"
+        ) VALUES (
+          gen_random_uuid(), $1::uuid, $2, $3, $4::"Category",
+          ST_SetSRID(ST_MakePoint($5, $6), 4326)::geography, $6, $5, $7, $8, $9, $10,
+          $11, $12, $13, $14::"BudgetBand", $15::text[],
+          $16::text[], $17::jsonb, $18, $19, NOW()
+        )
+        RETURNING *;
+        `,
+        provider.id,
+        sanitizedTitle,
+        sanitizedDescription,
+        dto.category,
+        dto.location.longitude,
+        dto.location.latitude,
+        dto.address,
+        dto.city,
+        dto.state,
+        dto.country,
+        dto.priceMin,
+        dto.priceMax,
+        dto.currency,
+        dto.budgetBand,
+        dto.accessibilityTags,
+        dto.mediaUrls,
+        JSON.stringify(dto.availabilityRules),
+        dto.durationMinutes,
+        published,
+      );
 
-    return experience[0];
+      return experience[0];
+    } catch (dbError: any) {
+      console.error('[ExperiencesService.createExperience] Error inserting experience:', dbError);
+      throw dbError;
+    }
   }
 
   /**
