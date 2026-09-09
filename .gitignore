@@ -34,6 +34,7 @@ Thumbs.db
 ~$\*
 *.docx
 *.pptx
+!Journi Platform PPT.pptx
 
 # Raw data scrapes and scratch dumps..
 all_experiences*.json
