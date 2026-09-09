@@ -167,7 +167,7 @@ export function TripHistoryList() {
                     </div>
 
                     <Link
-                      href={`/itinerary?sessionId=${session.id}`}
+                      href={`/trip/${session.id}`}
                       className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white font-medium text-sm transition-all shadow-md shrink-0"
                     >
                       Resume Trip Flow
@@ -278,7 +278,7 @@ export function TripHistoryList() {
 
                   <div className="pt-2 flex justify-end">
                     <Link
-                      href={`/itinerary?sessionId=${session.id}`}
+                      href={`/trip/${session.id}`}
                       className="text-xs font-semibold text-amber-600 hover:text-amber-700 flex items-center gap-1"
                     >
                       View Recap
