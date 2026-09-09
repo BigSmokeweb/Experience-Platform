@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { API_BASE } from '@/lib/api-client';
 import {
   Category,
   BudgetBand,
@@ -95,10 +96,52 @@ export default function ListingForm({ token, onDraftSaved, onPublished }: Listin
   const [step, setStep] = useState<FormStep>(1);
   const [draft, setDraft] = useState<DraftState>(INITIAL_DRAFT);
   const [saving, setSaving] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
 
   const update = useCallback(<K extends keyof DraftState>(key: K, value: DraftState[K]) => {
     setDraft((prev) => ({ ...prev, [key]: value }));
   }, []);
+
+  // Build the CreateExperienceDto payload matching the backend schema
+  const buildPayload = () => ({
+    title: draft.title.trim(),
+    description: draft.description.trim() || 'A unique local experience curated by a verified host.',
+    category: draft.category!,
+    location: {
+      latitude: draft.latitude!,
+      longitude: draft.longitude!,
+    },
+    address: draft.address.trim() || draft.city,
+    city: draft.city.trim(),
+    state: draft.state.trim() || 'Maharashtra',
+    country: 'India',
+    priceMin: draft.priceMin ?? 0,
+    priceMax: draft.priceMax ?? 0,
+    currency: 'INR',
+    budgetBand: draft.budgetBand!,
+    accessibilityTags: draft.accessibilityTags,
+    mediaUrls: draft.mediaUrls,
+    availabilityRules: draft.availabilityRules.length > 0
+      ? draft.availabilityRules.map((r) => ({
+          daysOfWeek: r.daysOfWeek,
+          openTime: r.openTime,
+          closeTime: r.closeTime,
+          slotDurationMinutes: 60,
+          maxCapacityPerSlot: 10,
+        }))
+      : [{ daysOfWeek: [1, 2, 3, 4, 5], openTime: '09:00', closeTime: '18:00', slotDurationMinutes: 60, maxCapacityPerSlot: 10 }],
+    durationMinutes: draft.durationMinutes || 120,
+  });
+
+  const isPublishEligible =
+    draft.category !== undefined &&
+    draft.title.trim().length >= 3 &&
+    draft.budgetBand !== undefined &&
+    draft.priceMin !== undefined &&
+    draft.priceMax !== undefined &&
+    draft.latitude !== undefined &&
+    draft.longitude !== undefined &&
+    draft.mediaUrls.length >= 1;
 
   // Build preview payload from current draft (send only set fields)
   const previewPayload: Partial<MatchPreviewRequestDto> = {
@@ -115,22 +158,51 @@ export default function ListingForm({ token, onDraftSaved, onPublished }: Listin
     durationMinutes: draft.durationMinutes || undefined,
   };
 
-  const isPublishEligible =
-    draft.category !== undefined &&
-    draft.title.trim().length >= 3 &&
-    draft.budgetBand !== undefined &&
-    draft.priceMin !== undefined &&
-    draft.priceMax !== undefined &&
-    draft.latitude !== undefined &&
-    draft.longitude !== undefined &&
-    draft.mediaUrls.length >= 1;
-
   const handleSaveDraft = async () => {
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 800)); // simulated save
-    setSaving(false);
-    onDraftSaved?.('Draft saved — you can continue editing anytime.');
+    setPublishError(null);
+    // Draft: attempt to save to backend; fall back to local success toast
+    try {
+      if (token) {
+        await fetch(`${API_BASE}/experiences`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ ...buildPayload(), status: 'DRAFT' }),
+        });
+      }
+    } catch {
+      // Ignore errors — draft save is best-effort
+    } finally {
+      setSaving(false);
+      onDraftSaved?.('Draft saved — you can continue editing anytime.');
+    }
   };
+
+  const handlePublish = async () => {
+    if (!isPublishEligible || !token) {
+      setPublishError(!token ? 'You must be logged in to publish.' : 'Fill all required fields first.');
+      return;
+    }
+    setSaving(true);
+    setPublishError(null);
+    try {
+      const res = await fetch(`${API_BASE}/experiences`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(buildPayload()),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.message || `Publish failed (${res.status})`);
+      }
+      onPublished?.();
+    } catch (err: any) {
+      setPublishError(err.message || 'Failed to publish. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
 
   // ── Step renderers ────────────────────────────────────────────────────────
 
@@ -577,16 +649,22 @@ export default function ListingForm({ token, onDraftSaved, onPublished }: Listin
               Continue <ArrowRight className="w-3.5 h-3.5" />
             </button>
           ) : (
-            <button
-              type="button"
-              disabled={!isPublishEligible}
-              onClick={() => onPublished?.()}
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#A69B80] hover:bg-[#7a9e6e] disabled:opacity-40 text-white text-xs font-mono uppercase tracking-wider font-bold rounded-xl shadow-md shadow-[#A69B80]/20 transition"
-            >
-              <Globe className="w-3.5 h-3.5" />
-              Publish listing
-            </button>
+            <div className="flex flex-col items-end gap-2">
+              {publishError && (
+                <p className="text-[11px] font-mono text-red-500 text-right max-w-xs">{publishError}</p>
+              )}
+              <button
+                type="button"
+                disabled={!isPublishEligible || saving}
+                onClick={handlePublish}
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#A69B80] hover:bg-[#7a9e6e] disabled:opacity-40 text-white text-xs font-mono uppercase tracking-wider font-bold rounded-xl shadow-md shadow-[#A69B80]/20 transition"
+              >
+                <Globe className="w-3.5 h-3.5" />
+                {saving ? 'Publishing…' : 'Publish listing'}
+              </button>
+            </div>
           )}
+
         </div>
       </div>
 

@@ -76,6 +76,7 @@ export interface RecommendApiResponse {
 }
 
 import { SEED_EXPERIENCES } from './seed-catalog';
+import catalogDataset from './catalog-dataset.json';
 
 export const CATALOG_EXPERIENCES: RecommendationItem[] = SEED_EXPERIENCES.map((e, idx) => ({
   id: e.id,
@@ -92,6 +93,31 @@ export const CATALOG_EXPERIENCES: RecommendationItem[] = SEED_EXPERIENCES.map((e
   candidateLng: e.candidateLng,
   mediaUrls: e.mediaUrls,
 }));
+
+// Bundled full catalog for synchronous lookups (used by decodeShareableTrip)
+const FULL_CATALOG: RecommendationItem[] = (catalogDataset as any[]).map((e) => ({
+  id: e.id,
+  title: e.title || e.name || 'Local Experience',
+  category: e.category || 'CULTURE',
+  city: e.city || 'Mumbai',
+  distanceKm: 1.0,
+  priceMin: e.priceMin ?? 0,
+  priceMax: e.priceMax ?? 0,
+  durationMinutes: e.durationMinutes ?? 90,
+  ratingAverage: e.ratingAverage ?? 4.5,
+  authenticityRating: e.authenticityRating ?? 0.9,
+  candidateLat: e.candidateLat ?? e.latitude,
+  candidateLng: e.candidateLng ?? e.longitude,
+  mediaUrls: e.mediaUrls || [],
+}));
+
+/** Lookup an experience by ID from all known catalogs (sync, always works at load time) */
+function findExperienceById(id: string): RecommendationItem | undefined {
+  return (
+    CATALOG_EXPERIENCES.find((c) => c.id === id) ||
+    FULL_CATALOG.find((c) => c.id === id)
+  );
+}
 
 // Asynchronously hydrate CATALOG_EXPERIENCES with fresh items from API if available
 if (typeof window !== 'undefined') {
@@ -566,7 +592,8 @@ export function decodeShareableTrip(shareStr: string, cityParam?: string | null)
       const cityName = cityParam || 'Mumbai';
 
       for (const id of stopIds) {
-        const found = CATALOG_EXPERIENCES.find((c) => c.id === id);
+        // Search in CATALOG_EXPERIENCES (seed) + FULL_CATALOG (catalog-dataset.json)
+        const found = findExperienceById(id);
         if (found) {
           const coords = sanitizeExperienceCoordinates(found);
           matchedExperiences.push({
@@ -582,6 +609,21 @@ export function decodeShareableTrip(shareStr: string, cityParam?: string | null)
             durationMinutes: found.durationMinutes ?? 90,
             candidateLat: coords.lat,
             candidateLng: coords.lng,
+          });
+        } else {
+          // Fallback: preserve the stop as a generic placeholder so it is NEVER silently dropped
+          matchedExperiences.push({
+            id,
+            title: 'Local Experience',
+            category: 'CULTURE',
+            city: cityName,
+            priceMin: 0,
+            priceMax: 0,
+            ratingAverage: 4.5,
+            authenticityRating: 0.9,
+            durationMinutes: 90,
+            candidateLat: 18.9220,
+            candidateLng: 72.8347,
           });
         }
       }

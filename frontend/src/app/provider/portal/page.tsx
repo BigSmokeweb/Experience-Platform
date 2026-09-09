@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { API_BASE } from '@/lib/api-client';
 import { 
   ShieldCheck, 
   Lock, 
@@ -15,57 +16,25 @@ import {
   Compass,
   AlertCircle,
   PenLine,
+  Layers,
 } from 'lucide-react';
 import ListingForm from '../components/ListingForm';
 import NudgesPanel from '../components/NudgesPanel';
 
-// Simulated provider listing data (production: GET /experiences/my-listings)
-const MOCK_LISTINGS = [
-  {
-    id: '1',
-    title: 'Upvan Lake Sunset & Ancient Shrines Walk',
-    category: 'FOOD',
-    city: 'Thane',
-    rating: 4.85,
-    reviews: 124,
-    duration: '90 mins',
-    tariff: '₹450 – ₹750',
-    published: true,
-    image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80',
-    nudges: [
-      { dimension: 'timeAvailability', message: 'Set your actual hours — listings without specific availability score lower on time-fit matching.', impact: 'HIGH' as const },
-    ],
-  },
-  {
-    id: '2',
-    title: 'Dawn at Sassoon Docks: Fisherfolk Culture',
-    category: 'LOCAL LIFE',
-    city: 'Mumbai',
-    rating: 4.88,
-    reviews: 96,
-    duration: '120 mins',
-    tariff: '₹600 – ₹1,000',
-    published: true,
-    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=80',
-    nudges: [],
-  },
-  {
-    id: '3',
-    title: 'Navi Mumbai Flamingo Sanctuary Dawn Boardwalk',
-    category: 'WORKSHOPS',
-    city: 'Navi Mumbai',
-    rating: 4.95,
-    reviews: 78,
-    duration: '120 mins',
-    tariff: '₹1,500 – ₹2,200',
-    published: true,
-    image: 'https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&w=600&q=80',
-    nudges: [
-      { dimension: 'accessibilityMatch', message: 'Add accessibility details — your listing is currently invisible to travelers filtering by accessibility needs.', impact: 'HIGH' as const },
-      { dimension: 'qualitySignal', message: 'Add 2 more photos — listings with 3+ photos get selected significantly more often.', impact: 'MEDIUM' as const },
-    ],
-  },
-];
+interface PortalListing {
+  id: string;
+  title: string;
+  category: string;
+  city: string;
+  ratingAverage?: number;
+  reviewCount?: number;
+  durationMinutes?: number;
+  priceMin?: number;
+  priceMax?: number;
+  status: string;
+  mediaUrls?: string[];
+  nudges?: { dimension: string; message: string; impact: 'HIGH' | 'MEDIUM' }[];
+}
 
 export default function ProviderPortalPage() {
   const [activeTab, setActiveTab] = useState<'listings' | 'create' | 'kyc' | 'mfa'>('listings');
@@ -75,10 +44,34 @@ export default function ProviderPortalPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [expandedNudges, setExpandedNudges] = useState<Record<string, boolean>>({});
   const [authToken, setAuthToken] = useState<string | undefined>(undefined);
+  const [listings, setListings] = useState<PortalListing[]>([]);
+  const [listingsLoading, setListingsLoading] = useState(true);
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') || undefined : undefined;
     setAuthToken(token);
+  }, []);
+
+  const fetchListings = async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    if (!token) { setListingsLoading(false); return; }
+    try {
+      const res = await fetch(`${API_BASE}/experiences/my-listings`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setListings(Array.isArray(data) ? data : data.data || []);
+      }
+    } catch {
+      // silently ignore
+    } finally {
+      setListingsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchListings();
   }, []);
 
   const handleUploadSubmit = (e: React.FormEvent) => {
@@ -177,77 +170,96 @@ export default function ProviderPortalPage() {
               <div className="p-5 sm:p-6 border-b border-[#C4A265] bg-[#F5F1E6]/40 flex items-center justify-between">
                 <div>
                   <h3 className="font-manifold text-base text-[#2C2C2C] uppercase tracking-wide font-bold">
-                    Active Catalog Listings ({MOCK_LISTINGS.length})
+                    Active Catalog Listings ({listings.length})
                   </h3>
                   <p className="text-xs font-mono text-[#2C2C2C]/60 mt-0.5">Synchronized across Mumbai, Thane, Navi Mumbai, and Maharashtra</p>
                 </div>
                 <span className="text-[11px] font-mono uppercase tracking-wider px-3 py-1 bg-[#A69B80]/20 text-[#347F8C] border border-[#A69B80]/30 rounded-full font-semibold">
-                  {MOCK_LISTINGS.filter((l) => l.published).length} Deployed
+                  {listings.filter((l) => l.status === 'PUBLISHED').length} Deployed
                 </span>
               </div>
 
               <div className="divide-y divide-[#D4CFC0]">
-                {MOCK_LISTINGS.map((item) => (
-                  <div key={item.id} className="p-5 sm:p-6 space-y-3 hover:bg-[#F5F1E6]/30 transition-colors">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
-                      <div className="flex items-start gap-4 min-w-0">
-                        <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-[#D4CFC0] bg-zinc-100 shrink-0">
-                          <Image src={item.image} alt={item.title} fill sizes="80px" className="object-cover" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[10px] font-mono uppercase tracking-widest text-[#347F8C] font-bold">{item.category}</span>
-                            <span className="text-[#D4CFC0]">&bull;</span>
-                            <span className="text-[10px] font-mono text-[#2C2C2C]/60 uppercase">{item.city}</span>
-                          </div>
-                          <h4 className="font-manifold text-base sm:text-lg text-[#2C2C2C] font-bold uppercase tracking-wide truncate">{item.title}</h4>
-                          <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs font-mono text-[#2C2C2C]/75">
-                            <span className="flex items-center gap-1 font-semibold text-[#2C2C2C]">
-                              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />{item.rating}
-                            </span>
-                            <span className="text-[#D4CFC0]">&bull;</span>
-                            <span>{item.reviews} reviews</span>
-                            <span className="text-[#D4CFC0]">&bull;</span>
-                            <span>{item.duration}</span>
-                            <span className="text-[#D4CFC0]">&bull;</span>
-                            <span className="font-semibold text-[#347F8C]">{item.tariff}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between md:justify-end gap-4 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-[#D4CFC0]">
-                        <span className={`inline-flex items-center gap-1 px-3 py-1 border text-xs font-mono uppercase tracking-wider font-bold rounded-full ${
-                          item.published ? 'bg-[#A69B80]/20 text-[#347F8C] border-[#A69B80]/30' : 'bg-amber-50 text-amber-700 border-amber-200'
-                        }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${item.published ? 'bg-[#A69B80]' : 'bg-amber-400'}`} />
-                          {item.published ? 'Published' : 'Draft'}
-                        </span>
-                        <button type="button" className="text-xs font-mono uppercase tracking-wider text-[#347F8C] hover:text-[#2A6772] font-bold underline underline-offset-4 decoration-[#347F8C]/40 hover:decoration-[#347F8C] transition">
-                          Edit Details
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Nudges — expandable per listing */}
-                    {item.nudges.length > 0 && (
-                      <div>
-                        <button
-                          type="button"
-                          onClick={() => setExpandedNudges((prev) => ({ ...prev, [item.id]: !prev[item.id] }))}
-                          className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-amber-600 font-bold"
-                        >
-                          <AlertCircle className="w-3.5 h-3.5" />
-                          {item.nudges.length} visibility nudge{item.nudges.length > 1 ? 's' : ''} available
-                          <span className="text-[#D4CFC0] ml-1">{expandedNudges[item.id] ? '▲' : '▼'}</span>
-                        </button>
-                        {expandedNudges[item.id] && (
-                          <div className="mt-2">
-                            <NudgesPanel nudges={item.nudges} compact />
-                          </div>
-                        )}
-                      </div>
-                    )}
+                {listingsLoading ? (
+                  <div className="p-10 text-center">
+                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-4 border-[#347F8C] border-t-transparent mb-3" />
+                    <p className="text-xs font-mono text-[#5C6460]">Loading your experiences…</p>
                   </div>
-                ))}
+                ) : listings.length === 0 ? (
+                  <div className="p-10 text-center space-y-3">
+                    <Layers className="w-10 h-10 mx-auto text-[#D4CFC0]" />
+                    <p className="text-sm font-mono text-[#5C6460]">No experiences yet — create your first listing above.</p>
+                  </div>
+                ) : (
+                  listings.map((item) => (
+                    <div key={item.id} className="p-5 sm:p-6 space-y-3 hover:bg-[#F5F1E6]/30 transition-colors">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+                        <div className="flex items-start gap-4 min-w-0">
+                          <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border border-[#D4CFC0] bg-zinc-100 shrink-0">
+                            {item.mediaUrls?.[0] ? (
+                              <Image src={item.mediaUrls[0]} alt={item.title} fill sizes="80px" className="object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-[#F5F1E6]">
+                                <Layers className="w-6 h-6 text-[#D4CFC0]" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-[10px] font-mono uppercase tracking-widest text-[#347F8C] font-bold">{item.category?.replace('_', ' ')}</span>
+                              <span className="text-[#D4CFC0]">&bull;</span>
+                              <span className="text-[10px] font-mono text-[#2C2C2C]/60 uppercase">{item.city}</span>
+                            </div>
+                            <h4 className="font-manifold text-base sm:text-lg text-[#2C2C2C] font-bold uppercase tracking-wide truncate">{item.title}</h4>
+                            <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs font-mono text-[#2C2C2C]/75">
+                              {item.ratingAverage != null && (
+                                <span className="flex items-center gap-1 font-semibold text-[#2C2C2C]">
+                                  <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />{item.ratingAverage.toFixed(2)}
+                                </span>
+                              )}
+                              {item.reviewCount != null && <><span className="text-[#D4CFC0]">&bull;</span><span>{item.reviewCount} reviews</span></>}
+                              {item.durationMinutes != null && <><span className="text-[#D4CFC0]">&bull;</span><span>{item.durationMinutes} mins</span></>}
+                              {(item.priceMin != null || item.priceMax != null) && (
+                                <><span className="text-[#D4CFC0]">&bull;</span><span className="font-semibold text-[#347F8C]">₹{item.priceMin ?? 0} – ₹{item.priceMax ?? 0}</span></>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between md:justify-end gap-4 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-[#D4CFC0]">
+                          <span className={`inline-flex items-center gap-1 px-3 py-1 border text-xs font-mono uppercase tracking-wider font-bold rounded-full ${
+                            item.status === 'PUBLISHED' ? 'bg-[#A69B80]/20 text-[#347F8C] border-[#A69B80]/30' : 'bg-amber-50 text-amber-700 border-amber-200'
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${item.status === 'PUBLISHED' ? 'bg-[#A69B80]' : 'bg-amber-400'}`} />
+                            {item.status === 'PUBLISHED' ? 'Published' : 'Draft'}
+                          </span>
+                          <button type="button" className="text-xs font-mono uppercase tracking-wider text-[#347F8C] hover:text-[#2A6772] font-bold underline underline-offset-4 decoration-[#347F8C]/40 hover:decoration-[#347F8C] transition">
+                            Edit Details
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Nudges — expandable per listing */}
+                      {item.nudges && item.nudges.length > 0 && (
+                        <div>
+                          <button
+                            type="button"
+                            onClick={() => setExpandedNudges((prev) => ({ ...prev, [item.id]: !prev[item.id] }))}
+                            className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-amber-600 font-bold"
+                          >
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            {item.nudges.length} visibility nudge{item.nudges.length > 1 ? 's' : ''} available
+                            <span className="text-[#D4CFC0] ml-1">{expandedNudges[item.id] ? '▲' : '▼'}</span>
+                          </button>
+                          {expandedNudges[item.id] && (
+                            <div className="mt-2">
+                              <NudgesPanel nudges={item.nudges} compact />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -266,8 +278,9 @@ export default function ProviderPortalPage() {
             <ListingForm
               token={authToken}
               onDraftSaved={(msg) => { showToast(msg); setActiveTab('listings'); }}
-              onPublished={() => { showToast('Listing published — now live in traveler search.'); setActiveTab('listings'); }}
+              onPublished={() => { showToast('Listing published — now live in traveler search.'); setActiveTab('listings'); fetchListings(); }}
             />
+
           </div>
         )}
 
