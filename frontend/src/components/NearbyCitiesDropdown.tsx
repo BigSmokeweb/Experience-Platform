@@ -257,14 +257,14 @@ export function NearbyCitiesDropdown({ isHome, scrolled }: NearbyCitiesDropdownP
         onClick={handleToggle}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
-        className={`flex items-center gap-1.5 transition-all duration-200 py-1 px-2 rounded-lg cursor-pointer ${
+        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 cursor-pointer ${
           isOpen
             ? isDark
               ? 'bg-white/20 text-white shadow-sm'
               : 'bg-[#347F8C]/15 text-[#347F8C]'
             : isDark
-            ? 'text-zinc-200 hover:text-white hover:bg-white/10'
-            : 'text-[#2C2C2C]/80 hover:text-[#347F8C] hover:bg-[#347F8C]/10'
+            ? 'text-white/90 hover:text-white hover:bg-white/15'
+            : 'text-[#2C2C2C]/85 hover:text-[#1F2937] hover:bg-black/5'
         }`}
       >
         <MapPin className={`w-3.5 h-3.5 ${userCoords ? 'text-[#C4A265]' : isDark ? 'text-sky-300' : 'text-[#347F8C]'}`} />
@@ -273,7 +273,7 @@ export function NearbyCitiesDropdown({ isHome, scrolled }: NearbyCitiesDropdownP
           <span className="w-1.5 h-1.5 rounded-full bg-[#C4A265] animate-pulse" />
         )}
         <ChevronDown
-          className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} ${isDark ? 'text-zinc-300' : 'text-[#2C2C2C]/60'}`}
+          className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''} ${isDark ? 'text-white/70' : 'text-[#2C2C2C]/60'}`}
         />
       </button>
 

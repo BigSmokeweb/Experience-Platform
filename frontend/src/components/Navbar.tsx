@@ -57,13 +57,13 @@ export function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none px-3 sm:px-6 pt-3 sm:pt-4">
       {/* Floating Capsule Bar */}
       <div
-        className={`pointer-events-auto max-w-6xl mx-auto rounded-full px-4 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-3 sm:gap-4 transition-all duration-300 ${
+        className={`pointer-events-auto max-w-7xl mx-auto rounded-full px-4 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-3 sm:gap-4 transition-all duration-300 ${
           isDarkNav
             ? 'bg-transparent text-white'
             : 'bg-[#F5F1E6]/95 backdrop-blur-xl border border-[#C4A265]/40 text-[#2C2C2C] shadow-lg shadow-stone-900/10'
         }`}
       >
-        {/* Left: Brand Logo */}
+        {/* Left: Brand Logo (Transparent background-removed, no opaque box) */}
         <Link
           href="/"
           onClick={(e) => {
@@ -75,66 +75,66 @@ export function Navbar() {
           className="flex items-center group shrink-0"
           aria-label="Journi Home"
         >
-          <div className="relative h-8 sm:h-9 flex items-center transition-transform duration-300 group-hover:scale-105">
+          <div className="relative flex items-center transition-transform duration-300 group-hover:scale-105">
             <Image
               src="/images/Journi-bg-rm.png"
               alt="Journi"
-              width={125}
-              height={38}
+              width={130}
+              height={40}
               priority
-              className="h-7 sm:h-8 w-auto object-contain drop-shadow-xs"
+              className="h-7 sm:h-8 w-auto object-contain drop-shadow-md"
             />
           </div>
         </Link>
 
-        {/* Center: Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm font-medium">
-          <Link
-            href="/#curated-experiences"
-            onClick={(e) => {
-              if (isHome) {
-                e.preventDefault();
-                document.getElementById('curated-experiences')?.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-            className={`px-3.5 py-1.5 rounded-full transition-all duration-200 ${
-              isDarkNav
-                ? 'text-white/90 hover:text-white hover:bg-white/10'
-                : 'text-[#2C2C2C]/80 hover:text-[#1F2937] hover:bg-black/5'
-            }`}
-          >
-            The Collection
-          </Link>
+        {/* Right: Navigation Links & Action Pills grouped together next to Plan Journey */}
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          {/* Desktop Navigation Links */}
+          <nav className="hidden lg:flex items-center space-x-1 sm:space-x-1.5 text-xs sm:text-sm font-medium mr-1">
+            <Link
+              href="/#curated-experiences"
+              onClick={(e) => {
+                if (isHome) {
+                  e.preventDefault();
+                  document.getElementById('curated-experiences')?.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition-all duration-200 ${
+                isDarkNav
+                  ? 'text-white/90 hover:text-white hover:bg-white/15'
+                  : 'text-[#2C2C2C]/85 hover:text-[#1F2937] hover:bg-black/5'
+              }`}
+            >
+              The Collection
+            </Link>
 
-          {/* Cities Dropdown */}
-          <div className="inline-flex items-center">
-            <NearbyCitiesDropdown isHome={isHome} scrolled={scrolled} />
-          </div>
+            {/* Cities Dropdown */}
+            <div className="inline-flex items-center">
+              <NearbyCitiesDropdown isHome={isHome} scrolled={scrolled} />
+            </div>
 
-          {/* Travel Journal Slide-over trigger */}
-          <button
-            type="button"
-            onClick={() => setIsJournalOpen(true)}
-            className={`relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-full transition-all duration-200 cursor-pointer ${
-              isDarkNav
-                ? 'text-white/90 hover:text-white hover:bg-white/10'
-                : 'text-[#2C2C2C]/80 hover:text-[#1F2937] hover:bg-black/5'
-            }`}
-            title="Open Travel Journal"
-          >
-            <Bookmark className={`w-3.5 h-3.5 transition-colors ${count > 0 ? 'fill-[#C4A265] text-[#C4A265]' : ''}`} />
-            <span>Journal</span>
-            {count > 0 && (
-              <span className="w-4 h-4 rounded-full bg-[#C4A265] text-[#2C2C2C] text-[9px] font-mono font-bold flex items-center justify-center shadow-xs">
-                {count}
-              </span>
-            )}
-          </button>
-        </nav>
+            {/* Travel Journal Slide-over trigger */}
+            <button
+              type="button"
+              onClick={() => setIsJournalOpen(true)}
+              className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition-all duration-200 cursor-pointer ${
+                isDarkNav
+                  ? 'text-white/90 hover:text-white hover:bg-white/15'
+                  : 'text-[#2C2C2C]/85 hover:text-[#1F2937] hover:bg-black/5'
+              }`}
+              title="Open Travel Journal"
+            >
+              <Bookmark className={`w-3.5 h-3.5 transition-colors ${count > 0 ? 'fill-[#C4A265] text-[#C4A265]' : ''}`} />
+              <span>Journal</span>
+              {count > 0 && (
+                <span className="w-4 h-4 rounded-full bg-[#C4A265] text-[#2C2C2C] text-[9px] font-mono font-bold flex items-center justify-center shadow-xs">
+                  {count}
+                </span>
+              )}
+            </button>
+          </nav>
 
-        {/* Right: Pill Actions & Mobile Hamburger */}
-        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-          {/* Action 1: Transparent Pill (Plan Journey) */}
+          {/* Action 1: Transparent / Frosted Pill (Plan Journey) */}
           <Link
             href="/#itinerary"
             onClick={(e) => {
@@ -143,10 +143,10 @@ export function Navbar() {
                 document.getElementById('itinerary')?.scrollIntoView({ behavior: 'smooth' });
               }
             }}
-            className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-semibold transition-all duration-200 active:scale-95 border ${
+            className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 active:scale-95 border ${
               isDarkNav
-                ? 'bg-transparent border-white/40 text-white hover:bg-white/15'
-                : 'bg-transparent border-[#1A2536]/40 text-[#1A2536] hover:bg-[#1A2536]/10'
+                ? 'bg-white/10 hover:bg-white/20 border-white/40 text-white shadow-xs backdrop-blur-sm'
+                : 'bg-[#347F8C]/10 hover:bg-[#347F8C]/20 border-[#347F8C]/40 text-[#245b64]'
             }`}
           >
             <Compass className={`w-3.5 h-3.5 ${isDarkNav ? 'text-sky-300' : 'text-[#347F8C]'}`} />
@@ -157,13 +157,13 @@ export function Navbar() {
           {/* Action 2: Outlined Pill (Partner With Us) - Desktop */}
           <Link
             href="/provider/portal"
-            className={`hidden md:flex items-center gap-1.5 px-3.5 py-1.5 sm:py-2 rounded-full text-xs font-medium transition-all duration-200 active:scale-95 border ${
+            className={`hidden md:flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-medium tracking-wide transition-all duration-200 active:scale-95 border ${
               isDarkNav
-                ? 'border-white/30 text-white hover:bg-white/15'
-                : 'border-stone-400/60 text-[#2C2C2C] hover:bg-stone-200/50'
+                ? 'border-white/30 text-white/90 hover:text-white hover:bg-white/15 backdrop-blur-sm'
+                : 'border-stone-300/80 text-[#2C2C2C] hover:bg-stone-200/50'
             }`}
           >
-            <Handshake className="w-3.5 h-3.5 text-amber-500/90" />
+            <Handshake className="w-3.5 h-3.5 text-amber-400" />
             <span>Partner With Us</span>
           </Link>
 
@@ -173,9 +173,9 @@ export function Navbar() {
               <button
                 type="button"
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-full text-xs font-medium transition-all duration-200 active:scale-95 border cursor-pointer ${
+                className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full text-xs font-medium transition-all duration-200 active:scale-95 border cursor-pointer ${
                   isDarkNav
-                    ? 'border-white/30 text-white hover:bg-white/15'
+                    ? 'border-white/30 text-white hover:bg-white/15 backdrop-blur-sm'
                     : 'border-stone-400/60 text-[#2C2C2C] hover:bg-stone-200/50'
                 }`}
               >
