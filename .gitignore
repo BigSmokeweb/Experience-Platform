@@ -29,7 +29,7 @@ pnpm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
- 
+
 # Office temp files..
 ~$\*
 *.docx
@@ -40,3 +40,17 @@ all_experiences*.json
 all_data*.json
 experience_data_full*.json
 new data*.json
+
+# ─── Environment / Secrets ────────────────────────────────────────────────────
+# NEVER commit real .env files. Only .env.example and .env.production are safe.
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production.local
+backend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
