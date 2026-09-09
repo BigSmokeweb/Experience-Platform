@@ -23,7 +23,7 @@ Journi operates as a **two-sided marketplace**:
 - **Travellers** — create a profile with travel vibes and preferences, get an AI-curated list of experiences, build a day-by-day itinerary, and navigate with an interactive area map.
 - **Providers** — register as a local experience provider, submit KYC documents, list experiences with pricing and availability, and manage their dashboard.
 
-The platform is a **discovery and planning tool — it does not process real payments**. Commercial arrangements between travellers and providers happen directly and independently.
+The platform is a **discovery and planning tool — it does not process real payments**. Commercial arrangements between travellers and providers happen directly and independently..
 
 ---
 
