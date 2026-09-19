@@ -11,20 +11,83 @@ type FetchOptions = Omit<RequestInit, 'body'> & {
   token?: string;
 };
 
+/**
+ * Attempt silent token refresh. If refresh fails or no refreshToken exists,
+ * clears the expired/invalid tokens from localStorage and notifies the app.
+ * Preserves user identity/destination metadata (userName, userRole, redirect).
+ */
+export async function trySilentRefreshToken(): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+  const refreshToken = localStorage.getItem('refreshToken');
+  if (!refreshToken) {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    window.dispatchEvent(new Event('auth-change'));
+    return null;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.accessToken) {
+        localStorage.setItem('accessToken', data.accessToken);
+        if (data.refreshToken) {
+          localStorage.setItem('refreshToken', data.refreshToken);
+        }
+        window.dispatchEvent(new Event('auth-change'));
+        return data.accessToken;
+      }
+    }
+  } catch {
+    // Network or server error during refresh
+  }
+
+  // Refresh failed or returned invalid tokens: clean up bad tokens from storage
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('refreshToken');
+  window.dispatchEvent(new Event('auth-change'));
+  return null;
+}
+
 async function request<T = unknown>(path: string, options: FetchOptions = {}): Promise<T> {
   const { body, token, headers: extraHeaders, ...rest } = options;
 
+  let activeToken = token;
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(activeToken ? { Authorization: `Bearer ${activeToken}` } : {}),
     ...(extraHeaders ?? {}),
   };
 
-  const res = await fetch(`${API_BASE}${path}`, {
+  let res = await fetch(`${API_BASE}${path}`, {
     ...rest,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
+
+  // If 401 and we had sent a token, try a silent token refresh before failing
+  if (res.status === 401 && activeToken) {
+    const refreshedToken = await trySilentRefreshToken();
+    if (refreshedToken) {
+      activeToken = refreshedToken;
+      const retryHeaders: HeadersInit = {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${refreshedToken}`,
+        ...(extraHeaders ?? {}),
+      };
+      res = await fetch(`${API_BASE}${path}`, {
+        ...rest,
+        headers: retryHeaders,
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+      });
+    }
+  }
 
   if (!res.ok) {
     let errorBody: unknown;

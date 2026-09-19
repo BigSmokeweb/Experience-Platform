@@ -64,7 +64,10 @@ export default function AuthLoginPage() {
 
       setSuccess(`Signed in as ${data.user?.name || email}! Redirecting...`);
       setTimeout(() => {
-        if (data.user?.role === 'PROVIDER') {
+        const redirectParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null;
+        if (redirectParam && redirectParam.startsWith('/')) {
+          router.push(redirectParam);
+        } else if (data.user?.role === 'PROVIDER') {
           router.push('/provider/portal');
         } else {
           router.push('/trip');
