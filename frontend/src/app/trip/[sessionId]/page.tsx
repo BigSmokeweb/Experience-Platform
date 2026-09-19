@@ -1,13 +1,13 @@
 'use client';
 
-import { Suspense, useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { API_BASE } from '@/lib/api-client';
 import { ItineraryStopCard } from '@/components/ItineraryStopCard';
 import { TripAreaMap } from '@/components/TripAreaMap';
-import { ArrowLeft, Share2, Check, Copy, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Share2, Check, Copy, MessageCircle, AlertTriangle, Loader2 } from 'lucide-react';
 
 import {
   fetchTripSession,
@@ -37,6 +37,9 @@ function TripSessionContent() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isCompleted, setIsCompleted] = useState(false);
   const [copiedShareLink, setCopiedShareLink] = useState(false);
+  const [selectingId, setSelectingId] = useState<string | null>(null);
+  const isSelectingRef = useRef(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const getAuthToken = () => {
     if (typeof window !== 'undefined') {
@@ -137,6 +140,9 @@ function TripSessionContent() {
 
   // Handler: Add selection
   async function handleSelect(cand: RecommendationItem) {
+    if (isSelectingRef.current || selectingId || isActionLoading) return; // Immediate synchronous lock
+    isSelectingRef.current = true;
+    setSelectingId(cand.id);
     setErrorMessage(null);
 
     try {
@@ -203,6 +209,9 @@ function TripSessionContent() {
       setWeatherAdaptPrompt(recData.weatherAdaptPrompt || null);
     } catch (err: any) {
       setErrorMessage(err.message);
+    } finally {
+      isSelectingRef.current = false;
+      setSelectingId(null);
     }
   }
 
@@ -300,6 +309,7 @@ function TripSessionContent() {
       };
       saveLocalSession(updated);
       setSession(updated);
+      setShowResetConfirm(false);
       await loadSessionAndRecommendations();
     } catch (err: any) {
       setErrorMessage(err.message);
@@ -418,7 +428,7 @@ function TripSessionContent() {
             {selectedStops.length > 0 && !isCompleted && (
               <button
                 type="button"
-                onClick={handleClearAllStops}
+                onClick={() => setShowResetConfirm(true)}
                 disabled={isActionLoading}
                 className="inline-flex items-center gap-1 text-xs font-mono uppercase tracking-wider text-rose-700 bg-white border border-rose-300 hover:bg-rose-50 px-3 py-2 rounded-xl transition shadow-xs cursor-pointer active:scale-95"
               >
@@ -447,6 +457,60 @@ function TripSessionContent() {
             )}
           </div>
         </div>
+
+        {/* Confirmation Modal for Reset All Stops */}
+        {showResetConfirm && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-fade-in"
+            onClick={() => setShowResetConfirm(false)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') setShowResetConfirm(false);
+            }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reset-modal-title"
+            tabIndex={-1}
+          >
+            <div
+              className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full border border-[#D4CFC0] shadow-2xl space-y-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start gap-3">
+                <div className="p-2.5 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 shrink-0">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 id="reset-modal-title" className="font-manifold text-lg uppercase tracking-wide text-[#2C2C2C] font-bold">
+                    Reset Entire Itinerary?
+                  </h3>
+                  <p className="text-xs text-[#5C6460] mt-1 leading-relaxed">
+                    This will remove all <strong className="text-[#2C2C2C]">{selectedStops.length} selected stop{selectedStops.length > 1 ? 's' : ''}</strong> from your route and restore your full budget &amp; time budget.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#D4CFC0]">
+                <button
+                  type="button"
+                  onClick={() => setShowResetConfirm(false)}
+                  disabled={isActionLoading}
+                  className="px-4 py-2 text-xs font-mono uppercase tracking-wider text-[#2C2C2C]/70 hover:bg-neutral-100 rounded-xl transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClearAllStops}
+                  disabled={isActionLoading}
+                  className="px-4 py-2 text-xs font-mono uppercase tracking-wider font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition shadow-sm cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  {isActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                  <span>Yes, Reset Route</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {errorMessage && (
           <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-2xl text-xs font-mono flex items-center justify-between">
@@ -729,15 +793,24 @@ function TripSessionContent() {
                       <div className="mt-4 pt-3 border-t border-[#D4CFC0] flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleReject(cand)}
-                          className="px-3 py-1.5 text-xs font-mono uppercase tracking-wider text-[#2C2C2C]/50 hover:text-red-500 hover:bg-red-50 border border-[#D4CFC0] rounded-xl transition cursor-pointer active:scale-95"
+                          disabled={selectingId === cand.id || isActionLoading}
+                          className="px-3 py-1.5 text-xs font-mono uppercase tracking-wider text-[#2C2C2C]/50 hover:text-red-500 hover:bg-red-50 border border-[#D4CFC0] rounded-xl transition cursor-pointer active:scale-95 disabled:opacity-40"
                         >
                           Dismiss
                         </button>
                         <button
                           onClick={() => handleSelect(cand)}
-                          className="px-4 py-1.5 text-xs font-mono uppercase font-bold tracking-wider bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] rounded-xl shadow-sm transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                          disabled={Boolean(selectingId) || isActionLoading}
+                          className="px-4 py-1.5 text-xs font-mono uppercase font-bold tracking-wider bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] rounded-xl shadow-sm transition active:scale-95 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                         >
-                          + Add Stop
+                          {selectingId === cand.id ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <span>Adding…</span>
+                            </>
+                          ) : (
+                            <span>+ Add Stop</span>
+                          )}
                         </button>
                       </div>
                     </div>

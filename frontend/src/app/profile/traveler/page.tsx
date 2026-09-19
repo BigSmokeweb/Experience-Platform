@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { API_BASE } from '@/lib/api-client';
+import { API_BASE, trySilentRefreshToken } from '@/lib/api-client';
 import { ProfileHeader } from '../components/ProfileHeader';
 import { TravelerPreferences } from '../components/TravelerPreferences';
 import { TripHistoryList } from '../components/TripHistoryList';
@@ -48,19 +48,27 @@ export default function TravelerProfilePage() {
         return;
       }
 
-      const res = await fetch(`${API_BASE}/users/me`, {
-        headers: { Authorization: `Bearer ${token}` },
+      let activeToken = token;
+      let res = await fetch(`${API_BASE}/users/me`, {
+        headers: { Authorization: `Bearer ${activeToken}` },
       });
 
+      if (res.status === 401 && activeToken !== 'mock-token-verified') {
+        const refreshed = await trySilentRefreshToken();
+        if (refreshed) {
+          activeToken = refreshed;
+          res = await fetch(`${API_BASE}/users/me`, {
+            headers: { Authorization: `Bearer ${activeToken}` },
+          });
+        }
+      }
+
       if (!res.ok) {
-        if (res.status === 401 && token !== 'mock-token-verified') {
+        if (res.status === 401 && activeToken !== 'mock-token-verified') {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
-          localStorage.removeItem('userRole');
-          localStorage.removeItem('userName');
-          localStorage.removeItem('userEmail');
           window.dispatchEvent(new Event('auth-change'));
-          router.push('/auth/login?redirect=/profile/traveler');
+          setError('Session expired. Please sign in again to access your traveler preferences.');
           return;
         }
         // Demo fallback profile for local presentation

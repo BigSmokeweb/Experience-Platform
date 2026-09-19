@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { API_BASE } from '@/lib/api-client';
+import { API_BASE, trySilentRefreshToken } from '@/lib/api-client';
 import { ProfileHeader } from '../components/ProfileHeader';
 import { ProviderBusinessCard } from '../components/ProviderBusinessCard';
 import { ProviderListingsGrid } from '../components/ProviderListingsGrid';
@@ -45,19 +45,29 @@ export default function ProviderProfilePage() {
         return;
       }
 
-      const res = await fetch(`${API_BASE}/providers/me`, {
-        headers: { Authorization: `Bearer ${token}` },
+      let activeToken = token;
+      let res = await fetch(`${API_BASE}/providers/me`, {
+        headers: { Authorization: `Bearer ${activeToken}` },
       });
+
+      if (res.status === 401) {
+        // Attempt silent refresh before giving up
+        const refreshed = await trySilentRefreshToken();
+        if (refreshed) {
+          activeToken = refreshed;
+          res = await fetch(`${API_BASE}/providers/me`, {
+            headers: { Authorization: `Bearer ${activeToken}` },
+          });
+        }
+      }
 
       if (!res.ok) {
         if (res.status === 401) {
+          // Token is definitively invalid and refresh failed — clear bad tokens
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
-          localStorage.removeItem('userRole');
-          localStorage.removeItem('userName');
-          localStorage.removeItem('userEmail');
           window.dispatchEvent(new Event('auth-change'));
-          router.push('/auth/login?redirect=/profile/provider');
+          setError('Session expired. Please sign in again to continue managing your experiences.');
           return;
         }
         const errJson = await res.json().catch(() => null);

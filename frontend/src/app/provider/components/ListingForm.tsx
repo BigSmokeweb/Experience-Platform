@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { API_BASE } from '@/lib/api-client';
 import {
   Category,
@@ -95,6 +95,7 @@ export default function ListingForm({ token, onDraftSaved, onPublished }: Listin
   const [step, setStep] = useState<FormStep>(1);
   const [draft, setDraft] = useState<DraftState>(INITIAL_DRAFT);
   const [saving, setSaving] = useState(false);
+  const isSavingRef = useRef(false);
   const [publishError, setPublishError] = useState<string | null>(null);
 
   const update = useCallback(<K extends keyof DraftState>(key: K, value: DraftState[K]) => {
@@ -175,10 +176,12 @@ export default function ListingForm({ token, onDraftSaved, onPublished }: Listin
   };
 
   const handlePublish = async () => {
-    if (!isPublishEligible || !token) {
-      setPublishError(!token ? 'You must be logged in to publish.' : 'Fill all required fields first.');
+    if (isSavingRef.current || saving || !isPublishEligible || !token) {
+      if (!token) setPublishError('You must be logged in to publish.');
+      else if (!isPublishEligible) setPublishError('Fill all required fields first.');
       return;
     }
+    isSavingRef.current = true;
     setSaving(true);
     setPublishError(null);
     const payload = buildPayload();
@@ -243,6 +246,7 @@ export default function ListingForm({ token, onDraftSaved, onPublished }: Listin
       });
       onPublished?.();
     } finally {
+      isSavingRef.current = false;
       setSaving(false);
     }
   };
@@ -437,17 +441,38 @@ export default function ListingForm({ token, onDraftSaved, onPublished }: Listin
 
         {/* Description */}
         <div>
-          <label className="block text-[10px] font-mono uppercase tracking-widest text-[#347F8C] font-bold mb-1.5">
-            Description
-          </label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-[10px] font-mono uppercase tracking-widest text-[#347F8C] font-bold">
+              Description <span className="text-red-500">*</span>
+            </label>
+            <span
+              className={`text-[10px] font-mono transition-colors ${
+                draft.description.trim().length === 0
+                  ? 'text-[#5C6460]'
+                  : draft.description.trim().length < 20
+                  ? 'text-amber-600 font-semibold'
+                  : 'text-emerald-700 font-semibold'
+              }`}
+            >
+              {draft.description.trim().length < 20
+                ? `${draft.description.trim().length} / 20 min chars (${20 - draft.description.trim().length} more needed)`
+                : `${draft.description.trim().length} / 4000 chars (✓ minimum met)`}
+            </span>
+          </div>
           <textarea
             rows={5}
             value={draft.description}
             onChange={(e) => update('description', e.target.value)}
-            placeholder="Tell travelers what makes this experience uniquely yours. What will they see, do, taste, or learn?"
-            className="w-full text-sm font-mono bg-[#F5F1E6]/60 border border-[#D4CFC0] rounded-xl p-3.5 text-[#2C2C2C] placeholder-[#2C2C2C]/30 focus:outline-none focus:border-[#347F8C] transition resize-none"
+            placeholder="Tell travelers what makes this experience uniquely yours. What will they see, do, taste, or learn? (minimum 20 characters)"
+            className={`w-full text-sm font-mono bg-[#F5F1E6]/60 border rounded-xl p-3.5 text-[#2C2C2C] placeholder-[#2C2C2C]/30 focus:outline-none transition resize-none ${
+              draft.description.trim().length > 0 && draft.description.trim().length < 20
+                ? 'border-amber-400 focus:border-amber-500'
+                : 'border-[#D4CFC0] focus:border-[#347F8C]'
+            }`}
           />
-          <p className="text-[10px] font-mono text-[#5C6460] mt-1">{draft.description.length} / 4000 chars</p>
+          <p className="text-[10px] font-mono text-[#5C6460] mt-1">
+            Detailed descriptions improve search visibility and traveler booking confidence.
+          </p>
         </div>
 
         {/* Category-specific extras */}
@@ -701,9 +726,13 @@ export default function ListingForm({ token, onDraftSaved, onPublished }: Listin
                 type="button"
                 disabled={!isPublishEligible || saving}
                 onClick={handlePublish}
-                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#A69B80] hover:bg-[#7a9e6e] disabled:opacity-40 text-white text-xs font-mono uppercase tracking-wider font-bold rounded-xl shadow-md shadow-[#A69B80]/20 transition"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#A69B80] hover:bg-[#7a9e6e] disabled:opacity-40 text-white text-xs font-mono uppercase tracking-wider font-bold rounded-xl shadow-md shadow-[#A69B80]/20 transition cursor-pointer active:scale-95"
               >
-                <Globe className="w-3.5 h-3.5" />
+                {saving ? (
+                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Globe className="w-3.5 h-3.5" />
+                )}
                 {saving ? 'Publishing…' : 'Publish listing'}
               </button>
             </div>
