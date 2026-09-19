@@ -55,3 +55,11 @@ backend/.env
 frontend/.env.local
 frontend/.env.development.local
 frontend/.env.test.local
+
+# ─── Local scratch / brag / video artifacts ───────────────────────────────────
+brag-output/
+brag-sigma/
+document/
+*.mp4
+*.pdf
+frontend/fallback_portal.png
