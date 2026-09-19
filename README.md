@@ -13,9 +13,6 @@ Journi is a full-stack, AI-powered experience discovery and itinerary planning p
     <img src="./document/Journi-Launch.gif" alt="Journi Launch Video Preview" width="720" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" />
   </a>
 </p>
-<p align="center">
-  <sub>▶️ <em>Click the preview above to watch the full HD video with audio</em></sub>
-</p>
 
 ---
 
