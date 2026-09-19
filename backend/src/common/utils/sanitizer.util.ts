@@ -1,7 +1,8 @@
-import sanitizeHtml from 'sanitize-html';
+import * as sanitizeHtmlNamespace from 'sanitize-html';
+const sanitizeHtml = (sanitizeHtmlNamespace as any).default || sanitizeHtmlNamespace;
 
 export class ContentSanitizer {
-  private static readonly strictOptions: sanitizeHtml.IOptions = {
+  private static readonly strictOptions: any = {
     allowedTags: ['b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li'],
     allowedAttributes: {},
     disallowedTagsMode: 'discard',

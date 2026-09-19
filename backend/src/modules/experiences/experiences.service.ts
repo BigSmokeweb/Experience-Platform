@@ -80,7 +80,13 @@ export class ExperiencesService {
           $11, $12, $13, $14::"BudgetBand", $15::text[],
           $16::text[], $17::jsonb, $18, $19, NOW()
         )
-        RETURNING *;
+        RETURNING
+          "id", "provider_id" AS "providerId", "title", "description", "category",
+          "latitude", "longitude", "address", "city", "state", "country",
+          "price_min" AS "priceMin", "price_max" AS "priceMax", "currency",
+          "budget_band" AS "budgetBand", "accessibility_tags" AS "accessibilityTags",
+          "media_urls" AS "mediaUrls", "availability_rules" AS "availabilityRules",
+          "duration_minutes" AS "durationMinutes", "published", "updated_at" AS "updatedAt";
         `,
         provider.id,
         sanitizedTitle,
