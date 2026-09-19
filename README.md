@@ -6,6 +6,16 @@ Journi is a full-stack, AI-powered experience discovery and itinerary planning p
 
 ---
 
+## 🎬 Product Walkthrough & Launch Preview
+
+https://github.com/user-attachments/assets/Journi-Launch.mp4
+
+<video src="./document/Journi-Launch.mp4" controls width="100%" poster="./document/journi-launch-poster.jpg">
+  <p>Your browser does not support the video tag. You can <a href="./document/Journi-Launch.mp4">download or watch the launch video here</a>.</p>
+</video>
+
+---
+
 ## Live Deployments
 
 | Service | URL |
