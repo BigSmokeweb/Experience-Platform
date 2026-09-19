@@ -56,9 +56,7 @@ frontend/.env.local
 frontend/.env.development.local
 frontend/.env.test.local
 
-# ─── Local scratch / brag / video artifacts ───────────────────────────────────
-brag-output/
-brag-sigma/
+# ─── Local scratch / video artifacts ───────────────────────────────────
 document/
 *.mp4
 *.pdf
