@@ -59,7 +59,10 @@ frontend/.env.test.local
 # ─── Local scratch / video artifacts ───────────────────────────────────
 document/*
 !document/Journi-Launch.mp4
+!document/Journi-Launch.gif
 !document/*.jpg
 !document/*.png
+*.mp4
+!document/Journi-Launch.mp4
 *.pdf
 frontend/fallback_portal.png
