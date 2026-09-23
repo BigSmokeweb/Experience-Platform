@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { API_BASE } from '@/lib/api-client';
 import { Star, Clock, ShieldCheck, MapPin, ArrowLeft, ArrowRight, Compass, CheckCircle2 } from 'lucide-react';
 import { BookmarkButton } from '@/components/BookmarkButton';
+import { BackButton } from '@/components/BackButton';
 
 const FALLBACK_DIRECTORY: Record<string, any> = {
   'exp-1': {
@@ -95,7 +96,7 @@ async function getExperience(id: string) {
   let rawExp: any = null;
   try {
     const res = await fetch(`${API_BASE}/experiences/${id}`, {
-      next: { revalidate: 60 },
+      cache: 'no-store',
     });
     if (res.ok) {
       rawExp = await res.json();
@@ -165,13 +166,12 @@ export default async function ExperienceDetailPage({ params }: { params: { id: s
   return (
     <div className="bg-[#F5F1E6] text-[#2C2C2C] min-h-screen pt-28 pb-24 selection:bg-[#8B7355]/30 selection:text-[#2C2C2C]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Link
-          href="/#curated-experiences"
-          className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#2C2C2C]/70 hover:text-[#347F8C] transition-colors mb-8"
-        >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Return to Curated Experiences</span>
-        </Link>
+        <BackButton
+          fallbackHref="/#curated-experiences"
+          label="Return to Curated Experiences"
+          className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-[#2C2C2C]/70 hover:text-[#347F8C] transition-colors mb-8 cursor-pointer"
+          iconClassName="w-3.5 h-3.5"
+        />
 
         {/* Main Experience Header Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mb-14">

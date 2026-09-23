@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       params.set('limit', limit.toString());
 
       const res = await fetch(`${API_BASE}/experiences/catalog?${params}`, {
-        next: { revalidate: 60 },
+        cache: 'no-store',
       });
       if (res.ok) {
         const data = await res.json();

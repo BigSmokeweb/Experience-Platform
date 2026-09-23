@@ -129,10 +129,11 @@ export function TripAreaMap({
           attributionControl: false,
         });
 
-        // Standard OpenStreetMap tiles (100% free, open, zero API key required)
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // OSM France mirror (free, no API key, no rate limits)
+        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
           maxZoom: 19,
-          attribution: '&copy; OpenStreetMap contributors',
+          subdomains: 'abc',
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles: <a href="https://www.hotosm.org/">HOT</a>',
         }).addTo(map);
 
         // Custom position zoom control

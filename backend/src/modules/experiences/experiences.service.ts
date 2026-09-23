@@ -401,13 +401,20 @@ export class ExperiencesService {
       }),
     ]);
 
+    const ensureSlash = (u?: string) => (u && typeof u === 'string' && u.startsWith('catalog-images/') ? '/' + u : u || '');
     const mapped = data.map((exp: any) => {
       const meta = (exp.metadata as any) || {};
+      const coverUrl = ensureSlash(meta.cover || exp.mediaUrls?.[0] || '');
+      const mediaList = (exp.mediaUrls || []).map(ensureSlash);
+      if (coverUrl && !mediaList.includes(coverUrl)) {
+        mediaList.unshift(coverUrl);
+      }
       return {
         ...exp,
         candidateLat: exp.latitude,
         candidateLng: exp.longitude,
-        cover: meta.cover || exp.mediaUrls?.[0] || '',
+        cover: coverUrl,
+        mediaUrls: mediaList,
         categoryLabel: meta.categoryLabel || exp.category,
         humanTip: meta.humanTip || '',
         bestTime: meta.bestTime || '',
@@ -463,12 +470,19 @@ export class ExperiencesService {
       throw new NotFoundException('Experience not found');
     }
 
+    const ensureSlash = (u?: string) => (u && typeof u === 'string' && u.startsWith('catalog-images/') ? '/' + u : u || '');
     const meta = (experience.metadata as any) || {};
+    const coverUrl = ensureSlash(meta.cover || experience.mediaUrls?.[0] || '');
+    const mediaList = (experience.mediaUrls || []).map(ensureSlash);
+    if (coverUrl && !mediaList.includes(coverUrl)) {
+      mediaList.unshift(coverUrl);
+    }
     return {
       ...experience,
       candidateLat: experience.latitude,
       candidateLng: experience.longitude,
-      cover: meta.cover || experience.mediaUrls?.[0] || '',
+      cover: coverUrl,
+      mediaUrls: mediaList,
       categoryLabel: meta.categoryLabel || experience.category,
       humanTip: meta.humanTip || '',
       bestTime: meta.bestTime || '',

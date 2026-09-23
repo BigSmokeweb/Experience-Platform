@@ -37,7 +37,7 @@ const EXCLUDED_CITIES = new Set(['jaipur', 'ahmedabad']);
 async function getAllExperiences(): Promise<ExperienceData[]> {
   try {
     const res = await fetch(`${API_BASE}/experiences/catalog?limit=500`, {
-      next: { revalidate: 60 },
+      cache: 'no-store',
     });
     if (res.ok) {
       const data = await res.json();

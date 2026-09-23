@@ -72,10 +72,11 @@ export function CitiesLeafletMap({
         scrollWheelZoom: true,
       });
 
-      // Standard OpenStreetMap Tile Layer
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 18,
-        attribution: '&copy; OpenStreetMap',
+      // OSM France mirror (free, no API key, no rate limits)
+      L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        subdomains: 'abc',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles: <a href="https://www.hotosm.org/">HOT</a>',
       }).addTo(map);
 
       // Subtle Zoom Control in bottom-right

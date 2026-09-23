@@ -41,7 +41,7 @@ const EXCLUDED_CITIES = new Set(['jaipur', 'ahmedabad']);
 async function getAllExperiences(): Promise<ExperienceData[]> {
   try {
     const res = await fetch(`${API_BASE}/experiences/catalog?limit=500`, {
-      next: { revalidate: 60 },
+      cache: 'no-store',
     });
     if (res.ok) {
       const data = await res.json();
@@ -51,6 +51,8 @@ async function getAllExperiences(): Promise<ExperienceData[]> {
           .map((e: any) => ({
             ...e,
             title: e.title || e.name || 'Local Experience',
+            cover: e.cover || e.metadata?.cover || (e.mediaUrls?.[0] ?? ''),
+            mediaUrls: e.mediaUrls && e.mediaUrls.length > 0 ? e.mediaUrls : (e.cover ? [e.cover] : []),
             provider: e.provider
               ? {
                   businessName: e.provider.businessName ?? undefined,

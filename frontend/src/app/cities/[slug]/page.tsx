@@ -6,6 +6,7 @@ import { API_BASE } from '@/lib/api-client';
 import { Star, Clock, ShieldCheck, ArrowRight, ArrowLeft, MapPin } from 'lucide-react';
 import { AnimatedCounter } from '@/components/AnimatedCounter';
 import { CityExperiencesGrid } from '@/components/CityExperiencesGrid';
+import { BackButton } from '@/components/BackButton';
 
 const CITY_DATA: Record<string, { name: string; state: string; desc: string; heroImage: string; experiences: any[] }> = {
   mumbai: {
@@ -86,7 +87,7 @@ import catalogDataset from '@/lib/catalog-dataset.json';
 async function getCityExperiences(cityName: string, fallbackList: any[]) {
   try {
     const res = await fetch(`${API_BASE}/experiences/catalog?city=${encodeURIComponent(cityName)}&limit=500`, {
-      next: { revalidate: 60 },
+      cache: 'no-store',
     });
     if (res.ok) {
       const data = await res.json();
@@ -120,13 +121,12 @@ export default async function CityDiscoveryPage({ params }: { params: { slug: st
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Go Back Button */}
         <div className="mb-6 flex items-center justify-between">
-          <Link
-            href="/#curated-experiences"
-            className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#2C2C2C] hover:text-[#347F8C] bg-white border border-[#D4CFC0] hover:border-[#347F8C]/60 px-4 py-2.5 rounded-xl transition-all duration-200 shadow-xs hover:shadow-sm font-bold active:scale-95"
-          >
-            <ArrowLeft className="w-4 h-4 text-[#347F8C]" />
-            <span>Go Back</span>
-          </Link>
+          <BackButton
+            fallbackHref="/#curated-experiences"
+            label="Go Back"
+            className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#2C2C2C] hover:text-[#347F8C] bg-white border border-[#D4CFC0] hover:border-[#347F8C]/60 px-4 py-2.5 rounded-xl transition-all duration-200 shadow-xs hover:shadow-sm font-bold active:scale-95 cursor-pointer"
+            iconClassName="w-4 h-4 text-[#347F8C]"
+          />
           <span className="text-xs font-mono text-[#5C6460]/80">
             {city.name} Regional Archive
           </span>
@@ -177,13 +177,12 @@ export default async function CityDiscoveryPage({ params }: { params: { slug: st
 
         {/* Bottom Go Back Footer */}
         <div className="mt-14 pt-8 border-t border-[#D4CFC0] flex items-center justify-between">
-          <Link
-            href="/#curated-experiences"
-            className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#2C2C2C] hover:text-[#347F8C] bg-white border border-[#D4CFC0] hover:border-[#347F8C]/60 px-5 py-3 rounded-xl transition-all duration-200 shadow-xs hover:shadow-sm font-bold active:scale-95"
-          >
-            <ArrowLeft className="w-4 h-4 text-[#347F8C]" />
-            <span>Go Back to Curated Experiences</span>
-          </Link>
+          <BackButton
+            fallbackHref="/#curated-experiences"
+            label="Go Back to Curated Experiences"
+            className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[#2C2C2C] hover:text-[#347F8C] bg-white border border-[#D4CFC0] hover:border-[#347F8C]/60 px-5 py-3 rounded-xl transition-all duration-200 shadow-xs hover:shadow-sm font-bold active:scale-95 cursor-pointer"
+            iconClassName="w-4 h-4 text-[#347F8C]"
+          />
         </div>
       </div>
     </div>

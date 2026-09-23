@@ -9,7 +9,7 @@ import {
 import {
   ChefHat, Landmark, Compass, Gem, Moon, CalendarDays, Scissors, ShoppingBag,
   MapPin, DollarSign, Image as ImageIcon, Clock, Users, ArrowRight, ArrowLeft,
-  Save, Globe, CheckCircle2,
+  Save, Globe, CheckCircle2, LocateFixed, Upload, X,
 } from 'lucide-react';
 import { addHostListing } from '@/lib/host-listings-store';
 
@@ -97,6 +97,7 @@ export default function ListingForm({ token, onDraftSaved, onPublished }: Listin
   const [saving, setSaving] = useState(false);
   const isSavingRef = useRef(false);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [locating, setLocating] = useState(false);
 
   const update = useCallback(<K extends keyof DraftState>(key: K, value: DraftState[K]) => {
     setDraft((prev) => ({ ...prev, [key]: value }));
@@ -338,33 +339,61 @@ export default function ListingForm({ token, onDraftSaved, onPublished }: Listin
         </div>
       </div>
 
-      {/* Lat/Lng */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-[10px] font-mono uppercase tracking-widest text-[#347F8C] font-bold mb-1.5">
-            Latitude <span className="text-red-400">*</span>
-          </label>
-          <input
-            type="number"
-            step="any"
-            value={draft.latitude ?? ''}
-            onChange={(e) => update('latitude', e.target.value ? parseFloat(e.target.value) : undefined)}
-            placeholder="e.g. 26.9124"
-            className="w-full text-sm font-mono bg-[#F5F1E6]/60 border border-[#D4CFC0] rounded-xl p-3.5 text-[#2C2C2C] placeholder-[#2C2C2C]/30 focus:outline-none focus:border-[#347F8C] transition"
-          />
+      {/* Lat/Lng + Get Location */}
+      <div>
+        <div className="flex items-center gap-3 mb-2">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-[#347F8C] font-bold">
+            Coordinates <span className="text-red-400">*</span>
+          </span>
+          <button
+            type="button"
+            disabled={locating}
+            onClick={() => {
+              if (!navigator.geolocation) { setPublishError('Geolocation not supported by your browser.'); return; }
+              setLocating(true);
+              navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                  update('latitude', Math.round(pos.coords.latitude * 1e6) / 1e6);
+                  update('longitude', Math.round(pos.coords.longitude * 1e6) / 1e6);
+                  setLocating(false);
+                },
+                (err) => { setPublishError('Location access denied: ' + err.message); setLocating(false); },
+                { enableHighAccuracy: true, timeout: 10000 }
+              );
+            }}
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-white bg-[#347F8C] hover:bg-[#2A6772] rounded-lg transition disabled:opacity-50"
+          >
+            <LocateFixed className="w-3 h-3" />
+            {locating ? 'Getting…' : 'Get my location'}
+          </button>
         </div>
-        <div>
-          <label className="block text-[10px] font-mono uppercase tracking-widest text-[#347F8C] font-bold mb-1.5">
-            Longitude <span className="text-red-400">*</span>
-          </label>
-          <input
-            type="number"
-            step="any"
-            value={draft.longitude ?? ''}
-            onChange={(e) => update('longitude', e.target.value ? parseFloat(e.target.value) : undefined)}
-            placeholder="e.g. 75.7873"
-            className="w-full text-sm font-mono bg-[#F5F1E6]/60 border border-[#D4CFC0] rounded-xl p-3.5 text-[#2C2C2C] placeholder-[#2C2C2C]/30 focus:outline-none focus:border-[#347F8C] transition"
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-[10px] font-mono uppercase tracking-widest text-[#347F8C] font-bold mb-1.5">
+              Latitude
+            </label>
+            <input
+              type="number"
+              step="any"
+              value={draft.latitude ?? ''}
+              onChange={(e) => update('latitude', e.target.value ? parseFloat(e.target.value) : undefined)}
+              placeholder="e.g. 26.9124"
+              className="w-full text-sm font-mono bg-[#F5F1E6]/60 border border-[#D4CFC0] rounded-xl p-3.5 text-[#2C2C2C] placeholder-[#2C2C2C]/30 focus:outline-none focus:border-[#347F8C] transition"
+            />
+          </div>
+          <div>
+            <label className="block text-[10px] font-mono uppercase tracking-widest text-[#347F8C] font-bold mb-1.5">
+              Longitude
+            </label>
+            <input
+              type="number"
+              step="any"
+              value={draft.longitude ?? ''}
+              onChange={(e) => update('longitude', e.target.value ? parseFloat(e.target.value) : undefined)}
+              placeholder="e.g. 75.7873"
+              className="w-full text-sm font-mono bg-[#F5F1E6]/60 border border-[#D4CFC0] rounded-xl p-3.5 text-[#2C2C2C] placeholder-[#2C2C2C]/30 focus:outline-none focus:border-[#347F8C] transition"
+            />
+          </div>
         </div>
       </div>
 
@@ -554,23 +583,71 @@ export default function ListingForm({ token, onDraftSaved, onPublished }: Listin
         </p>
       </div>
 
-      {/* Photo URLs */}
+      {/* Photos — Upload from device + URL input */}
       <div>
-        <label className="block text-[10px] font-mono uppercase tracking-widest text-[#347F8C] font-bold mb-1.5">
-          <ImageIcon className="w-3 h-3 inline mr-1" />Photo URLs (one per line, min 1 to publish)
+        <label className="block text-[10px] font-mono uppercase tracking-widest text-[#347F8C] font-bold mb-2">
+          <ImageIcon className="w-3 h-3 inline mr-1" />Photos (min 1 to publish)
         </label>
-        <textarea
-          rows={4}
-          value={draft.mediaUrls.join('\n')}
-          onChange={(e) =>
-            update(
-              'mediaUrls',
-              e.target.value.split('\n').map((s) => s.trim()).filter(Boolean),
-            )
-          }
-          placeholder={'https://images.unsplash.com/...\nhttps://images.unsplash.com/...'}
-          className="w-full text-xs font-mono bg-[#F5F1E6]/60 border border-[#D4CFC0] rounded-xl p-3.5 text-[#2C2C2C] placeholder-[#2C2C2C]/30 focus:outline-none focus:border-[#347F8C] transition resize-none"
-        />
+
+        {/* Upload from device */}
+        <label className="inline-flex items-center gap-1.5 px-4 py-2.5 mb-3 text-[10px] font-mono uppercase tracking-wider text-white bg-[#347F8C] hover:bg-[#2A6772] rounded-xl cursor-pointer transition shadow-sm">
+          <Upload className="w-3.5 h-3.5" />
+          Upload from device
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              const files = Array.from(e.target.files || []);
+              files.forEach((file) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                  if (typeof reader.result === 'string') {
+                    setDraft((prev) => ({ ...prev, mediaUrls: [...prev.mediaUrls, reader.result as string] }));
+                  }
+                };
+                reader.readAsDataURL(file);
+              });
+              e.target.value = '';
+            }}
+          />
+        </label>
+
+        {/* Thumbnail previews */}
+        {draft.mediaUrls.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {draft.mediaUrls.map((url, i) => (
+              <div key={i} className="relative group w-20 h-20 rounded-lg overflow-hidden border border-[#D4CFC0] bg-[#EAE5D6]">
+                <img src={url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => update('mediaUrls', draft.mediaUrls.filter((_, j) => j !== i))}
+                  className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                >
+                  <X className="w-3 h-3 text-white" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* URL input fallback */}
+        <details className="text-xs font-mono text-[#5C6460]">
+          <summary className="cursor-pointer hover:text-[#347F8C] transition">Or paste image URLs</summary>
+          <textarea
+            rows={3}
+            value={draft.mediaUrls.filter((u) => u.startsWith('http')).join('\n')}
+            onChange={(e) => {
+              const urls = e.target.value.split('\n').map((s) => s.trim()).filter(Boolean);
+              const deviceImages = draft.mediaUrls.filter((u) => u.startsWith('data:'));
+              update('mediaUrls', [...deviceImages, ...urls]);
+            }}
+            placeholder={'https://images.unsplash.com/...\nhttps://images.unsplash.com/...'}
+            className="w-full mt-2 text-xs font-mono bg-[#F5F1E6]/60 border border-[#D4CFC0] rounded-xl p-3.5 text-[#2C2C2C] placeholder-[#2C2C2C]/30 focus:outline-none focus:border-[#347F8C] transition resize-none"
+          />
+        </details>
+
         <p className="text-[10px] font-mono text-[#5C6460] mt-1">
           {draft.mediaUrls.length} photo{draft.mediaUrls.length !== 1 ? 's' : ''} added
           {draft.mediaUrls.length < 3 && ' · Add 3+ for best results'}

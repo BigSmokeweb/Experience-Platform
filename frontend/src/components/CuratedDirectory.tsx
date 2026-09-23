@@ -69,6 +69,7 @@ const ExperienceCard = memo(function ExperienceCard({
   compact = false,
   isHovered = false,
   isFaded = false,
+  onClick,
   onMouseEnter,
   onMouseLeave,
 }: {
@@ -76,6 +77,7 @@ const ExperienceCard = memo(function ExperienceCard({
   compact?: boolean;
   isHovered?: boolean;
   isFaded?: boolean;
+  onClick?: () => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 }) {
@@ -178,6 +180,7 @@ const ExperienceCard = memo(function ExperienceCard({
           </div>
           <Link
             href={`/experiences/${exp.id}`}
+            onClick={onClick}
             className="group/btn inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[#F5F1E6] bg-[#347F8C] hover:bg-[#2A6772] font-bold px-3.5 py-1.5 rounded-lg transition-all duration-300 active:scale-95 shadow-md shadow-[#347F8C]/20"
           >
             <span>Explore</span>
@@ -202,21 +205,111 @@ function CityExpeditionSection({
   isNearest: boolean;
   experiences: CuratedExperience[];
 }) {
+  const cityKey = cityName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+  const storageKey = `journi_expanded_city_${cityKey}`;
+  const scrollKey = `journi_scroll_city_${cityKey}`;
+  const limitKey = `journi_limit_city_${cityKey}`;
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Initialize expanded state from sessionStorage so navigating back restores the window
+  const [isExpanded, setIsExpanded] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return sessionStorage.getItem(storageKey) === 'true';
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  });
+
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
-  const [visibleLimit, setVisibleLimit] = useState(8);
+
+  const [visibleLimit, setVisibleLimit] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = sessionStorage.getItem(limitKey);
+        if (saved) return Math.max(8, parseInt(saved, 10));
+      } catch {}
+    }
+    return 8;
+  });
 
   const topThree = experiences.slice(0, 3);
   const remainingExperiences = experiences.slice(3);
   const visibleRemaining = remainingExperiences.slice(0, visibleLimit);
   const hasMore = visibleLimit < remainingExperiences.length;
 
-  // Reset visible batch count when experiences or expansion state changes
+  // Toggle expansion & persist in sessionStorage
+  const handleToggleExpand = () => {
+    setIsExpanded((prev) => {
+      const next = !prev;
+      try {
+        if (next) {
+          sessionStorage.setItem(storageKey, 'true');
+        } else {
+          sessionStorage.removeItem(storageKey);
+          sessionStorage.removeItem(scrollKey);
+          sessionStorage.removeItem(limitKey);
+        }
+      } catch {}
+      return next;
+    });
+  };
+
+  // Restore horizontal scroll position when expanded
   useEffect(() => {
-    setVisibleLimit(8);
-  }, [experiences, isExpanded]);
+    if (!isExpanded || !scrollRef.current) return;
+    try {
+      const savedScroll = sessionStorage.getItem(scrollKey);
+      if (savedScroll) {
+        const left = parseInt(savedScroll, 10);
+        if (!isNaN(left) && left > 0) {
+          const timer = setTimeout(() => {
+            if (scrollRef.current) {
+              scrollRef.current.scrollLeft = left;
+            }
+          }, 80);
+          return () => clearTimeout(timer);
+        }
+      }
+    } catch {}
+  }, [isExpanded, scrollKey, visibleLimit]);
+
+  // Save horizontal scroll position on scroll
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !isExpanded) return;
+
+    let timeout: any;
+    const onScroll = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        try {
+          sessionStorage.setItem(scrollKey, String(el.scrollLeft));
+        } catch {}
+      }, 100);
+    };
+
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      clearTimeout(timeout);
+    };
+  }, [isExpanded, scrollKey]);
+
+  // Save state when clicking an experience card
+  const handleCardClick = () => {
+    try {
+      sessionStorage.setItem('journi_last_active_city', cityKey);
+      sessionStorage.setItem('journi_page_scroll_y', String(window.scrollY));
+      if (scrollRef.current && isExpanded) {
+        sessionStorage.setItem(scrollKey, String(scrollRef.current.scrollLeft));
+      }
+    } catch {}
+  };
 
   // Infinite Scroll: automatically load next batch of cards when scrolling near the end
   useEffect(() => {
@@ -228,7 +321,13 @@ function CityExpeditionSection({
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting) {
-          setVisibleLimit((prev) => Math.min(prev + 8, remainingExperiences.length));
+          setVisibleLimit((prev) => {
+            const next = Math.min(prev + 8, remainingExperiences.length);
+            try {
+              sessionStorage.setItem(limitKey, String(next));
+            } catch {}
+            return next;
+          });
         }
       },
       {
@@ -240,7 +339,7 @@ function CityExpeditionSection({
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [isExpanded, hasMore, remainingExperiences.length]);
+  }, [isExpanded, hasMore, remainingExperiences.length, limitKey]);
 
   // Wheel listener: map vertical wheel to sideways horizontal scroll
   useEffect(() => {
@@ -264,7 +363,13 @@ function CityExpeditionSection({
   const scroll = (direction: 'left' | 'right') => {
     if (scrollRef.current) {
       if (direction === 'right' && hasMore) {
-        setVisibleLimit((prev) => Math.min(prev + 8, remainingExperiences.length));
+        setVisibleLimit((prev) => {
+          const next = Math.min(prev + 8, remainingExperiences.length);
+          try {
+            sessionStorage.setItem(limitKey, String(next));
+          } catch {}
+          return next;
+        });
       }
       const scrollAmount = direction === 'left' ? -420 : 420;
       scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
@@ -272,7 +377,7 @@ function CityExpeditionSection({
   };
 
   return (
-    <section className="mb-20 last:mb-0">
+    <section className="mb-20 last:mb-0" id={`city-${cityKey}`}>
       {/* ─── City Subheading & Distance Indicator ─── */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-[#C4A265] pb-4 mb-6">
         <div>
@@ -293,7 +398,7 @@ function CityExpeditionSection({
               </span>
             )}
           </div>
-          <h3 className="flex items-baseline gap-3 my-1 sm:my-1.5">
+          <h3 className="flex items-baseline gap-3 my-1 sm:my-1.5 scroll-fade-ready">
             <span className="font-edu-cursive font-normal text-3xl sm:text-4xl lg:text-[42px] text-[#2C2C2C] tracking-wide leading-normal">
               {cityName}
             </span>
@@ -307,7 +412,7 @@ function CityExpeditionSection({
       {/* ─── Top 3 Curated Experiences Grid ─── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         {topThree.map((exp) => (
-          <ExperienceCard key={exp.id} exp={exp} />
+          <ExperienceCard key={exp.id} exp={exp} onClick={handleCardClick} />
         ))}
       </div>
 
@@ -316,7 +421,7 @@ function CityExpeditionSection({
         <div className="flex items-center justify-between mb-6">
           <button
             type="button"
-            onClick={() => setIsExpanded((prev) => !prev)}
+            onClick={handleToggleExpand}
             className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-xl border border-[#347F8C] bg-white hover:bg-[#347F8C] text-[#347F8C] hover:text-[#F5F1E6] font-mono text-xs uppercase tracking-wider font-bold transition-all duration-200 shadow-xs hover:shadow-md active:scale-95 cursor-pointer"
           >
             <span>{isExpanded ? `Collapse ${cityName} Experiences` : `Explore All ${cityName} (${experiences.length})`}</span>
@@ -376,6 +481,7 @@ function CityExpeditionSection({
                   compact
                   isHovered={hoveredCardId === exp.id}
                   isFaded={hoveredCardId !== null && hoveredCardId !== exp.id}
+                  onClick={handleCardClick}
                   onMouseEnter={() => setHoveredCardId(exp.id)}
                   onMouseLeave={() => setHoveredCardId(null)}
                 />
@@ -433,6 +539,44 @@ function CuratedDirectoryContent({
         { enableHighAccuracy: false, timeout: 5000 }
       );
     }
+  }, []);
+
+  // Restore the previous city only for browser back/forward navigation.
+  // A reload must start at the hero rather than reviving stale session state.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+      if (navigation?.type !== 'back_forward') return;
+
+      const lastActiveCity = sessionStorage.getItem('journi_last_active_city');
+      const savedPageScroll = sessionStorage.getItem('journi_page_scroll_y');
+
+      if (lastActiveCity || savedPageScroll) {
+        const restoreScroll = () => {
+          if (lastActiveCity) {
+            const cityEl = document.getElementById(`city-${lastActiveCity}`);
+            if (cityEl) {
+              cityEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              return;
+            }
+          }
+          if (savedPageScroll) {
+            const y = parseInt(savedPageScroll, 10);
+            if (!isNaN(y) && y > 0) {
+              window.scrollTo({ top: y, behavior: 'smooth' });
+            }
+          }
+        };
+
+        const t1 = setTimeout(restoreScroll, 120);
+        const t2 = setTimeout(restoreScroll, 400);
+        return () => {
+          clearTimeout(t1);
+          clearTimeout(t2);
+        };
+      }
+    } catch {}
   }, []);
 
   useEffect(() => {

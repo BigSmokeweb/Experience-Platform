@@ -135,18 +135,18 @@ export function HeroParallaxVideo() {
       {/* Subtle top header gradient solely for navbar contrast */}
       <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/35 to-transparent pointer-events-none" />
 
-      {/* ─── Seamless Feathered Blend into 2nd Page (Exact Match to Screenshot) ─── */}
+      {/* ─── Seamless Feathered Blend into 2nd Page (Soft mist at bottom ~20% only) ─── */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background: `linear-gradient(
             to bottom,
             transparent 0%,
-            transparent 50%,
-            rgba(245, 241, 230, 0.08) 62%,
-            rgba(245, 241, 230, 0.32) 74%,
-            rgba(245, 241, 230, 0.70) 86%,
-            rgba(245, 241, 230, 0.94) 95%,
+            transparent 72%,
+            rgba(245, 241, 230, 0.08) 80%,
+            rgba(245, 241, 230, 0.28) 87%,
+            rgba(245, 241, 230, 0.65) 93%,
+            rgba(245, 241, 230, 0.92) 97%,
             #F5F1E6 100%
           )`,
         }}

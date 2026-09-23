@@ -384,10 +384,12 @@ function TripSessionContent() {
     }
   }
 
-  // Back button: if finalized, re-open editing to add stops; otherwise return to hero itinerary section
+  // Back button: if finalized, re-open editing to add stops; otherwise return to previous view in stack
   function handleBack() {
     if (isCompleted) {
       reactivateSession();
+    } else if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
     } else {
       router.push('/#itinerary');
     }
