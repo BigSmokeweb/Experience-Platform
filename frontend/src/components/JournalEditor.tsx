@@ -93,7 +93,6 @@ function PhotoThumb({
     <div className="relative group rounded-xl overflow-hidden border border-[#D4CFC0] bg-white">
       <img src={photo.dataUrl} alt={photo.caption || 'Journal photo'} className="w-full h-32 object-cover" />
 
-      {/* Remove button */}
       <button
         type="button"
         onClick={onRemove}
@@ -103,7 +102,6 @@ function PhotoThumb({
         <X className="w-3 h-3" />
       </button>
 
-      {/* Caption row */}
       <div className="p-2">
         {editingCaption ? (
           <input
@@ -141,7 +139,7 @@ function PhotoThumb({
 
 // ─── Main Editor ─────────────────────────────────────────────────────────────
 interface JournalEditorProps {
-  entryId: string; // "new" or an existing UUID
+  entryId: string;
 }
 
 export function JournalEditor({ entryId }: JournalEditorProps) {
@@ -158,7 +156,6 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
   const [photoError, setPhotoError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  // Load existing entry
   useEffect(() => {
     if (!isNew) {
       const existing = getEntry(entryId);
@@ -170,14 +167,12 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
     }
   }, [entryId, isNew, router]);
 
-  // Track dirty state
   const update = useCallback(<K extends keyof JournalEntry>(key: K, value: JournalEntry[K]) => {
     setEntry((prev) => ({ ...prev, [key]: value }));
     setIsDirty(true);
     setSaved(false);
   }, []);
 
-  // Save
   const handleSave = useCallback(() => {
     setSaving(true);
     saveEntry(entry);
@@ -186,13 +181,11 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
       setSaved(true);
       setIsDirty(false);
       if (isNew) {
-        // Navigate to the entry's edit page so URL is stable
         router.replace(`/journal/${entry.id}`);
       }
     }, 400);
   }, [entry, isNew, router]);
 
-  // Keyboard shortcut Ctrl+S / Cmd+S
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
@@ -204,20 +197,15 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
     return () => window.removeEventListener('keydown', handler);
   }, [handleSave]);
 
-  // ── Photo handling ────────────────────────────────────────────────────────
-
   function handlePhotoUpload(files: FileList | null) {
     if (!files) return;
     setPhotoError('');
-
     const remaining = MAX_PHOTOS - entry.photos.length;
     if (remaining <= 0) {
       setPhotoError(`Maximum ${MAX_PHOTOS} photos per entry.`);
       return;
     }
-
     const toProcess = Array.from(files).slice(0, remaining);
-
     toProcess.forEach((file) => {
       if (file.size > MAX_PHOTO_SIZE_MB * 1024 * 1024) {
         setPhotoError(`"${file.name}" exceeds ${MAX_PHOTO_SIZE_MB} MB. Please compress it first.`);
@@ -232,10 +220,7 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
           caption: '',
           takenAt: Date.now(),
         };
-        setEntry((prev) => ({
-          ...prev,
-          photos: [...prev.photos, newPhoto],
-        }));
+        setEntry((prev) => ({ ...prev, photos: [...prev.photos, newPhoto] }));
         setIsDirty(true);
         setSaved(false);
       };
@@ -258,8 +243,6 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
     setSaved(false);
   }
 
-  // ── Tag handling ──────────────────────────────────────────────────────────
-
   function addTag(raw: string) {
     const tag = raw.trim().toLowerCase().replace(/[^a-z0-9\-]/g, '');
     if (!tag || entry.tags.includes(tag) || entry.tags.length >= 10) return;
@@ -271,14 +254,10 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
     update('tags', entry.tags.filter((t) => t !== tag));
   }
 
-  // ── Delete ────────────────────────────────────────────────────────────────
-
   function handleDelete() {
     deleteEntry(entry.id);
     router.push('/journal');
   }
-
-  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-[#F5F1E6] text-[#2C2C2C]">
@@ -294,7 +273,6 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
           </Link>
 
           <div className="flex items-center gap-2">
-            {/* Status */}
             {saved && !isDirty && (
               <span className="hidden sm:flex items-center gap-1.5 text-[10px] font-mono text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full">
                 <CheckCircle2 className="w-3 h-3" />
@@ -307,7 +285,6 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
               </span>
             )}
 
-            {/* Delete (existing only) */}
             {!isNew && (
               confirmDelete ? (
                 <div className="flex items-center gap-2">
@@ -338,7 +315,6 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
               )
             )}
 
-            {/* Save */}
             <button
               type="button"
               onClick={handleSave}
@@ -357,9 +333,9 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
       </div>
 
       {/* ── Editor body ── */}
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 pb-20">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 pb-10">
 
-        {/* ── Section: Title ── */}
+        {/* Title */}
         <div className="mb-6">
           <label className="block text-[10px] font-mono text-[#5C6460] uppercase tracking-wider mb-2">
             Entry Title
@@ -373,9 +349,8 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
           />
         </div>
 
-        {/* ── Section: Meta row (city, date) ── */}
+        {/* City + Date */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          {/* City */}
           <div>
             <label className="flex items-center gap-1.5 text-[10px] font-mono text-[#5C6460] uppercase tracking-wider mb-2">
               <MapPin className="w-3 h-3 text-[#347F8C]" />
@@ -393,7 +368,6 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
             </select>
           </div>
 
-          {/* Date visited */}
           <div>
             <label className="flex items-center gap-1.5 text-[10px] font-mono text-[#5C6460] uppercase tracking-wider mb-2">
               <Calendar className="w-3 h-3 text-[#347F8C]" />
@@ -409,7 +383,7 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
           </div>
         </div>
 
-        {/* ── Section: Experience link ── */}
+        {/* Experience name */}
         <div className="mb-6">
           <label className="flex items-center gap-1.5 text-[10px] font-mono text-[#5C6460] uppercase tracking-wider mb-2">
             <BookOpen className="w-3 h-3 text-[#347F8C]" />
@@ -424,10 +398,9 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
           />
         </div>
 
-        {/* ── Section: Rating + Mood ── */}
+        {/* Rating + Mood */}
         <div className="bg-white/70 border border-[#D4CFC0] rounded-2xl p-5 mb-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {/* Rating */}
             <div>
               <label className="block text-[10px] font-mono text-[#5C6460] uppercase tracking-wider mb-3">
                 Your Rating
@@ -438,7 +411,6 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
               </p>
             </div>
 
-            {/* Mood */}
             <div>
               <label className="block text-[10px] font-mono text-[#5C6460] uppercase tracking-wider mb-3">
                 How it felt
@@ -464,7 +436,7 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
           </div>
         </div>
 
-        {/* ── Section: Journal entry text ── */}
+        {/* Journal text */}
         <div className="mb-6">
           <label className="block text-[10px] font-mono text-[#5C6460] uppercase tracking-wider mb-2">
             Your Journal
@@ -472,7 +444,7 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
           <textarea
             value={entry.content}
             onChange={(e) => update('content', e.target.value)}
-            placeholder="Write about what you saw, heard, tasted, felt…&#10;&#10;Describe the moment you arrived. What surprised you? Who did you meet? What would you tell a friend?"
+            placeholder="Write about what you saw, heard, tasted, felt…"
             rows={14}
             className="w-full px-4 py-4 text-sm bg-white border border-[#D4CFC0] rounded-2xl text-[#2C2C2C] placeholder-stone-300 focus:outline-none focus:border-[#347F8C] transition-colors font-light leading-relaxed resize-none"
           />
@@ -481,7 +453,7 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
           </p>
         </div>
 
-        {/* ── Section: Photos ── */}
+        {/* Photos */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <label className="flex items-center gap-1.5 text-[10px] font-mono text-[#5C6460] uppercase tracking-wider">
@@ -501,7 +473,6 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
             )}
           </div>
 
-          {/* Hidden file input */}
           <input
             ref={fileInputRef}
             type="file"
@@ -511,7 +482,6 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
             onChange={(e) => handlePhotoUpload(e.target.files)}
           />
 
-          {/* Error */}
           {photoError && (
             <p className="text-xs text-red-600 font-mono mb-3 flex items-center gap-1.5">
               <X className="w-3.5 h-3.5" />
@@ -519,7 +489,6 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
             </p>
           )}
 
-          {/* Photo grid */}
           {entry.photos.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
               {entry.photos.map((photo) => (
@@ -530,7 +499,6 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
                   onCaptionChange={(caption) => updatePhotoCaption(photo.id, caption)}
                 />
               ))}
-              {/* Add more tile */}
               {entry.photos.length < MAX_PHOTOS && (
                 <button
                   type="button"
@@ -543,7 +511,6 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
               )}
             </div>
           ) : (
-            /* Drop zone */
             <div
               onClick={() => fileInputRef.current?.click()}
               onDragOver={(e) => e.preventDefault()}
@@ -564,8 +531,8 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
           )}
         </div>
 
-        {/* ── Section: Tags ── */}
-        <div className="mb-8">
+        {/* Tags */}
+        <div className="mb-6">
           <label className="flex items-center gap-1.5 text-[10px] font-mono text-[#5C6460] uppercase tracking-wider mb-3">
             <Tag className="w-3 h-3 text-[#347F8C]" />
             Tags <span className="normal-case text-[#7C8581]">(up to 10)</span>
@@ -617,7 +584,6 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
             </div>
           )}
 
-          {/* Suggested tags */}
           <div className="flex flex-wrap gap-1.5 mt-3">
             {['food', 'heritage', 'culture', 'adventure', 'local', 'photography', 'night', 'craft', 'market', 'nature']
               .filter((t) => !entry.tags.includes(t))
@@ -635,29 +601,48 @@ export function JournalEditor({ entryId }: JournalEditorProps) {
           </div>
         </div>
 
-        {/* ── Bottom save bar ── */}
-        <div className="fixed bottom-0 left-0 right-0 z-30 bg-[#F5F1E6]/95 backdrop-blur-md border-t border-[#D4CFC0] px-4 py-3">
-          <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
+        {/* ── Bottom action bar (inline, not fixed) ── */}
+        <div className="mt-2 pt-6 border-t border-[#D4CFC0] flex items-center justify-between gap-3 flex-wrap">
+          {/* Left: status + back link */}
+          <div className="flex items-center gap-3">
             <p className="text-[10px] font-mono text-[#5C6460]">
-              {isDirty ? 'You have unsaved changes · Ctrl+S to save' : saved ? '✓ All changes saved' : 'No unsaved changes'}
+              {isDirty
+                ? 'Unsaved changes · Ctrl+S to save'
+                : saved
+                ? '✓ All changes saved'
+                : 'No unsaved changes'}
             </p>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving || (!isDirty && !isNew)}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#1C4D56] hover:bg-[#153B42] disabled:opacity-40 text-[#F5F1E6] text-sm font-medium transition-all duration-200 active:scale-95 cursor-pointer disabled:cursor-not-allowed shadow-md shadow-[#1C4D56]/20"
-            >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : saved && !isDirty ? (
-                <CheckCircle2 className="w-4 h-4" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-              {saving ? 'Saving…' : saved && !isDirty ? 'Saved' : 'Save Entry'}
-            </button>
+
+            {/* Back to journal button — only shown when saved */}
+            {saved && !isDirty && (
+              <Link
+                href="/journal"
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-[#C4A265] text-[#1C4D56] text-xs font-mono hover:bg-[#EBE3D5] transition-all duration-200 active:scale-95"
+              >
+                <ArrowLeft className="w-3 h-3" />
+                Back to Journal
+              </Link>
+            )}
           </div>
+
+          {/* Right: save button */}
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || (!isDirty && !isNew)}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#1C4D56] hover:bg-[#153B42] disabled:opacity-40 text-[#F5F1E6] text-sm font-medium transition-all duration-200 active:scale-95 cursor-pointer disabled:cursor-not-allowed shadow-md shadow-[#1C4D56]/20"
+          >
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : saved && !isDirty ? (
+              <CheckCircle2 className="w-4 h-4" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            {saving ? 'Saving…' : saved && !isDirty ? 'Saved' : 'Save Entry'}
+          </button>
         </div>
+
       </div>
     </div>
   );

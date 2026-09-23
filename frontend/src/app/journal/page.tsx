@@ -347,13 +347,7 @@ export default function JournalPage() {
             <p className="text-sm text-[#5C6460] font-light max-w-sm leading-relaxed mb-8">
               Start documenting your experiences across Maharashtra — the food, the people, the moments that made you feel alive.
             </p>
-            <Link
-              href="/journal/new"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#1C4D56] hover:bg-[#153B42] text-[#F5F1E6] text-sm font-medium transition-all duration-200 shadow-md shadow-[#1C4D56]/20 active:scale-95"
-            >
-              <Plus className="w-4 h-4" />
-              Write your first entry
-            </Link>
+
           </div>
         ) : filtered.length === 0 ? (
           /* No results */

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Bookmark, User, LogOut, ChevronDown, Compass, Handshake, LogIn, Menu, X } from 'lucide-react';
+import { BookOpen, User, LogOut, ChevronDown, Compass, Handshake, LogIn, Menu, X } from 'lucide-react';
 import { NearbyCitiesDropdown } from '@/components/NearbyCitiesDropdown';
 import { CollectionDrawer } from '@/components/CollectionDrawer';
 import { useCollection } from '@/lib/collection-store';
@@ -63,7 +63,7 @@ export function Navbar() {
             : 'bg-[#F5F1E6]/95 backdrop-blur-xl border border-[#C4A265]/40 text-[#2C2C2C] shadow-lg shadow-stone-900/10'
         }`}
       >
-        {/* Left: Brand Logo (Transparent background-removed, no opaque box) */}
+        {/* Left: Brand Logo */}
         <Link
           href="/"
           onClick={(e) => {
@@ -87,7 +87,7 @@ export function Navbar() {
           </div>
         </Link>
 
-        {/* Right: Navigation Links & Action Pills grouped together next to Plan Journey */}
+        {/* Right: Navigation Links & Action Pills */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {/* Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center space-x-1 sm:space-x-1.5 text-xs sm:text-sm font-medium mr-1">
@@ -113,28 +113,21 @@ export function Navbar() {
               <NearbyCitiesDropdown isHome={isHome} scrolled={scrolled} />
             </div>
 
-            {/* Travel Journal Slide-over trigger */}
-            <button
-              type="button"
-              onClick={() => setIsJournalOpen(true)}
-              className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition-all duration-200 cursor-pointer ${
+            {/* My Journal link — replaces the old Journal slide-over button */}
+            <Link
+              href="/journal"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition-all duration-200 ${
                 isDarkNav
                   ? 'text-white/90 hover:text-white hover:bg-white/15'
                   : 'text-[#2C2C2C]/85 hover:text-[#1F2937] hover:bg-black/5'
-              }`}
-              title="Open Travel Journal"
+              } ${pathname.startsWith('/journal') ? 'text-[#347F8C] font-semibold' : ''}`}
             >
-              <Bookmark className={`w-3.5 h-3.5 transition-colors ${count > 0 ? 'fill-[#C4A265] text-[#C4A265]' : ''}`} />
-              <span>Journal</span>
-              {count > 0 && (
-                <span className="w-4 h-4 rounded-full bg-[#C4A265] text-[#2C2C2C] text-[9px] font-mono font-bold flex items-center justify-center shadow-xs">
-                  {count}
-                </span>
-              )}
-            </button>
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>My Journal</span>
+            </Link>
           </nav>
 
-          {/* Action 1: Transparent / Frosted Pill (Plan Journey) */}
+          {/* Action 1: Plan Journey */}
           <Link
             href="/#itinerary"
             onClick={(e) => {
@@ -154,7 +147,7 @@ export function Navbar() {
             <span>Journey</span>
           </Link>
 
-          {/* Action 2: Outlined Pill (Partner With Us) - Desktop */}
+          {/* Action 2: Partner With Us */}
           <Link
             href="/provider/portal"
             className={`hidden md:flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-medium tracking-wide transition-all duration-200 active:scale-95 border ${
@@ -167,7 +160,7 @@ export function Navbar() {
             <span>Partner With Us</span>
           </Link>
 
-          {/* Action 3: Outlined Pill (Login / User Profile Menu) */}
+          {/* Action 3: Login / User Profile */}
           {userName ? (
             <div className="relative">
               <button
@@ -241,7 +234,7 @@ export function Navbar() {
             </Link>
           )}
 
-          {/* Action 4: Mobile Hamburger Menu Toggle Button (Visible on screens < lg) */}
+          {/* Mobile Hamburger */}
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -294,26 +287,18 @@ export function Navbar() {
               <NearbyCitiesDropdown isHome={false} scrolled={true} />
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                setIsJournalOpen(true);
-              }}
-              className="flex items-center justify-between px-4 py-2.5 rounded-xl hover:bg-black/5 text-sm font-medium transition-colors text-left w-full cursor-pointer"
+            {/* My Journal — mobile */}
+            <Link
+              href="/journal"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center justify-between px-4 py-2.5 rounded-xl hover:bg-black/5 text-sm font-medium transition-colors"
             >
               <div className="flex items-center gap-2">
-                <Bookmark className={`w-4 h-4 ${count > 0 ? 'fill-[#C4A265] text-[#C4A265]' : 'text-[#347F8C]'}`} />
-                <span>Travel Journal</span>
+                <BookOpen className="w-4 h-4 text-[#347F8C]" />
+                <span>My Journal</span>
               </div>
-              {count > 0 ? (
-                <span className="px-2 py-0.5 rounded-full bg-[#C4A265] text-[#2C2C2C] text-[10px] font-mono font-bold">
-                  {count} saved
-                </span>
-              ) : (
-                <span className="text-[10px] font-mono text-[#5C6460]">0 saved</span>
-              )}
-            </button>
+              <span className="text-[10px] font-mono text-[#5C6460]">Entries</span>
+            </Link>
 
             <Link
               href="/provider/portal"
@@ -330,7 +315,7 @@ export function Navbar() {
         </div>
       )}
 
-      {/* Travel Journal Slide-Over Drawer */}
+      {/* Travel Journal Slide-Over Drawer — kept for The Collection bookmarks */}
       <CollectionDrawer isOpen={isJournalOpen} onClose={() => setIsJournalOpen(false)} />
     </header>
   );
