@@ -93,6 +93,7 @@ At 5:30 AM, witness the vibrant arrival of Bombay's indigenous Koli fishing traw
 
 import { ExperienceGallery } from '@/components/ExperienceGallery';
 import catalogDataset from '@/lib/catalog-dataset.json';
+import seasonalDataset from '@/lib/seasonal-dataset.json';
 
 async function getExperience(id: string) {
   let rawExp: any = null;
@@ -115,10 +116,20 @@ async function getExperience(id: string) {
   }
 
   if (!rawExp) {
+    const foundInSeasonal = (seasonalDataset as any[]).find((e) => e.id === id);
+    if (foundInSeasonal) {
+      rawExp = foundInSeasonal;
+    }
+  }
+
+  if (!rawExp) {
     rawExp = FALLBACK_DIRECTORY[id] || FALLBACK_DIRECTORY['exp-1'];
   }
 
   if (!rawExp) return null;
+
+  const rawCover = rawExp.cover || (rawExp.mediaUrls && rawExp.mediaUrls[0]) || '';
+  const resolvedCover = resolveExperienceImageUrl(rawCover);
 
   const rawMediaList =
     rawExp.mediaUrls && rawExp.mediaUrls.length > 0
@@ -127,16 +138,22 @@ async function getExperience(id: string) {
       ? rawExp.images
       : ['https://images.unsplash.com/photo-1596178065887-1198b6148b2b?auto=format&fit=crop&w=1200&q=80'];
 
-  const mediaList = rawMediaList.map(resolveExperienceImageUrl);
+  const otherMedia = rawMediaList
+    .map(resolveExperienceImageUrl)
+    .filter((u) => u !== resolvedCover);
+  const mediaList = [resolvedCover, ...otherMedia];
 
   const imagesList = (
     rawExp.images && rawExp.images.length > 0
       ? rawExp.images
       : rawMediaList
-  ).map(resolveExperienceImageUrl);
+  )
+    .map(resolveExperienceImageUrl)
+    .filter((u) => u !== resolvedCover);
 
   return {
     ...rawExp,
+    cover: resolvedCover,
     title: rawExp.title || rawExp.name || 'Local Experience',
     description:
       rawExp.description ||
@@ -149,7 +166,7 @@ async function getExperience(id: string) {
     ratingAverage: rawExp.ratingAverage ?? 4.9,
     authenticityRating: rawExp.authenticityRating ?? rawExp.authenticityScore ?? 0.95,
     mediaUrls: mediaList,
-    images: imagesList,
+    images: [resolvedCover, ...imagesList],
   };
 }
 
@@ -182,7 +199,7 @@ export default async function ExperienceDetailPage({ params }: { params: { id: s
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mb-14">
           <div className="lg:col-span-7 rounded-3xl overflow-hidden border border-[#D4CFC0] h-80 sm:h-96 lg:h-[460px] bg-[#EAE5D6] relative shadow-sm">
             <Image
-              src={exp.mediaUrls?.[0] || 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?auto=format&fit=crop&w=1200&q=80'}
+              src={exp.cover || exp.mediaUrls?.[0] || 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?auto=format&fit=crop&w=1200&q=80'}
               alt={exp.title}
               fill
               unoptimized

@@ -19,6 +19,12 @@ export function resolveExperienceImageUrl(url?: string | null): string {
     return clean;
   }
 
+  // If seasonal-images
+  if (clean.includes('seasonal-images/')) {
+    const subPath = clean.slice(clean.indexOf('seasonal-images/'));
+    return `/${subPath.replace(/^\/+/, '')}`;
+  }
+
   // If relative path like "/catalog-images/..." or "catalog-images/..."
   if (clean.includes('catalog-images/')) {
     const subPath = clean.slice(clean.indexOf('catalog-images/') + 'catalog-images/'.length);

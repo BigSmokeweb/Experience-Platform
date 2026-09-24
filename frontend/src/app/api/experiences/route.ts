@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { API_BASE } from '@/lib/api-client';
 import catalogDataset from '@/lib/catalog-dataset.json';
+import seasonalDataset from '@/lib/seasonal-dataset.json';
 import { resolveExperienceImageUrl } from '@/lib/image-utils';
 
 function normalizeItem(e: any) {
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
   }
 
   // 2. Server-side dataset fallback (instant, zero cold-starts, works on Vercel)
-  let filtered = catalogDataset as any[];
+  let filtered = [...(catalogDataset as any[]), ...(seasonalDataset as any[])];
   if (city) {
     const c = city.toLowerCase();
     filtered = filtered.filter((e) => e.city?.toLowerCase() === c);
