@@ -1,6 +1,8 @@
 import {
   Controller,
+  Get,
   Post,
+  Param,
   Body,
   UseGuards,
   UsePipes,
@@ -30,6 +32,15 @@ export class ReviewsController {
     @Body() dto: LogInteractionDto,
   ) {
     return this.reviewsService.logInteraction(userId, dto);
+  }
+
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @Get('reviews/experience/:experienceId/mine')
+  async getMyReview(
+    @CurrentUser('id') userId: string,
+    @Param('experienceId') experienceId: string,
+  ) {
+    return this.reviewsService.getUserReviewForExperience(userId, experienceId);
   }
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })

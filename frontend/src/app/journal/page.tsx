@@ -15,6 +15,9 @@ import {
   ImageIcon,
   Filter,
   SortDesc,
+  Camera,
+  Clock,
+  Route,
 } from 'lucide-react';
 import { useJournal, JournalEntry, deleteEntry } from '@/lib/journal-store';
 
@@ -53,6 +56,145 @@ function EntryCard({ entry, onDelete }: { entry: JournalEntry; onDelete: (id: st
   });
 
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // Variant: Finalized Itinerary Entry Card
+  if (entry.itineraryData) {
+    const itin = entry.itineraryData;
+    const itinCover = itin.stops.find((s) => s.coverImage)?.coverImage || cover;
+
+    return (
+      <article className="group relative bg-[#FAF7EE] border-2 border-[#8B7355]/40 hover:border-[#8B7355] rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+        {/* Cover or Header Strip */}
+        {itinCover ? (
+          <div className="relative h-44 overflow-hidden bg-[#2C2C2C]">
+            <img
+              src={itinCover}
+              alt={entry.title}
+              className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-[#8B7355] text-white text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded-full font-bold shadow-xs">
+              <Route className="w-3 h-3" />
+              <span>Finalized Itinerary</span>
+            </div>
+            <span className="absolute bottom-3 right-3 text-white text-[11px] font-mono bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-xl">
+              {itin.stops.length} Stops
+            </span>
+          </div>
+        ) : (
+          <div className="h-24 bg-gradient-to-r from-[#8B7355]/15 to-[#347F8C]/15 border-b border-[#D4CFC0] p-4 flex items-center justify-between">
+            <span className="inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider text-[#8B7355] bg-white border border-[#8B7355]/30 px-3 py-1 rounded-xl">
+              <Route className="w-3.5 h-3.5" />
+              <span>Finalized Itinerary</span>
+            </span>
+            <span className="text-xs font-mono text-[#2C2C2C]/70 font-semibold">
+              {itin.stops.length} Stops
+            </span>
+          </div>
+        )}
+
+        <div className="p-5">
+          {/* City + Date + Time Row */}
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2 text-xs font-mono text-[#5C6460]">
+            <div className="flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-[#347F8C]" />
+              <span className="font-semibold text-[#2C2C2C]">{entry.city || 'Curated Route'}</span>
+            </div>
+            <div className="flex items-center gap-3 text-[11px]">
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3 h-3 text-[#8B7355]" />
+                {dateLabel}
+              </span>
+              {itin.timePeriod && (
+                <span className="flex items-center gap-1 text-[#347F8C]">
+                  <Clock className="w-3 h-3" />
+                  {itin.timePeriod}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Title */}
+          <h3 className="font-cormorant text-[#2C2C2C] text-2xl font-bold leading-snug mb-2 line-clamp-1">
+            {entry.title}
+          </h3>
+
+          {/* Stops preview */}
+          {itin.stops.length > 0 && (
+            <div className="space-y-1 mb-4 bg-white/70 rounded-xl p-2.5 border border-[#D4CFC0]/60">
+              <span className="block text-[10px] font-mono text-[#8B7355] uppercase tracking-wider font-semibold mb-1">
+                Sequential Stops:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {itin.stops.slice(0, 3).map((stop, idx) => (
+                  <span
+                    key={stop.experienceId || idx}
+                    className="text-[11px] font-mono px-2 py-0.5 rounded-lg bg-[#FAF7EE] border border-[#D4CFC0] text-[#2C2C2C] truncate max-w-[180px]"
+                  >
+                    {idx + 1}. {stop.title}
+                  </span>
+                ))}
+                {itin.stops.length > 3 && (
+                  <span className="text-[11px] font-mono px-1.5 py-0.5 text-[#7C8581]">
+                    +{itin.stops.length - 3} more
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Action Row */}
+          <div className="flex items-center justify-between pt-3 border-t border-[#D4CFC0]/60">
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/journal/${itin.sessionId || entry.id}/memories`}
+                className="cursor-pointer inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-white bg-[#8B7355] hover:bg-[#725E45] font-bold px-3.5 py-1.5 rounded-xl transition shadow-2xs active:scale-95"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>Trip Memories</span>
+              </Link>
+              <Link
+                href={`/trip/${itin.sessionId}`}
+                className="inline-flex items-center gap-1 text-xs font-mono uppercase tracking-wider text-[#347F8C] hover:text-[#2A6772] bg-white border border-[#347F8C]/40 px-2.5 py-1.5 rounded-xl transition shadow-2xs"
+                title="View full interactive route"
+              >
+                <Route className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Route</span>
+              </Link>
+            </div>
+
+            {confirmDelete ? (
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => onDelete(entry.id)}
+                  className="text-[10px] font-mono px-2 py-1 rounded-lg bg-red-600 text-white hover:bg-red-700 transition cursor-pointer"
+                >
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(false)}
+                  className="text-[10px] font-mono px-2 py-1 rounded-lg bg-stone-200 text-stone-700 hover:bg-stone-300 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                className="w-7 h-7 rounded-lg bg-white border border-[#D4CFC0] hover:bg-red-50 hover:text-red-600 text-[#7C8581] flex items-center justify-center transition cursor-pointer"
+                title="Delete itinerary entry"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article className="group relative bg-white/80 backdrop-blur-sm border border-[#D4CFC0] rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-[#C4A265]/60 transition-all duration-300">

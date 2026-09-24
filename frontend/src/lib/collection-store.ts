@@ -58,13 +58,14 @@ export function toggleCollectionItem(experience: {
       next = current.filter((item) => item.id !== experience.id);
       nowSaved = false;
     } else {
-      const priceFormatted =
-        (!experience.priceMin && !experience.priceMax) ||
-        (experience.priceMin === 0 && experience.priceMax === 0)
-          ? 'Free'
-          : experience.priceMin === 0
-          ? `Free – ₹${experience.priceMax?.toLocaleString()}`
-          : `₹${experience.priceMin?.toLocaleString()} – ₹${experience.priceMax?.toLocaleString()}`;
+      const isFreePublic = (!experience.priceMin && !experience.priceMax) || (experience.priceMin === 0 && experience.priceMax === 0);
+      const priceFormatted = isFreePublic
+        ? 'Free Public Spot'
+        : !experience.priceMin || experience.priceMin === 0
+        ? `Free Entry (Items extra)`
+        : experience.priceMin === experience.priceMax
+        ? `₹${experience.priceMin?.toLocaleString()}`
+        : `₹${experience.priceMin?.toLocaleString()} – ₹${experience.priceMax?.toLocaleString()}`;
 
       const newItem: SavedCollectionItem = {
         id: experience.id,

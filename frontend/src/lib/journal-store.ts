@@ -11,6 +11,29 @@ export interface JournalPhoto {
   takenAt: number;        // timestamp
 }
 
+export interface ItineraryStopSummary {
+  experienceId: string;
+  title: string;
+  city?: string;
+  category?: string;
+  cost?: number;
+  durationMinutes?: number;
+  rating?: number;
+  coverImage?: string;
+}
+
+export interface JournalItineraryData {
+  sessionId: string;
+  tripDate?: string;
+  timePeriod?: string;
+  startTimeOfDay?: string;
+  endTimeOfDay?: string;
+  totalBudget?: number;
+  remainingBudget?: number;
+  stops: ItineraryStopSummary[];
+  completedAt: string;
+}
+
 export interface JournalEntry {
   id: string;
   title: string;
@@ -25,6 +48,7 @@ export interface JournalEntry {
   visitedAt: string;      // ISO date string (date picker)
   createdAt: number;      // timestamp
   updatedAt: number;      // timestamp
+  itineraryData?: JournalItineraryData;
 }
 
 // ─── Storage key & event ─────────────────────────────────────────────────────
@@ -40,7 +64,12 @@ export function getAllEntries(): JournalEntry[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.sort((a, b) => {
+      const timeA = a.visitedAt ? new Date(a.visitedAt).getTime() : (a.createdAt || 0);
+      const timeB = b.visitedAt ? new Date(b.visitedAt).getTime() : (b.createdAt || 0);
+      return timeB - timeA;
+    });
   } catch {
     return [];
   }

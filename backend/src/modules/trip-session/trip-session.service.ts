@@ -59,12 +59,15 @@ export class TripSessionService {
         start_time, remaining_time_minutes,
         total_budget, remaining_budget,
         group_size, accessibility_requirements,
-        interests, last_activity_at, updated_at
+        interests, trip_date, start_time_of_day, end_time_of_day,
+        last_activity_at, updated_at
       ) VALUES (
         gen_random_uuid(), $1::uuid, 'ACTIVE',
         ST_SetSRID(ST_MakePoint($2, $3), 4326)::geography,
         ST_SetSRID(ST_MakePoint($2, $3), 4326)::geography,
-        NOW(), $4, $5, $5, $6, $7::text[], $8::"Category"[], NOW(), NOW()
+        NOW(), $4, $5, $5, $6, $7::text[], $8::"Category"[],
+        $9::date, $10, $11,
+        NOW(), NOW()
       ) RETURNING id;
       `,
       userId,
@@ -75,6 +78,9 @@ export class TripSessionService {
       dto.groupSize,
       dto.accessibilityRequirements,
       dto.interests,
+      dto.tripDate ? dto.tripDate : null,
+      dto.startTimeOfDay ?? null,
+      dto.endTimeOfDay ?? null,
     ).then((rows) => rows[0]);
   }
 

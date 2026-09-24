@@ -90,12 +90,14 @@ const ExperienceCard = memo(function ExperienceCard({
     setImgSrc(nextUrl);
   }, [exp.mediaUrls]);
 
-  const formattedPrice =
-    (!exp.priceMin && !exp.priceMax) || (exp.priceMin === 0 && exp.priceMax === 0)
-      ? 'Free'
-      : exp.priceMin === 0
-      ? `Free – ₹${exp.priceMax?.toLocaleString()}`
-      : `₹${exp.priceMin?.toLocaleString()} – ₹${exp.priceMax?.toLocaleString()}`;
+  const isFreePublic = (!exp.priceMin && !exp.priceMax) || (exp.priceMin === 0 && exp.priceMax === 0);
+  const formattedPrice = isFreePublic
+    ? 'Free Public Spot'
+    : exp.priceMin === 0
+    ? `Free Entry (Items extra)`
+    : exp.priceMin === exp.priceMax
+    ? `₹${exp.priceMin?.toLocaleString()}`
+    : `₹${exp.priceMin?.toLocaleString()} – ₹${exp.priceMax?.toLocaleString()}`;
 
   return (
     <article
@@ -172,7 +174,7 @@ const ExperienceCard = memo(function ExperienceCard({
         <div className={`${compact ? 'mt-4 pt-3' : 'mt-8 pt-5'} border-t border-[#D4CFC0] flex items-center justify-between`}>
           <div>
             <span className="text-[9px] font-mono uppercase tracking-widest text-[#7C8581] block">
-              Starting at
+              {isFreePublic ? 'Admission' : 'Est. Spend'}
             </span>
             <p className="font-bold font-cormorant oldstyle-nums text-[#2C2C2C] text-base sm:text-lg tracking-wide">
               {formattedPrice}

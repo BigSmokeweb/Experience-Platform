@@ -36,18 +36,18 @@ const nextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(self)',
+            value: 'camera=(self), microphone=(), geolocation=(self)',
           },
           {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self' blob:",
               "media-src 'self' data: blob: https:",
-              "img-src 'self' data: blob: https: https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://images.unsplash.com https://*.wikimedia.org https://unpkg.com",
+              "img-src 'self' data: blob: https: https://*.supabase.co https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://images.unsplash.com https://*.wikimedia.org https://unpkg.com",
               "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
               "font-src 'self' https://fonts.gstatic.com data:",
-              "connect-src 'self' blob: data: http://localhost:4000 https://experience-backend-k4aw.onrender.com https://*.onrender.com https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://nominatim.openstreetmap.org",
+              "connect-src 'self' blob: data: http://localhost:4000 https://*.supabase.co https://experience-backend-k4aw.onrender.com https://*.onrender.com https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://nominatim.openstreetmap.org",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

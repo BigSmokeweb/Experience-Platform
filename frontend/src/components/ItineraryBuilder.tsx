@@ -39,7 +39,7 @@ const CURATORIAL_INTERESTS = [
   { id: 'CULTURE', label: 'Heritage & Culture', desc: 'Protected architectural walks, temples & private shrines' },
   { id: 'WORKSHOPS', label: 'Artisan Workshops', desc: 'Hands-on block printing, brass casting & traditional crafts' },
   { id: 'ADVENTURE', label: 'Outdoor & Adventure', desc: 'Dawn harbor navigations, wetlands, stepwells & ridge treks' },
-  { id: 'HIDDEN_GEMS', label: 'Off the Map', desc: 'Private collections, secret viewpoints & off-circuit routes' },
+  { id: 'SHOPPING', label: 'Artisans & Bazaars', desc: 'Curio lanes, spice alleys, traditional bazaars & antique trails' },
   { id: 'NIGHTLIFE', label: 'Nightlife & Music', desc: 'Classical baithaks, lantern walks & evening cultural venues' },
 ];
 
@@ -75,6 +75,9 @@ export function ItineraryBuilder() {
   const [totalBudget, setTotalBudget] = useState('5000');
   const [durationMinutes, setDurationMinutes] = useState('180');
   const [groupSize, setGroupSize] = useState('2');
+  const [tripDate, setTripDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [startTimeOfDay, setStartTimeOfDay] = useState('09:00');
+  const [endTimeOfDay, setEndTimeOfDay] = useState('17:00');
 
   // Check active session on mount
   useEffect(() => {
@@ -180,6 +183,9 @@ export function ItineraryBuilder() {
         totalTimeMinutes: parseInt(durationMinutes, 10) || 180,
         groupSize: parseInt(groupSize, 10) || 2,
         interests: finalInterests,
+        tripDate,
+        startTimeOfDay,
+        endTimeOfDay,
       });
 
       // Navigate to the trip session loop
@@ -565,11 +571,104 @@ export function ItineraryBuilder() {
                     Phase 03
                   </span>
                   <h3 className="font-manifold text-2xl tracking-wide uppercase text-[#2C2C2C] font-bold">
-                    Duration & Budget
+                    Date, Time & Budget
                   </h3>
                   <p className="text-xs text-[#2C2C2C]/70 mt-1 font-light">
-                    Establish temporal thresholds and budget allocation for guild tariffs and workshops.
+                    Establish your journey date, time window, and budget allocation for experiences.
                   </p>
+                </div>
+
+                {/* Trip Date & Time Period */}
+                <div className="bg-[#FAF7EE] p-4 rounded-2xl border border-[#D4CFC0]/60 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-mono text-[#2C2C2C]/70 uppercase tracking-wider mb-1.5 font-semibold">
+                        Trip Date
+                      </label>
+                      <input
+                        type="date"
+                        value={tripDate}
+                        onChange={(e) => setTripDate(e.target.value)}
+                        className="w-full text-xs font-mono bg-white border border-[#D4CFC0] rounded-xl px-3 py-2 text-[#2C2C2C] focus:outline-none focus:border-[#347F8C] transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-mono text-[#2C2C2C]/70 uppercase tracking-wider mb-1.5 font-semibold">
+                        Start Time
+                      </label>
+                      <input
+                        type="time"
+                        value={startTimeOfDay}
+                        onChange={(e) => setStartTimeOfDay(e.target.value)}
+                        className="w-full text-xs font-mono bg-white border border-[#D4CFC0] rounded-xl px-3 py-2 text-[#2C2C2C] focus:outline-none focus:border-[#347F8C] transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-mono text-[#2C2C2C]/70 uppercase tracking-wider mb-1.5 font-semibold">
+                        End Time
+                      </label>
+                      <input
+                        type="time"
+                        value={endTimeOfDay}
+                        onChange={(e) => setEndTimeOfDay(e.target.value)}
+                        className="w-full text-xs font-mono bg-white border border-[#D4CFC0] rounded-xl px-3 py-2 text-[#2C2C2C] focus:outline-none focus:border-[#347F8C] transition"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Time Presets */}
+                  <div>
+                    <span className="block text-[10px] font-mono text-[#2C2C2C]/60 uppercase tracking-wider mb-1.5">
+                      Schedule Presets:
+                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStartTimeOfDay('09:00');
+                          setEndTimeOfDay('13:00');
+                          setDurationMinutes('240');
+                        }}
+                        className={`cursor-pointer text-[11px] font-mono px-3 py-1.5 rounded-lg border transition ${
+                          startTimeOfDay === '09:00' && endTimeOfDay === '13:00'
+                            ? 'bg-[#347F8C] text-white font-bold border-[#347F8C]'
+                            : 'bg-white text-[#2C2C2C] border-[#D4CFC0] hover:bg-[#F5F1E6]'
+                        }`}
+                      >
+                        Morning (9 AM – 1 PM)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStartTimeOfDay('09:00');
+                          setEndTimeOfDay('17:00');
+                          setDurationMinutes('360');
+                        }}
+                        className={`cursor-pointer text-[11px] font-mono px-3 py-1.5 rounded-lg border transition ${
+                          startTimeOfDay === '09:00' && endTimeOfDay === '17:00'
+                            ? 'bg-[#347F8C] text-white font-bold border-[#347F8C]'
+                            : 'bg-white text-[#2C2C2C] border-[#D4CFC0] hover:bg-[#F5F1E6]'
+                        }`}
+                      >
+                        Full Day (9 AM – 5 PM)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStartTimeOfDay('16:00');
+                          setEndTimeOfDay('21:00');
+                          setDurationMinutes('300');
+                        }}
+                        className={`cursor-pointer text-[11px] font-mono px-3 py-1.5 rounded-lg border transition ${
+                          startTimeOfDay === '16:00' && endTimeOfDay === '21:00'
+                            ? 'bg-[#347F8C] text-white font-bold border-[#347F8C]'
+                            : 'bg-white text-[#2C2C2C] border-[#D4CFC0] hover:bg-[#F5F1E6]'
+                        }`}
+                      >
+                        Evening (4 PM – 9 PM)
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Duration Picker */}

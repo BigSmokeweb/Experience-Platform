@@ -6,6 +6,7 @@ import { API_BASE } from '@/lib/api-client';
 import { Star, Clock, ShieldCheck, MapPin, ArrowLeft, ArrowRight, Compass, CheckCircle2 } from 'lucide-react';
 import { BookmarkButton } from '@/components/BookmarkButton';
 import { BackButton } from '@/components/BackButton';
+import { PlaceRatingWidget } from '@/components/PlaceRatingWidget';
 
 const FALLBACK_DIRECTORY: Record<string, any> = {
   'exp-1': {
@@ -313,8 +314,8 @@ export default async function ExperienceDetailPage({ params }: { params: { id: s
             </section>
 
             {/* Reviews */}
-            <section>
-              <div className="flex items-center justify-between mb-6">
+            <section className="space-y-6">
+              <div className="flex items-center justify-between mb-2">
                 <h2 className="font-manifold text-xl text-[#2C2C2C] uppercase tracking-wide font-bold">
                   Field Dispatches & Reviews
                 </h2>
@@ -322,6 +323,12 @@ export default async function ExperienceDetailPage({ params }: { params: { id: s
                   {exp.reviewCount || 48} entries
                 </span>
               </div>
+
+              {/* 5-Star Rating Widget with Anti-Fake Guardrails */}
+              <PlaceRatingWidget
+                experienceId={exp.id}
+                experienceTitle={exp.title}
+              />
 
               {exp.reviews && exp.reviews.length > 0 ? (
                 <div className="space-y-4">

@@ -271,6 +271,8 @@ export interface RecommendationCandidateDto {
   mediaUrls: string[];
   scoreBreakdown: CandidateScoreBreakdown;
   aiExplanation?: string;
+  candidateLat?: number;
+  candidateLng?: number;
 }
 
 export interface RecommendationResponseDto {
@@ -319,11 +321,11 @@ export type LogInteractionDto = z.infer<typeof LogInteractionSchema>;
 export const CreateReviewSchema = z.object({
   experienceId: z.string().uuid(),
   ratingOverall: z.number().int().min(1).max(5),
-  ratingAuthenticity: z.number().int().min(1).max(5),
-  ratingValue: z.number().int().min(1).max(5),
-  ratingExperience: z.number().int().min(1).max(5),
-  ratingAccessibility: z.number().int().min(1).max(5),
-  text: z.string().min(10).max(2000),
+  ratingAuthenticity: z.number().int().min(1).max(5).optional(),
+  ratingValue: z.number().int().min(1).max(5).optional(),
+  ratingExperience: z.number().int().min(1).max(5).optional(),
+  ratingAccessibility: z.number().int().min(1).max(5).optional(),
+  text: z.string().max(2000).optional().default(''),
 });
 
 export type CreateReviewDto = z.infer<typeof CreateReviewSchema>;
@@ -352,6 +354,9 @@ export const CreateTripSessionSchema = z.object({
   groupSize: z.number().int().positive().default(1),
   interests: z.array(z.nativeEnum(Category)).min(1),
   accessibilityRequirements: z.array(z.string()).default([]),
+  tripDate: z.string().optional(),
+  startTimeOfDay: z.string().optional(),
+  endTimeOfDay: z.string().optional(),
 });
 export type CreateTripSessionDto = z.infer<typeof CreateTripSessionSchema>;
 
@@ -526,4 +531,62 @@ export interface NudgeItem {
   dimension: string;
   message: string;
   impact: NudgeImpact;
+}
+
+// ==========================================
+// 14. TRIP MEMORIES
+// ==========================================
+
+export const CreateTripMemorySchema = z.object({
+  tripSessionId: z.string().uuid().optional(),
+  title: z.string().min(1).max(200),
+  notes: z.string().max(2000).optional(),
+  visitedAt: z.string().optional(),
+});
+export type CreateTripMemoryDto = z.infer<typeof CreateTripMemorySchema>;
+
+export const UpdateTripMemorySchema = z.object({
+  title: z.string().min(1).max(200).optional(),
+  notes: z.string().max(2000).optional(),
+  visitedAt: z.string().optional(),
+});
+export type UpdateTripMemoryDto = z.infer<typeof UpdateTripMemorySchema>;
+
+export const AddTripMemoryPhotoSchema = z.object({
+  experienceId: z.string().uuid().optional(),
+  caption: z.string().max(500).optional(),
+  takenAt: z.string().optional(),
+});
+export type AddTripMemoryPhotoDto = z.infer<typeof AddTripMemoryPhotoSchema>;
+
+export interface TripMemoryPhotoResponse {
+  id: string;
+  tripMemoryId: string;
+  experienceId?: string | null;
+  url: string;
+  caption?: string | null;
+  takenAt?: string | null;
+  createdAt: string;
+}
+
+export interface TripMemoryResponse {
+  id: string;
+  userId: string;
+  tripSessionId?: string | null;
+  title: string;
+  notes?: string | null;
+  visitedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  photos: TripMemoryPhotoResponse[];
+  tripSession?: {
+    id: string;
+    status: string;
+    totalBudget: number;
+    remainingBudget: number;
+    tripDate?: string | null;
+    startTimeOfDay?: string | null;
+    endTimeOfDay?: string | null;
+    selectedExperienceIds?: string[];
+  } | null;
 }

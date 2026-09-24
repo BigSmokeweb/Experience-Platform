@@ -83,6 +83,7 @@ model User {
   reviews         Review[]
   interactions    Interaction[]
   tripSessions    TripSession[]
+  tripMemories    TripMemory[]
 
   @@map("users")
 }
@@ -160,6 +161,7 @@ model Experience {
   provider     ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
   reviews      Review[]
   interactions Interaction[]
+  tripMemoryPhotos TripMemoryPhoto[]
 
   @@index([city])
   @@index([category])
@@ -168,23 +170,24 @@ model Experience {
 }
 
 model Review {
-  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  experienceId         String   @map("experience_id") @db.Uuid
-  userId               String   @map("user_id") @db.Uuid
-  interactionId        String   @unique @map("interaction_id") @db.Uuid // Strictly tied to verified completion
-  ratingOverall        Int      @map("rating_overall") // 1-5
-  ratingAuthenticity   Int      @map("rating_authenticity")
-  ratingValue          Int      @map("rating_value")
-  ratingExperience     Int      @map("rating_experience")
-  ratingAccessibility  Int      @map("rating_accessibility")
-  text                 String   // Sanitized UGC
-  isModerated          Boolean  @default(true) @map("is_moderated")
-  createdAt            DateTime @default(now()) @map("created_at")
+  id                   String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  experienceId         String       @map("experience_id") @db.Uuid
+  userId               String       @map("user_id") @db.Uuid
+  interactionId        String?      @unique @map("interaction_id") @db.Uuid // Optional: linked to verified completion when available
+  ratingOverall        Int          @map("rating_overall") // 1-5
+  ratingAuthenticity   Int          @default(5) @map("rating_authenticity")
+  ratingValue          Int          @default(5) @map("rating_value")
+  ratingExperience     Int          @default(5) @map("rating_experience")
+  ratingAccessibility  Int          @default(5) @map("rating_accessibility")
+  text                 String       @default("") // Sanitized UGC
+  isModerated          Boolean      @default(true) @map("is_moderated")
+  createdAt            DateTime     @default(now()) @map("created_at")
 
-  experience  Experience  @relation(fields: [experienceId], references: [id], onDelete: Cascade)
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  interaction Interaction @relation(fields: [interactionId], references: [id], onDelete: Restrict)
+  experience  Experience   @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interaction Interaction? @relation(fields: [interactionId], references: [id], onDelete: SetNull)
 
+  @@unique([userId, experienceId])
   @@index([experienceId])
   @@map("reviews")
 }
@@ -237,6 +240,9 @@ model TripSession {
   currentLocation          Unsupported("geography(Point,4326)") @map("current_location")
 
   startTime                DateTime          @map("start_time")
+  tripDate                 DateTime?         @map("trip_date") @db.Date
+  startTimeOfDay           String?           @map("start_time_of_day")
+  endTimeOfDay             String?           @map("end_time_of_day")
   remainingTimeMinutes     Int               @map("remaining_time_minutes")
   totalBudget              Float             @map("total_budget")
   remainingBudget          Float             @map("remaining_budget")
@@ -259,8 +265,71 @@ model TripSession {
   updatedAt                DateTime          @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tripMemory TripMemory?
 
   @@index([userId, status])
   @@index([lastActivityAt]) // used by cleanup cron
   @@map("trip_sessions")
 }
+
+enum MediaCategory {
+  EXPERIENCE_HERO
+  EXPERIENCE_GALLERY
+  PROVIDER_KYC
+  PROFILE_AVATAR
+}
+
+model MediaAsset {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category    MediaCategory @default(EXPERIENCE_GALLERY)
+  title       String?
+  fileName    String        @map("file_name")
+  mimeType    String        @map("mime_type")
+  sizeBytes   Int?          @map("size_bytes")
+  publicUrl   String        @map("public_url")
+  altText     String?       @map("alt_text")
+  storageKey  String?       @map("storage_key")
+  referenceId String?       @map("reference_id")
+  uploadedBy  String?       @map("uploaded_by")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@map("media_assets")
+}
+
+model TripMemory {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String            @map("user_id") @db.Uuid
+  tripSessionId String?           @unique @map("trip_session_id") @db.Uuid
+  title         String
+  notes         String?
+  visitedAt     DateTime?         @map("visited_at")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tripSession TripSession?      @relation(fields: [tripSessionId], references: [id], onDelete: SetNull)
+  photos      TripMemoryPhoto[]
+
+  @@index([userId])
+  @@map("trip_memories")
+}
+
+model TripMemoryPhoto {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tripMemoryId String      @map("trip_memory_id") @db.Uuid
+  experienceId String?     @map("experience_id") @db.Uuid
+  url          String
+  caption      String?
+  takenAt      DateTime?   @map("taken_at")
+  storageKey   String?     @map("storage_key")
+  createdAt    DateTime    @default(now()) @map("created_at")
+
+  tripMemory TripMemory  @relation(fields: [tripMemoryId], references: [id], onDelete: Cascade)
+  experience Experience? @relation(fields: [experienceId], references: [id], onDelete: SetNull)
+
+  @@index([tripMemoryId])
+  @@index([experienceId])
+  @@map("trip_memory_photos")
+}
+

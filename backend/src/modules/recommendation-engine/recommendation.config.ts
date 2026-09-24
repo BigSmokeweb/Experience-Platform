@@ -16,13 +16,13 @@ export interface RecommendationWeights {
 }
 
 export const DEFAULT_RECOMMENDATION_WEIGHTS: RecommendationWeights = {
-  w1_locationMatch: 0.20,
+  w1_locationMatch: 0.25,
   w2_intentMatch: 0.25,
   w3_budgetFit: 0.15,
   w4_timeAvailability: 0.10,
   w5_rating: 0.15,
-  w6_authenticity: 0.15,
-  w7_distancePenalty: 0.05,
+  w6_authenticity: 0.10,
+  w7_distancePenalty: 0.08,
   // w8/w9/w10: session weights.
   // w10 = 0.25 justified against seed data: with 7 experiences across 4 categories, a
   // rejected FOOD category drops effective intentMatch from 0.50 (baseline) to 0.25.

@@ -5,6 +5,7 @@ import { HeroParallaxVideo } from '@/components/HeroParallaxVideo';
 import { ItineraryBuilder } from '@/components/ItineraryBuilder';
 import { CuratedDirectory } from '@/components/CuratedDirectory';
 import { ScrollToHeroOnRefresh } from '@/components/ScrollToHeroOnRefresh';
+import { SeasonalBanner } from '@/components/SeasonalBanner';
 import { API_BASE } from '@/lib/api-client';
 
 export const metadata: Metadata = {
@@ -133,6 +134,9 @@ export default async function HomePage() {
           cities={CITIES}
         />
       </div>
+
+      {/* ─── SEASONAL SPOTS BANNER ─── */}
+      <SeasonalBanner />
 
       {/* ─── SECTION 3: ITINERARY BUILDER ATELIER ─── */}
       <ItineraryBuilder />

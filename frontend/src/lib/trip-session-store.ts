@@ -17,6 +17,7 @@ export interface RecommendationItem {
   priceMax: number;
   durationMinutes?: number;
   ratingAverage: number;
+  reviewCount?: number;
   authenticityRating: number;
   mediaUrls?: string[];
   candidateLat?: number;
@@ -32,6 +33,7 @@ export interface SelectedExperience {
   priceMin: number;
   priceMax: number;
   ratingAverage: number;
+  reviewCount?: number;
   authenticityRating: number;
   mediaUrls?: string[];
   durationMinutes?: number;
@@ -52,6 +54,9 @@ export interface SessionData {
   rejectedExperienceIds?: string[];
   userLat?: number;
   userLng?: number;
+  tripDate?: string;
+  startTimeOfDay?: string;
+  endTimeOfDay?: string;
 }
 
 export interface RecommendApiResponse {
@@ -78,38 +83,55 @@ export interface RecommendApiResponse {
 import { SEED_EXPERIENCES } from './seed-catalog';
 import catalogDataset from './catalog-dataset.json';
 
-export const CATALOG_EXPERIENCES: RecommendationItem[] = SEED_EXPERIENCES.map((e, idx) => ({
-  id: e.id,
-  title: e.title || e.name || 'Local Experience',
-  category: e.category,
-  city: e.city,
-  distanceKm: 0.5 + (idx % 10) * 0.8,
-  priceMin: e.priceMin ?? e.entryFee ?? 0,
-  priceMax: e.priceMax ?? e.activityCost ?? 0,
-  durationMinutes: e.durationMinutes ?? 90,
-  ratingAverage: e.ratingAverage ?? 4.5,
-  authenticityRating: e.authenticityRating ?? e.authenticityScore ?? 0.9,
-  candidateLat: e.candidateLat,
-  candidateLng: e.candidateLng,
-  mediaUrls: e.mediaUrls,
-}));
+// Bundled full catalog for synchronous lookups & offline recommendation engine
+export const CATALOG_EXPERIENCES: RecommendationItem[] = (() => {
+  const map = new Map<string, RecommendationItem>();
 
-// Bundled full catalog for synchronous lookups (used by decodeShareableTrip)
-const FULL_CATALOG: RecommendationItem[] = (catalogDataset as any[]).map((e) => ({
-  id: e.id,
-  title: e.title || e.name || 'Local Experience',
-  category: e.category || 'CULTURE',
-  city: e.city || 'Mumbai',
-  distanceKm: 1.0,
-  priceMin: e.priceMin ?? 0,
-  priceMax: e.priceMax ?? 0,
-  durationMinutes: e.durationMinutes ?? 90,
-  ratingAverage: e.ratingAverage ?? 4.5,
-  authenticityRating: e.authenticityRating ?? 0.9,
-  candidateLat: e.candidateLat ?? e.latitude,
-  candidateLng: e.candidateLng ?? e.longitude,
-  mediaUrls: e.mediaUrls || [],
-}));
+  (catalogDataset as any[]).forEach((e) => {
+    const rawCat = e.category || 'CULTURE';
+    const cleanCat = rawCat.toUpperCase().includes('HIDDEN') ? 'CULTURE' : rawCat;
+    map.set(e.id, {
+      id: e.id,
+      title: e.title || e.name || 'Local Experience',
+      category: cleanCat,
+      city: e.city || 'Mumbai',
+      distanceKm: 1.0,
+      priceMin: e.priceMin ?? e.entryFee ?? 0,
+      priceMax: e.priceMax ?? e.activityCost ?? 0,
+      durationMinutes: e.durationMinutes ?? 90,
+      ratingAverage: e.ratingAverage ?? 4.7,
+      authenticityRating: e.authenticityRating ?? e.authenticityScore ?? 0.92,
+      candidateLat: e.candidateLat ?? e.latitude,
+      candidateLng: e.candidateLng ?? e.longitude,
+      mediaUrls: e.mediaUrls || (e.cover ? [e.cover] : []),
+    });
+  });
+
+  SEED_EXPERIENCES.forEach((e, idx) => {
+    const rawCat = e.category || 'CULTURE';
+    const cleanCat = rawCat.toUpperCase().includes('HIDDEN') ? 'CULTURE' : rawCat;
+    map.set(e.id, {
+      id: e.id,
+      title: e.title || e.name || 'Local Experience',
+      category: cleanCat,
+      city: e.city,
+      distanceKm: 0.5 + (idx % 10) * 0.8,
+      priceMin: e.priceMin ?? e.entryFee ?? 0,
+      priceMax: e.priceMax ?? e.activityCost ?? 0,
+      durationMinutes: e.durationMinutes ?? 90,
+      ratingAverage: e.ratingAverage ?? 4.5,
+      authenticityRating: e.authenticityRating ?? e.authenticityScore ?? 0.9,
+      candidateLat: e.candidateLat,
+      candidateLng: e.candidateLng,
+      mediaUrls: e.mediaUrls,
+    });
+  });
+
+  return Array.from(map.values());
+})();
+
+// Full catalog alias
+const FULL_CATALOG: RecommendationItem[] = CATALOG_EXPERIENCES;
 
 /** Lookup an experience by ID from all known catalogs (sync, always works at load time) */
 function findExperienceById(id: string): RecommendationItem | undefined {
@@ -117,6 +139,19 @@ function findExperienceById(id: string): RecommendationItem | undefined {
     CATALOG_EXPERIENCES.find((c) => c.id === id) ||
     FULL_CATALOG.find((c) => c.id === id)
   );
+}
+
+/** Updates in-memory rating and review count when user submits a rating */
+export function updateLocalExperienceRating(experienceId: string, newStars: number) {
+  const item = findExperienceById(experienceId);
+  if (item) {
+    const currentCount = item.reviewCount || 1;
+    const currentAvg = item.ratingAverage || 4.0;
+    const updatedCount = currentCount + 1;
+    const updatedAvg = Math.round(((currentAvg * currentCount + newStars) / updatedCount) * 10) / 10;
+    item.ratingAverage = updatedAvg;
+    item.reviewCount = updatedCount;
+  }
 }
 
 // Asynchronously hydrate CATALOG_EXPERIENCES with fresh items from API if available
@@ -249,8 +284,11 @@ export function scoreCandidate(
     }
   }
 
-  // 4. Rating (Historical user rating normalized 0-1)
-  const ratingScore = Math.min(1, Math.max(0, (cand.ratingAverage || 4.5) / 5.0));
+  // 4. Rating (Bayesian smoothed user rating from DB, normalized 0-1)
+  const count = cand.reviewCount || 0;
+  const avg = (cand.ratingAverage !== undefined && cand.ratingAverage > 0) ? cand.ratingAverage : 3.5;
+  const bayesianAvg = (count * avg + 3 * 3.5) / (count + 3);
+  const ratingScore = Math.min(1, Math.max(0, bayesianAvg / 5.0));
 
   // Multi-factor weighted score: Nearest (35%), Intent (30%), Budget (20%), Rating (15%)
   const totalScore =
@@ -299,6 +337,9 @@ export async function createTripSession(payload: {
   totalTimeMinutes: number;
   groupSize: number;
   interests: string[];
+  tripDate?: string;
+  startTimeOfDay?: string;
+  endTimeOfDay?: string;
 }): Promise<{ id: string }> {
   // Always clear stale active session from localStorage when generating a new custom route
   if (typeof window !== 'undefined') {
@@ -359,6 +400,9 @@ export async function createTripSession(payload: {
     rejectedExperienceIds: [],
     userLat: payload.latitude,
     userLng: payload.longitude,
+    tripDate: payload.tripDate,
+    startTimeOfDay: payload.startTimeOfDay,
+    endTimeOfDay: payload.endTimeOfDay,
   };
 
   if (typeof window !== 'undefined') {
@@ -396,17 +440,6 @@ export async function fetchTripSession(sessionId: string): Promise<SessionData> 
     const raw = localStorage.getItem(`trip_session_${sessionId}`);
     if (raw) {
       const parsed: any = JSON.parse(raw);
-      // Automatically purge any stale legacy sessions that had pre-selected stops
-      if (!parsed._v || parsed._v < 2) {
-        parsed.selectedExperiences = [];
-        parsed.selectedExperienceIds = [];
-        parsed.remainingBudget = parsed.totalBudget || 5000;
-        parsed.remainingTimeMinutes = 180;
-        parsed._v = 2;
-        try {
-          localStorage.setItem(`trip_session_${sessionId}`, JSON.stringify(parsed));
-        } catch {}
-      }
       return normalizeSessionStops(parsed);
     }
   }

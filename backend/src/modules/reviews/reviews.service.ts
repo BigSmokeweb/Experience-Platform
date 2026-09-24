@@ -31,55 +31,85 @@ export class ReviewsService {
   }
 
   /**
-   * Create Review (Strictly gated by completed interaction verification + UGC sanitization)
+   * Get Current User's Review for an Experience (if any)
+   */
+  async getUserReviewForExperience(userId: string, experienceId: string) {
+    return this.prisma.review.findUnique({
+      where: {
+        userId_experienceId: {
+          userId,
+          experienceId,
+        },
+      },
+    });
+  }
+
+  /**
+   * Create or Update Review (Strict guardrails: 1 rating per user per place, UGC sanitization, atomic rolling average)
    */
   async createReview(userId: string, dto: CreateReviewDto) {
-    // 1. Verify that user has a completed interaction for this experience
+    // 1. Check if experience exists
+    const experience = await this.prisma.experience.findUnique({
+      where: { id: dto.experienceId },
+      select: { id: true },
+    });
+
+    if (!experience) {
+      throw new NotFoundException('Experience not found');
+    }
+
+    // 2. Check for optional completed visit interaction to attach verified badge
     const completedInteraction = await this.prisma.interaction.findFirst({
       where: {
         userId,
         experienceId: dto.experienceId,
         eventType: EventType.COMPLETE,
       },
-      include: {
-        review: true,
-      },
       orderBy: { createdAt: 'desc' },
     });
 
-    if (!completedInteraction) {
-      throw new ForbiddenException(
-        'Review eligibility violation: You can only review experiences you have completed.',
-      );
-    }
+    // 3. Strict UGC Sanitization on Write
+    const sanitizedText = dto.text ? ContentSanitizer.sanitize(dto.text) : '';
 
-    if (completedInteraction.review) {
-      throw new BadRequestException(
-        'Duplicate review violation: A review has already been submitted for this completed visit.',
-      );
-    }
+    const ratingOverall = Math.max(1, Math.min(5, Math.round(dto.ratingOverall)));
+    const ratingAuthenticity = dto.ratingAuthenticity ?? ratingOverall;
+    const ratingValue = dto.ratingValue ?? ratingOverall;
+    const ratingExperience = dto.ratingExperience ?? ratingOverall;
+    const ratingAccessibility = dto.ratingAccessibility ?? ratingOverall;
 
-    // 2. Strict UGC Sanitization on Write
-    const sanitizedText = ContentSanitizer.sanitize(dto.text);
-
-    // 3. Create review & update experience rolling average ratings in transaction
+    // 4. Guardrail: 1 review per user per place (Upsert in transaction)
     const review = await this.prisma.$transaction(async (tx) => {
-      const createdReview = await tx.review.create({
-        data: {
+      const savedReview = await tx.review.upsert({
+        where: {
+          userId_experienceId: {
+            userId,
+            experienceId: dto.experienceId,
+          },
+        },
+        create: {
           experienceId: dto.experienceId,
           userId,
-          interactionId: completedInteraction.id,
-          ratingOverall: dto.ratingOverall,
-          ratingAuthenticity: dto.ratingAuthenticity,
-          ratingValue: dto.ratingValue,
-          ratingExperience: dto.ratingExperience,
-          ratingAccessibility: dto.ratingAccessibility,
+          interactionId: completedInteraction ? completedInteraction.id : undefined,
+          ratingOverall,
+          ratingAuthenticity,
+          ratingValue,
+          ratingExperience,
+          ratingAccessibility,
           text: sanitizedText,
           isModerated: true,
         },
+        update: {
+          ratingOverall,
+          ratingAuthenticity,
+          ratingValue,
+          ratingExperience,
+          ratingAccessibility,
+          text: sanitizedText,
+          ...(completedInteraction ? { interactionId: completedInteraction.id } : {}),
+        },
       });
 
-      // Recalculate average rating for experience
+      // 5. Recalculate average rating & review count for experience
       const agg = await tx.review.aggregate({
         where: { experienceId: dto.experienceId, isModerated: true },
         _avg: {
@@ -91,16 +121,19 @@ export class ReviewsService {
         },
       });
 
+      const newRatingAverage = Math.round((agg._avg.ratingOverall || ratingOverall) * 10) / 10;
+      const newAuthRating = Math.round(((agg._avg.ratingAuthenticity || ratingOverall) / 5.0) * 100) / 100;
+
       await tx.experience.update({
         where: { id: dto.experienceId },
         data: {
-          ratingAverage: Math.round((agg._avg.ratingOverall || dto.ratingOverall) * 10) / 10,
-          authenticityRating: Math.round(((agg._avg.ratingAuthenticity || dto.ratingAuthenticity) / 5.0) * 100) / 100,
+          ratingAverage: newRatingAverage,
+          authenticityRating: newAuthRating,
           reviewCount: agg._count.id,
         },
       });
 
-      return createdReview;
+      return savedReview;
     });
 
     return review;

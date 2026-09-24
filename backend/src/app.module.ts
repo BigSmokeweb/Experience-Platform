@@ -15,6 +15,7 @@ import { AiReasoningModule } from './modules/ai-reasoning/ai-reasoning.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { TripSessionModule } from './modules/trip-session/trip-session.module';
+import { TripMemoriesModule } from './modules/trip-memories/trip-memories.module';
 
 @Module({
   controllers: [HealthController],
@@ -44,6 +45,7 @@ import { TripSessionModule } from './modules/trip-session/trip-session.module';
     ReviewsModule,
     AdminModule,
     TripSessionModule,
+    TripMemoriesModule,
   ],
   providers: [
     {

@@ -4,8 +4,8 @@ export const SEED_EXPERIENCES: ExperienceData[] = [
   {
     id: "exp-exp001",
     title: "Marine Drive Sunset Walk",
-    category: "HIDDEN_GEMS",
-    categoryLabel: "Hidden Enclaves",
+    category: "CULTURE",
+    categoryLabel: "Scenic & Heritage",
     city: "Mumbai",
     area: "Marine Drive",
     priceMin: 0,
@@ -100,8 +100,8 @@ export const SEED_EXPERIENCES: ExperienceData[] = [
   {
     id: "exp-exp005",
     title: "Bandra Pali Hill Café & Vintage Trail",
-    category: "HIDDEN_GEMS",
-    categoryLabel: "Hidden Enclaves",
+    category: "FOOD",
+    categoryLabel: "Café & Vintage Trail",
     city: "Mumbai",
     area: "Bandra West",
     priceMin: 300,

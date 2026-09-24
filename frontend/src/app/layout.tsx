@@ -2,15 +2,9 @@ import type { Metadata } from 'next';
 import { Playfair_Display, Cormorant_Garamond, Source_Serif_4, JetBrains_Mono, Luxurious_Script } from 'next/font/google';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import dynamic from 'next/dynamic';
 import { PageTransition } from '@/components/PageTransition';
-import { ScrollFadeUpObserver } from '@/components/ScrollFadeUpObserver';
+import { FloatingChatSupport } from '@/components/FloatingChatSupport';
 import './globals.css';
-
-const FloatingChatSupport = dynamic(
-  () => import('@/components/FloatingChatSupport').then((mod) => mod.FloatingChatSupport),
-  { ssr: false }
-);
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -75,7 +69,6 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning className={`${sourceSerif.className} ${playfair.variable} ${cormorant.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} ${luxuriousScript.variable} bg-[#F5F1E6] text-[#2C2C2C] antialiased selection:bg-[#8B7355]/30 selection:text-[#2C2C2C] overflow-x-hidden`}>
-        <ScrollFadeUpObserver />
         <PageTransition />
         <Navbar />
         <main>{children}</main>

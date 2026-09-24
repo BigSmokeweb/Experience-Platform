@@ -251,6 +251,21 @@ export class DeterministicScoringEngine {
     return 0.8; // Repeated category rejection — strong penalty, still not a hard block
   }
 
+  /**
+   * Bayesian Smoothed Rating Score (0.0 to 1.0).
+   * Incorporates user star ratings saved in the DB.
+   * Places with high user stars rank ahead of lower/unrated places,
+   * while Bayesian shrinkage prevents 1-review anomalies from dominating.
+   */
+  static computeRatingScore(ratingAverage?: number, reviewCount?: number): number {
+    const priorMean = 3.5;
+    const priorWeight = 3;
+    const count = reviewCount || 0;
+    const avg = (ratingAverage !== undefined && ratingAverage > 0) ? ratingAverage : priorMean;
+    const bayesianAvg = (count * avg + priorWeight * priorMean) / (count + priorWeight);
+    return Math.min(1.0, Math.max(0.0, bayesianAvg / 5.0));
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
 
   /**
@@ -293,8 +308,8 @@ export class DeterministicScoringEngine {
     // Time availability
     const timeAvailability = 1.0;
 
-    // Rating score (normalized to 0-1)
-    const ratingScore = Math.min(Math.max((candidate.ratingAverage || 3.5) / 5.0, 0), 1.0);
+    // Rating score (normalized to 0-1, Bayesian smoothed from DB user reviews)
+    const ratingScore = this.computeRatingScore(candidate.ratingAverage, candidate.reviewCount);
 
     // Authenticity score (0-1)
     const authenticityScore = Math.min(Math.max(candidate.authenticityRating || 0.8, 0), 1.0);
@@ -388,6 +403,8 @@ export class DeterministicScoringEngine {
         authenticityRating: candidate.authenticityRating,
         accessibilityTags: candidate.accessibilityTags,
         mediaUrls: candidate.mediaUrls,
+        candidateLat: candidate.candidateLat,
+        candidateLng: candidate.candidateLng,
         scoreBreakdown,
       };
     });

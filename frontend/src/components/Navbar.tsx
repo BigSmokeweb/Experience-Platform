@@ -54,13 +54,13 @@ export function Navbar() {
   const isDarkNav = isHome && !scrolled;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none px-3 sm:px-6 pt-3 sm:pt-4">
+    <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none px-3 sm:px-6 lg:px-8 pt-3 sm:pt-4">
       {/* Floating Capsule Bar */}
       <div
-        className={`pointer-events-auto max-w-7xl mx-auto rounded-full px-4 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-3 sm:gap-4 transition-all duration-300 ${
+        className={`pointer-events-auto w-full mx-auto rounded-full flex items-center justify-between gap-3 sm:gap-4 transition-all duration-300 ${
           isDarkNav
-            ? 'bg-transparent text-white'
-            : 'bg-[#F5F1E6]/95 backdrop-blur-xl border border-[#C4A265]/40 text-[#2C2C2C] shadow-lg shadow-stone-900/10'
+            ? 'max-w-[1440px] px-2 sm:px-4 py-2 sm:py-3 bg-transparent text-white'
+            : 'max-w-7xl px-4 sm:px-6 py-2 sm:py-2.5 bg-[#F5F1E6]/95 backdrop-blur-xl border border-[#C4A265]/40 text-[#2C2C2C] shadow-lg shadow-stone-900/10'
         }`}
       >
         {/* Left: Brand Logo */}
@@ -72,17 +72,17 @@ export function Navbar() {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }
           }}
-          className="flex items-center group shrink-0"
+          className="flex items-center group shrink-0 -ml-0.5 sm:-ml-1.5"
           aria-label="Journi Home"
         >
           <div className="relative flex items-center transition-transform duration-300 group-hover:scale-105">
             <Image
               src="/images/Journi-bg-rm.png"
               alt="Journi"
-              width={130}
-              height={40}
+              width={160}
+              height={48}
               priority
-              className="h-7 sm:h-8 w-auto object-contain drop-shadow-md"
+              className="h-9 sm:h-10 md:h-11 w-auto object-contain drop-shadow-md"
             />
           </div>
         </Link>

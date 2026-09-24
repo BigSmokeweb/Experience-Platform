@@ -1,4 +1,8 @@
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @font-face {
   font-family: 'Manifold CF';
   src: url('/fonts/manifold-cf-extra-bold.woff2') format('woff2'),
@@ -8,10 +12,6 @@
   font-style: normal;
   font-display: swap;
 }
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 .font-cormorant {
   font-family: 'Cormorant Garamond', var(--font-cormorant), Garamond, Georgia, serif;

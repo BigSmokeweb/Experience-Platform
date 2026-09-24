@@ -1,20 +1,92 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 @Injectable()
 export class StorageService {
+  private readonly logger = new Logger(StorageService.name);
   private readonly publicBucket: string;
   private readonly privateKycBucket: string;
   private readonly endpoint: string;
   private readonly signedExpirySeconds: number;
+  private readonly supabase: SupabaseClient | null = null;
 
   constructor(private readonly configService: ConfigService) {
     this.publicBucket = this.configService.get<string>('STORAGE_PUBLIC_BUCKET', 'experience-public-media');
     this.privateKycBucket = this.configService.get<string>('STORAGE_PRIVATE_KYC_BUCKET', 'provider-kyc-documents-restricted');
     this.endpoint = this.configService.get<string>('STORAGE_ENDPOINT', 'http://localhost:9000');
     this.signedExpirySeconds = Number(this.configService.get<number>('STORAGE_SIGNED_URL_EXPIRY_SECONDS', 900));
+
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+    const supabaseKey =
+      this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY') ||
+      this.configService.get<string>('SUPABASE_SECRET_KEY');
+
+    if (supabaseUrl && supabaseKey) {
+      try {
+        this.supabase = createClient(supabaseUrl, supabaseKey, {
+          auth: { persistSession: false },
+        });
+        this.logger.log('Supabase storage client initialized');
+      } catch (err) {
+        this.logger.warn(`Failed to initialize Supabase client: ${err}`);
+      }
+    }
   }
+
+  /**
+   * Uploads a trip memory or user photo to Supabase storage with fallback to base64 data URI
+   */
+  async uploadPhoto(
+    buffer: Buffer,
+    mimeType: string,
+    originalName: string,
+    subfolder = 'memories',
+  ): Promise<{ publicUrl: string; storageKey: string }> {
+    const ext = originalName.split('.').pop() || 'jpg';
+    const storageKey = `${subfolder}/${crypto.randomUUID()}.${ext}`;
+
+    if (this.supabase) {
+      const buckets = ['trip-memories', 'catalog-images'];
+      for (const bucket of buckets) {
+        try {
+          const { error } = await this.supabase.storage.from(bucket).upload(storageKey, buffer, {
+            contentType: mimeType,
+            upsert: true,
+          });
+          if (!error) {
+            const { data } = this.supabase.storage.from(bucket).getPublicUrl(storageKey);
+            return { publicUrl: data.publicUrl, storageKey: `${bucket}/${storageKey}` };
+          }
+        } catch {
+          // Try next bucket
+        }
+      }
+    }
+
+    // Fallback: Base64 data URL
+    const base64 = buffer.toString('base64');
+    const publicUrl = `data:${mimeType};base64,${base64}`;
+    return { publicUrl, storageKey };
+  }
+
+  /**
+   * Deletes a photo from storage
+   */
+  async deletePhoto(storageKey: string): Promise<boolean> {
+    if (!this.supabase || !storageKey || storageKey.startsWith('data:')) return true;
+    try {
+      const parts = storageKey.split('/');
+      const bucket = parts[0];
+      const filePath = parts.slice(1).join('/');
+      await this.supabase.storage.from(bucket).remove([filePath]);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
 
   /**
    * Generates a signed, single-use, short-lived (15 min) URL for uploading a KYC document

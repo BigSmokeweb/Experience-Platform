@@ -7,7 +7,8 @@ import Image from 'next/image';
 import { API_BASE } from '@/lib/api-client';
 import { ItineraryStopCard } from '@/components/ItineraryStopCard';
 import { TripAreaMap } from '@/components/TripAreaMap';
-import { ArrowLeft, Share2, Check, Copy, MessageCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Share2, Check, Copy, MessageCircle, AlertTriangle, Loader2, Camera, BookOpen } from 'lucide-react';
+import { saveEntry, JournalEntry } from '@/lib/journal-store';
 
 import {
   fetchTripSession,
@@ -332,12 +333,87 @@ function TripSessionContent() {
       setSession(updated);
       setIsCompleted(true);
 
+      // Auto-save finalized itinerary into Journal
+      const stops = (updated.selectedExperiences || []).map((exp) => ({
+        experienceId: exp.id,
+        title: exp.title,
+        city: exp.city,
+        category: exp.category,
+        cost: exp.priceMin,
+        durationMinutes: exp.durationMinutes,
+        rating: exp.ratingAverage,
+        coverImage: exp.mediaUrls?.[0],
+      }));
+
+      const tripDateStr = updated.tripDate || new Date().toISOString().slice(0, 10);
+      let timePeriodStr = '';
+      if (updated.startTimeOfDay && updated.endTimeOfDay) {
+        timePeriodStr = `${updated.startTimeOfDay} – ${updated.endTimeOfDay}`;
+      }
+
+      const journalEntry: JournalEntry = {
+        id: `itinerary_${sessionId}`,
+        title: `${updated.city || 'Curated'} Journey (${stops.length} stops)`,
+        city: updated.city || 'India',
+        content: `Finalized bespoke itinerary with ${stops.length} curated stops across ${updated.city || 'local destinations'}. Budget allocated: ₹${updated.totalBudget || 0}.`,
+        mood: 'wonderful',
+        rating: 5,
+        photos: [],
+        tags: ['Itinerary', updated.city || 'Travel', ...(updated.selectedCategories || [])],
+        visitedAt: tripDateStr,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        itineraryData: {
+          sessionId,
+          tripDate: tripDateStr,
+          timePeriod: timePeriodStr,
+          startTimeOfDay: updated.startTimeOfDay,
+          endTimeOfDay: updated.endTimeOfDay,
+          totalBudget: updated.totalBudget,
+          remainingBudget: updated.remainingBudget,
+          stops,
+          completedAt: new Date().toISOString(),
+        },
+      };
+
+      saveEntry(journalEntry);
+
       const token = getAuthToken();
       if (token) {
         fetch(`${API_BASE}/trip-sessions/${sessionId}/complete`, {
           method: 'PATCH',
           headers: { Authorization: `Bearer ${token}` },
         }).catch(() => {});
+
+        // Auto-create backend trip memory record
+        fetch(`${API_BASE}/trip-memories`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            tripSessionId: sessionId.includes('-') ? sessionId : undefined,
+            title: `${updated.city || 'Curated'} Journey`,
+            visitedAt: tripDateStr,
+          }),
+        }).catch(() => {});
+
+        // Attach verified route visit interaction for each stop
+        (updated.selectedExperienceIds || []).forEach((expId) => {
+          fetch(`${API_BASE}/interactions`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              experienceId: expId,
+              eventType: 'COMPLETE',
+              metadata: { sessionId, completedAt: new Date().toISOString() },
+            }),
+          }).catch(() => {});
+        });
       }
     } catch (err: any) {
       setErrorMessage(err.message);
@@ -439,6 +515,20 @@ function TripSessionContent() {
             )}
             {isCompleted && (
               <>
+                <Link
+                  href={`/journal/${sessionId}/memories`}
+                  className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-[#F5F1E6] bg-[#8B7355] hover:bg-[#725E45] px-4 py-2 rounded-xl transition shadow-sm font-semibold cursor-pointer active:scale-95"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Trip Memories</span>
+                </Link>
+                <Link
+                  href="/journal"
+                  className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-widest text-[#347F8C] hover:text-[#2A6772] border border-[#347F8C]/40 bg-white px-3.5 py-2 rounded-xl transition shadow-sm font-semibold cursor-pointer active:scale-95"
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Journal</span>
+                </Link>
                 <button
                   type="button"
                   onClick={handleCopyShareLink}
@@ -584,13 +674,21 @@ function TripSessionContent() {
 
               {/* Share With Travel Companions Action Bar */}
               <div className="mt-6 inline-flex flex-wrap items-center justify-center gap-3 p-2 bg-[#F5F1E6] rounded-2xl border border-[#D4CFC0] shadow-xs">
+                <Link
+                  href={`/journal/${sessionId}/memories`}
+                  className="inline-flex items-center gap-2 bg-[#8B7355] hover:bg-[#725E45] text-[#F5F1E6] font-mono font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl transition cursor-pointer shadow-sm active:scale-95"
+                >
+                  <Camera className="w-4 h-4" />
+                  <span>Trip Memories & Photos</span>
+                </Link>
+
                 <button
                   type="button"
                   onClick={handleCopyShareLink}
                   className="inline-flex items-center gap-2 bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] font-mono font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl transition cursor-pointer shadow-sm active:scale-95"
                 >
                   {copiedShareLink ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
-                  <span>{copiedShareLink ? 'Link Copied to Clipboard!' : 'Copy Shareable Link'}</span>
+                  <span>{copiedShareLink ? 'Link Copied!' : 'Copy Shareable Link'}</span>
                 </button>
 
                 <button
@@ -626,6 +724,7 @@ function TripSessionContent() {
                   {selectedStops.map((stop, idx) => (
                     <ItineraryStopCard
                       key={stop.id}
+                      id={stop.id}
                       stopNumber={idx + 1}
                       title={stop.title}
                       category={stop.category}
@@ -636,6 +735,8 @@ function TripSessionContent() {
                       ratingAverage={stop.ratingAverage}
                       authenticityRating={stop.authenticityRating}
                       mediaUrl={stop.mediaUrls?.[0]}
+                      showRateAction={true}
+                      sessionId={sessionId}
                     />
                   ))}
                 </div>
@@ -750,7 +851,9 @@ function TripSessionContent() {
                   {recommendations.map((cand) => (
                     <div
                       key={cand.id}
-                      className="group bg-white border border-[#D4CFC0] hover:border-[#347F8C]/50 p-5 rounded-2xl shadow-sm transition-all duration-300 flex flex-col justify-between"
+                      onClick={() => router.push(`/experiences/${cand.id}`)}
+                      className="group bg-white border border-[#D4CFC0] hover:border-[#347F8C] p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between cursor-pointer"
+                      title="Click anywhere to view full experience details"
                     >
                       <div className="flex gap-4 items-start">
                         {cand.mediaUrls?.[0] && (
@@ -767,12 +870,12 @@ function TripSessionContent() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-[10px] font-mono uppercase tracking-wider text-[#347F8C] font-semibold">
-                              {cand.category}
+                              {(!cand.category || cand.category.toUpperCase().includes('HIDDEN')) ? 'LOCAL EXPERIENCE' : cand.category.replace(/_/g, ' ')}
                             </span>
                             <span className="text-[#D4CFC0] text-xs">&bull;</span>
                             <span className="text-[10px] font-mono text-[#2C2C2C]/70 uppercase">{cand.city}</span>
                           </div>
-                          <h3 className="font-cormorant text-xl sm:text-2xl font-bold tracking-normal text-[#2C2C2C] leading-snug">
+                          <h3 className="font-cormorant text-xl sm:text-2xl font-bold tracking-normal text-[#2C2C2C] group-hover:text-[#347F8C] transition-colors leading-snug">
                             {cand.title}
                           </h3>
                           <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-mono text-[#2C2C2C]/75">
@@ -792,28 +895,49 @@ function TripSessionContent() {
                       </div>
 
                       {/* Action buttons */}
-                      <div className="mt-4 pt-3 border-t border-[#D4CFC0] flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleReject(cand)}
-                          disabled={selectingId === cand.id || isActionLoading}
-                          className="px-3 py-1.5 text-xs font-mono uppercase tracking-wider text-[#2C2C2C]/50 hover:text-red-500 hover:bg-red-50 border border-[#D4CFC0] rounded-xl transition cursor-pointer active:scale-95 disabled:opacity-40"
+                      <div
+                        className="mt-4 pt-3 border-t border-[#D4CFC0] flex items-center justify-between"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Link
+                          href={`/experiences/${cand.id}`}
+                          className="inline-flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider text-[#347F8C] hover:text-[#2A6772] font-semibold hover:underline"
                         >
-                          Dismiss
-                        </button>
-                        <button
-                          onClick={() => handleSelect(cand)}
-                          disabled={Boolean(selectingId) || isActionLoading}
-                          className="px-4 py-1.5 text-xs font-mono uppercase font-bold tracking-wider bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] rounded-xl shadow-sm transition active:scale-95 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                        >
-                          {selectingId === cand.id ? (
-                            <>
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              <span>Adding…</span>
-                            </>
-                          ) : (
-                            <span>+ Add Stop</span>
-                          )}
-                        </button>
+                          <span>Explore Details</span>
+                          <span className="text-xs">&rarr;</span>
+                        </Link>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleReject(cand);
+                            }}
+                            disabled={selectingId === cand.id || isActionLoading}
+                            className="px-3 py-1.5 text-xs font-mono uppercase tracking-wider text-[#2C2C2C]/50 hover:text-red-500 hover:bg-red-50 border border-[#D4CFC0] rounded-xl transition cursor-pointer active:scale-95 disabled:opacity-40"
+                          >
+                            Dismiss
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelect(cand);
+                            }}
+                            disabled={Boolean(selectingId) || isActionLoading}
+                            className="px-4 py-1.5 text-xs font-mono uppercase font-bold tracking-wider bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] rounded-xl shadow-sm transition active:scale-95 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          >
+                            {selectingId === cand.id ? (
+                              <>
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                <span>Adding…</span>
+                              </>
+                            ) : (
+                              <span>+ Add Stop</span>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -855,6 +979,7 @@ function TripSessionContent() {
                   {selectedStops.map((stop, idx) => (
                     <ItineraryStopCard
                       key={stop.id}
+                      id={stop.id}
                       stopNumber={idx + 1}
                       title={stop.title}
                       category={stop.category}

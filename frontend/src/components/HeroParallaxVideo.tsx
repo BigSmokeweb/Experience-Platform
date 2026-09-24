@@ -13,7 +13,7 @@ export function HeroParallaxVideo() {
 
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) {
-      video.style.transform = 'scale(1) translateZ(0)';
+      video.style.transform = 'none';
       video.style.opacity = '1';
       return;
     }
@@ -22,14 +22,21 @@ export function HeroParallaxVideo() {
     let isObserving = false;
 
     const updateTransform = (progress: number) => {
-      // Cinematic depth pull: scale 1.0 -> 1.15
       const clampedProgress = Math.min(1, Math.max(0, progress));
+      if (clampedProgress === 0) {
+        video.style.transform = 'none';
+        video.style.opacity = '1';
+        return;
+      }
+
+      // Cinematic depth pull: scale 1.0 -> 1.15
       const scale = 1.0 + clampedProgress * 0.15;
       
       // Smooth cinematic fade out
       const opacity = Math.max(0, 1.0 - Math.pow(clampedProgress, 0.9) * 1.05);
 
-      video.style.transform = `scale(${scale.toFixed(4)}) translate3d(0, ${(clampedProgress * 40).toFixed(2)}px, 0)`;
+      // Clean 2D transform avoids Chromium 3D GPU texture downsampling
+      video.style.transform = `scale(${scale.toFixed(4)}) translateY(${(clampedProgress * 40).toFixed(2)}px)`;
       video.style.opacity = `${opacity.toFixed(4)}`;
     };
 
@@ -114,13 +121,15 @@ export function HeroParallaxVideo() {
         loop
         muted
         playsInline
-        preload="metadata"
+        preload="auto"
         poster="/images/hero-bg.png"
         aria-label="Scenic travel landscape background video"
-        className="w-full h-full object-cover object-center will-change-transform"
+        className="w-full h-full object-cover object-center"
         style={{
-          transform: 'scale(1.0) translateZ(0)',
+          transform: 'none',
           opacity: 1,
+          imageRendering: '-webkit-optimize-contrast',
+          filter: 'contrast(1.04) brightness(1.01)',
         }}
       >
         <source src="/hero-bg-2.mp4" type="video/mp4" />

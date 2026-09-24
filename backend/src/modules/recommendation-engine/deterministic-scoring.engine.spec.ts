@@ -485,4 +485,80 @@ describe('DeterministicScoringEngine (Pure Unit Tests)', () => {
       expect(ranked[0].scoreBreakdown.routeContinuityScore).toBe(0);
     });
   });
+
+  // ─── NEW TESTS: User Star Ratings & Location Hierarchy ───────────────────
+  describe('User Star Ratings & Location Hierarchy', () => {
+    it('computeRatingScore: Bayesian smoothing scales correctly with review counts', () => {
+      // 0 reviews falls back to prior 3.5 / 5.0 = 0.70
+      expect(DeterministicScoringEngine.computeRatingScore(0, 0)).toBeCloseTo(0.70, 2);
+      expect(DeterministicScoringEngine.computeRatingScore(undefined, 0)).toBeCloseTo(0.70, 2);
+
+      // Place with high stars (5.0) and high review count approaches 1.0
+      const highRatedScore = DeterministicScoringEngine.computeRatingScore(5.0, 30);
+      expect(highRatedScore).toBeGreaterThan(0.95);
+
+      // Place with low stars (1.5) and high review count is pulled down
+      const lowRatedScore = DeterministicScoringEngine.computeRatingScore(1.5, 20);
+      expect(lowRatedScore).toBeLessThan(0.40);
+
+      // Single 5.0 review is smoothed: (1 * 5 + 3 * 3.5) / 4 / 5 = 15.5 / 20 = 0.775
+      const singleReviewScore = DeterministicScoringEngine.computeRatingScore(5.0, 1);
+      expect(singleReviewScore).toBeCloseTo(0.775, 2);
+    });
+
+    it('ranks place with higher user stars first when distance and category match', () => {
+      const candidateHighStars: RawCandidateInput = {
+        ...mockCandidates[0],
+        id: 'aaaa-high-stars',
+        ratingAverage: 4.9,
+        reviewCount: 25,
+        distanceKm: 3.0,
+      };
+      const candidateLowStars: RawCandidateInput = {
+        ...mockCandidates[0],
+        id: 'bbbb-low-stars',
+        ratingAverage: 2.5,
+        reviewCount: 25,
+        distanceKm: 3.0,
+      };
+
+      const ranked = DeterministicScoringEngine.rankCandidates(
+        [candidateLowStars, candidateHighStars],
+        { maxDistanceKm: 20, userCategories: [Category.FOOD] },
+        DEFAULT_RECOMMENDATION_WEIGHTS,
+      );
+
+      expect(ranked[0].id).toBe('aaaa-high-stars');
+      expect(ranked[0].scoreBreakdown.finalScore).toBeGreaterThan(ranked[1].scoreBreakdown.finalScore);
+      expect(ranked[0].scoreBreakdown.ratingScore).toBeGreaterThan(ranked[1].scoreBreakdown.ratingScore);
+    });
+
+    it('location dominance: nearby 4.0 star place ranks ahead of far 5.0 star place', () => {
+      const nearbySpot: RawCandidateInput = {
+        ...mockCandidates[0],
+        id: 'nearby-4-star',
+        ratingAverage: 4.0,
+        reviewCount: 15,
+        distanceKm: 1.5,
+      };
+      const distantSpot: RawCandidateInput = {
+        ...mockCandidates[0],
+        id: 'distant-5-star',
+        ratingAverage: 5.0,
+        reviewCount: 50,
+        distanceKm: 18.0,
+      };
+
+      const ranked = DeterministicScoringEngine.rankCandidates(
+        [distantSpot, nearbySpot],
+        { maxDistanceKm: 20, userCategories: [Category.FOOD] },
+        DEFAULT_RECOMMENDATION_WEIGHTS,
+      );
+
+      // Proximity & distance penalty keep the nearby spot first
+      expect(ranked[0].id).toBe('nearby-4-star');
+      expect(ranked[0].scoreBreakdown.finalScore).toBeGreaterThan(ranked[1].scoreBreakdown.finalScore);
+      expect(ranked[0].scoreBreakdown.locationMatch).toBeGreaterThan(ranked[1].scoreBreakdown.locationMatch);
+    });
+  });
 });
