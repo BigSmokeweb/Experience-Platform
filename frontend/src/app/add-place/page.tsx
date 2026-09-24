@@ -189,7 +189,9 @@ export default function AddPlacePage() {
           latitude,
           longitude,
           description: description.trim(),
-          photoUrl: photoUrl.trim() || null,
+          // Exclude data: URIs — local files are preview-only and are stripped server-side anyway.
+          // Only send a real https:// URL if the user pasted one.
+          photoUrl: photoUrl.trim() && !photoUrl.trim().startsWith('data:') ? photoUrl.trim() : null,
           costTier,
           isOwner,
         }),
@@ -214,7 +216,7 @@ export default function AddPlacePage() {
               latitude,
               longitude,
               description: description.trim(),
-              photoUrl: photoUrl.trim() || null,
+              photoUrl: photoUrl.trim() && !photoUrl.trim().startsWith('data:') ? photoUrl.trim() : null,
               costTier,
               isOwner,
             }),
@@ -521,6 +523,11 @@ export default function AddPlacePage() {
                     >
                       <X className="w-4 h-4" />
                     </button>
+                    {photoUrl.startsWith('data:') && (
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] font-mono text-center py-1.5 px-2">
+                        📷 Local preview — paste an image URL above to save a photo with your listing
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="flex flex-col sm:flex-row items-center gap-3">

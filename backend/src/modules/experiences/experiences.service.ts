@@ -220,7 +220,14 @@ export class ExperiencesService {
         budgetBand = BudgetBand.MODERATE;
     }
 
-    const mediaUrls = dto.photoUrl && dto.photoUrl.trim() ? [dto.photoUrl.trim()] : [];
+    // Strip data: URIs — they're ephemeral browser blobs and don't belong in the DB.
+    // If the user uploaded a file locally, we ignore it here; a real CDN upload flow handles media.
+    const photoUrlClean =
+      dto.photoUrl && dto.photoUrl.trim() && !dto.photoUrl.trim().startsWith('data:')
+        ? dto.photoUrl.trim()
+        : null;
+    const mediaUrls = photoUrlClean ? [photoUrlClean] : [];
+
     const defaultAvailabilityRules = [
       { daysOfWeek: [0, 1, 2, 3, 4, 5, 6], openTime: '09:00', closeTime: '21:00', slotDurationMinutes: 60, maxCapacityPerSlot: 10 },
     ];
@@ -270,8 +277,12 @@ export class ExperiencesService {
         published,
       );
 
+      // Normalize availabilityRules: Prisma's pg driver returns integer arrays inside JSONB
+      // as space-separated strings (e.g. "0 1 2 3 4 5 6") instead of [0,1,2,3,4,5,6].
+      // Return the known default directly to avoid the round-trip deserialization quirk.
       return {
         ...experience[0],
+        availabilityRules: defaultAvailabilityRules,
         message: published
           ? 'Place successfully listed and published!'
           : 'Place submitted for community review! It will appear once approved by our curators.',
