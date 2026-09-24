@@ -226,7 +226,11 @@ export default function AddPlacePage() {
 
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.message || `Submission failed (${res.status})`);
+        let errMsg = errJson.message || `Submission failed (${res.status})`;
+        if (errJson.errors && Array.isArray(errJson.errors) && errJson.errors.length > 0) {
+          errMsg = errJson.errors.map((e: any) => e.message || `${e.field}: invalid`).join(', ');
+        }
+        throw new Error(errMsg);
       }
 
       const data = await res.json();
