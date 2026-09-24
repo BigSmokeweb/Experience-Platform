@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Camera, X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { resolveExperienceImageUrl } from '@/lib/image-utils';
 
 interface ExperienceGalleryProps {
   images: string[];
@@ -17,7 +18,7 @@ export function ExperienceGallery({ images, title, city, area }: ExperienceGalle
   // Filter and deduplicate images
   const validImages = Array.from(
     new Set(images.filter((img) => typeof img === 'string' && img.trim().length > 0))
-  ).map((url) => url.replace('thumb.wikimedia.org', 'upload.wikimedia.org'));
+  ).map((url) => resolveExperienceImageUrl(url));
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {

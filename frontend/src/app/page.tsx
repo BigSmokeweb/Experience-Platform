@@ -7,6 +7,7 @@ import { CuratedDirectory } from '@/components/CuratedDirectory';
 import { ScrollToHeroOnRefresh } from '@/components/ScrollToHeroOnRefresh';
 import { SeasonalBanner } from '@/components/SeasonalBanner';
 import { API_BASE } from '@/lib/api-client';
+import { resolveExperienceImageUrl } from '@/lib/image-utils';
 
 export const metadata: Metadata = {
   title: 'Journi — Smarter Journeys. Better Choices.',
@@ -49,18 +50,24 @@ async function getAllExperiences(): Promise<ExperienceData[]> {
       if (data?.data && Array.isArray(data.data) && data.data.length > 0) {
         return data.data
           .filter((e: any) => !EXCLUDED_CITIES.has(e.city?.toLowerCase()))
-          .map((e: any) => ({
-            ...e,
-            title: e.title || e.name || 'Local Experience',
-            cover: e.cover || e.metadata?.cover || (e.mediaUrls?.[0] ?? ''),
-            mediaUrls: e.mediaUrls && e.mediaUrls.length > 0 ? e.mediaUrls : (e.cover ? [e.cover] : []),
-            provider: e.provider
-              ? {
-                  businessName: e.provider.businessName ?? undefined,
-                  verificationStatus: e.provider.verificationStatus ?? undefined,
-                }
-              : undefined,
-          }));
+          .map((e: any) => {
+            const rawCover = e.cover || e.metadata?.cover || (e.mediaUrls?.[0] ?? '');
+            const rawMedia = e.mediaUrls && e.mediaUrls.length > 0 ? e.mediaUrls : (e.cover ? [e.cover] : []);
+            const resolvedCover = resolveExperienceImageUrl(rawCover);
+            const resolvedMedia = rawMedia.map(resolveExperienceImageUrl);
+            return {
+              ...e,
+              title: e.title || e.name || 'Local Experience',
+              cover: resolvedCover,
+              mediaUrls: resolvedMedia.length > 0 ? resolvedMedia : [resolvedCover],
+              provider: e.provider
+                ? {
+                    businessName: e.provider.businessName ?? undefined,
+                    verificationStatus: e.provider.verificationStatus ?? undefined,
+                  }
+                : undefined,
+            };
+          });
       }
     }
   } catch (err) {
@@ -70,16 +77,24 @@ async function getAllExperiences(): Promise<ExperienceData[]> {
   // Server-side dataset fallback (instant on Vercel, zero client bundle bloat)
   return (catalogDataset as any[])
     .filter((e) => !EXCLUDED_CITIES.has(e.city?.toLowerCase()))
-    .map((e) => ({
-      ...e,
-      title: e.title || e.name || 'Local Experience',
-      provider: e.provider
-        ? {
-            businessName: e.provider.businessName ?? undefined,
-            verificationStatus: e.provider.verificationStatus ?? undefined,
-          }
-        : undefined,
-    }));
+    .map((e) => {
+      const rawCover = e.cover || e.metadata?.cover || (e.mediaUrls?.[0] ?? '');
+      const rawMedia = e.mediaUrls && e.mediaUrls.length > 0 ? e.mediaUrls : (e.cover ? [e.cover] : []);
+      const resolvedCover = resolveExperienceImageUrl(rawCover);
+      const resolvedMedia = rawMedia.map(resolveExperienceImageUrl);
+      return {
+        ...e,
+        title: e.title || e.name || 'Local Experience',
+        cover: resolvedCover,
+        mediaUrls: resolvedMedia.length > 0 ? resolvedMedia : [resolvedCover],
+        provider: e.provider
+          ? {
+              businessName: e.provider.businessName ?? undefined,
+              verificationStatus: e.provider.verificationStatus ?? undefined,
+            }
+          : undefined,
+      };
+    });
 }
 
 export default async function HomePage() {

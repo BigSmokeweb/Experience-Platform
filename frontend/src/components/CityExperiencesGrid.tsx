@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Star, Clock, ShieldCheck } from 'lucide-react';
+import { resolveExperienceImageUrl } from '@/lib/image-utils';
 
 interface ExperienceItem {
   id: string;
@@ -101,9 +102,8 @@ function CityExperienceCard({
   isVisible: boolean;
   staggerDelay: string;
 }) {
-  const fallbackUrl = heroImage || 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?auto=format&fit=crop&w=1000&q=80';
-  const rawUrl = exp.mediaUrls?.[0] || fallbackUrl;
-  const initialUrl = rawUrl.replace('thumb.wikimedia.org', 'upload.wikimedia.org');
+  const rawUrl = exp.mediaUrls?.[0] || heroImage;
+  const initialUrl = resolveExperienceImageUrl(rawUrl);
   const [imgSrc, setImgSrc] = useState(initialUrl);
 
   return (

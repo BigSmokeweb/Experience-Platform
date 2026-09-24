@@ -7,6 +7,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Search, MapPin, Clock, Star, ShieldCheck, ArrowRight, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { AnimatedCounter } from '@/components/AnimatedCounter';
 import { BookmarkButton } from '@/components/BookmarkButton';
+import { resolveExperienceImageUrl, FALLBACK_EXPERIENCE_IMAGE } from '@/lib/image-utils';
 
 export interface CategoryOption {
   label: string;
@@ -29,6 +30,7 @@ export interface CuratedExperience {
   priceMax?: number;
   ratingAverage?: number;
   authenticityRating?: number;
+  cover?: string;
   mediaUrls?: string[];
   description?: string;
   provider?: {
@@ -81,14 +83,13 @@ const ExperienceCard = memo(function ExperienceCard({
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 }) {
-  const fallbackUrl = 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?auto=format&fit=crop&w=1000&q=80';
-  const initialUrl = (exp.mediaUrls?.[0] || fallbackUrl).replace('thumb.wikimedia.org', 'upload.wikimedia.org');
+  const rawTarget = exp.cover || exp.mediaUrls?.[0];
+  const initialUrl = resolveExperienceImageUrl(rawTarget);
   const [imgSrc, setImgSrc] = useState(initialUrl);
 
   useEffect(() => {
-    const nextUrl = (exp.mediaUrls?.[0] || fallbackUrl).replace('thumb.wikimedia.org', 'upload.wikimedia.org');
-    setImgSrc(nextUrl);
-  }, [exp.mediaUrls]);
+    setImgSrc(resolveExperienceImageUrl(exp.cover || exp.mediaUrls?.[0]));
+  }, [exp.cover, exp.mediaUrls]);
 
   const isFreePublic = (!exp.priceMin && !exp.priceMax) || (exp.priceMin === 0 && exp.priceMax === 0);
   const formattedPrice = isFreePublic
@@ -122,8 +123,8 @@ const ExperienceCard = memo(function ExperienceCard({
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover"
           onError={() => {
-            if (imgSrc !== fallbackUrl) {
-              setImgSrc(fallbackUrl);
+            if (imgSrc !== FALLBACK_EXPERIENCE_IMAGE) {
+              setImgSrc(FALLBACK_EXPERIENCE_IMAGE);
             }
           }}
         />

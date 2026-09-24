@@ -13,6 +13,14 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/catalog-images/:path*',
+        destination: 'https://mvsnmwznonupjypacswj.supabase.co/storage/v1/object/public/catalog-images/:path*',
+      },
+    ];
+  },
   async headers() {
     return [
       {

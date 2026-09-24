@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ExperiencesService } from '../experiences/experiences.service';
+import { ExperiencesService, ensureCdnUrl } from '../experiences/experiences.service';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { DeterministicScoringEngine, RawCandidateInput } from './deterministic-scoring.engine';
 import { DEFAULT_RECOMMENDATION_WEIGHTS, RecommendationWeights } from './recommendation.config';
@@ -71,7 +71,7 @@ export class RecommendationEngineService {
       reviewCount: Number(r.reviewCount),
       authenticityRating: Number(r.authenticityRating),
       accessibilityTags: r.accessibilityTags || [],
-      mediaUrls: r.mediaUrls || [],
+      mediaUrls: (r.mediaUrls || []).map(ensureCdnUrl),
       availabilityRules: Array.isArray(r.availabilityRules) ? r.availabilityRules : [],
     }));
 

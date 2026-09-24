@@ -7,6 +7,7 @@ import { Star, Clock, ShieldCheck, MapPin, ArrowLeft, ArrowRight, Compass, Check
 import { BookmarkButton } from '@/components/BookmarkButton';
 import { BackButton } from '@/components/BackButton';
 import { PlaceRatingWidget } from '@/components/PlaceRatingWidget';
+import { resolveExperienceImageUrl } from '@/lib/image-utils';
 
 const FALLBACK_DIRECTORY: Record<string, any> = {
   'exp-1': {
@@ -119,17 +120,20 @@ async function getExperience(id: string) {
 
   if (!rawExp) return null;
 
-  const mediaList =
+  const rawMediaList =
     rawExp.mediaUrls && rawExp.mediaUrls.length > 0
       ? rawExp.mediaUrls
       : rawExp.images && rawExp.images.length > 0
       ? rawExp.images
       : ['https://images.unsplash.com/photo-1596178065887-1198b6148b2b?auto=format&fit=crop&w=1200&q=80'];
 
-  const imagesList =
+  const mediaList = rawMediaList.map(resolveExperienceImageUrl);
+
+  const imagesList = (
     rawExp.images && rawExp.images.length > 0
       ? rawExp.images
-      : mediaList;
+      : rawMediaList
+  ).map(resolveExperienceImageUrl);
 
   return {
     ...rawExp,

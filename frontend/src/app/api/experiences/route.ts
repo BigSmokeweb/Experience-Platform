@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { API_BASE } from '@/lib/api-client';
 import catalogDataset from '@/lib/catalog-dataset.json';
+import { resolveExperienceImageUrl } from '@/lib/image-utils';
+
+function normalizeItem(e: any) {
+  const rawCover = e.cover || e.metadata?.cover || (e.mediaUrls?.[0] ?? '');
+  const rawMedia = e.mediaUrls && e.mediaUrls.length > 0 ? e.mediaUrls : (e.cover ? [e.cover] : []);
+  const resolvedCover = resolveExperienceImageUrl(rawCover);
+  const resolvedMedia = rawMedia.map(resolveExperienceImageUrl);
+  return {
+    ...e,
+    cover: resolvedCover,
+    mediaUrls: resolvedMedia.length > 0 ? resolvedMedia : [resolvedCover],
+  };
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -25,6 +38,9 @@ export async function GET(request: NextRequest) {
       });
       if (res.ok) {
         const data = await res.json();
+        if (data?.data && Array.isArray(data.data)) {
+          data.data = data.data.map(normalizeItem);
+        }
         return NextResponse.json(data, {
           headers: {
             'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
@@ -58,7 +74,7 @@ export async function GET(request: NextRequest) {
 
   const total = filtered.length;
   const offset = (page - 1) * limit;
-  const paginated = filtered.slice(offset, offset + limit);
+  const paginated = filtered.slice(offset, offset + limit).map(normalizeItem);
 
   return NextResponse.json(
     {

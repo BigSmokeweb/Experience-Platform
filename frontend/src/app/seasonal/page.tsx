@@ -6,6 +6,7 @@ import { getCurrentSeason, SEASONS } from '@/lib/seasons';
 import { API_BASE } from '@/lib/api-client';
 import catalogDataset from '@/lib/catalog-dataset.json';
 import { SeasonalBackButton } from '@/components/SeasonalBackButton';
+import { resolveExperienceImageUrl, FALLBACK_EXPERIENCE_IMAGE } from '@/lib/image-utils';
 
 export const metadata: Metadata = {
   title: 'Seasonal Festivals & Spots — Journi',
@@ -61,7 +62,7 @@ async function getSeasonalRecommendations(): Promise<SeasonalExperience[]> {
           priceMax: r.priceMax,
           ratingAverage: r.ratingAverage,
           reviewCount: r.reviewCount,
-          mediaUrls: r.mediaUrls || [],
+          mediaUrls: (r.mediaUrls || []).map(resolveExperienceImageUrl),
           description: r.description,
         }));
       }
@@ -76,20 +77,23 @@ async function getSeasonalRecommendations(): Promise<SeasonalExperience[]> {
     .filter((e) => !EXCLUDED.has(e.city?.toLowerCase()))
     .sort((a, b) => (b.ratingAverage || 0) - (a.ratingAverage || 0))
     .slice(0, 20)
-    .map((e) => ({
-      id: e.id,
-      title: e.title || e.name || 'Local Experience',
-      category: e.category,
-      city: e.city,
-      priceMin: e.priceMin || 0,
-      priceMax: e.priceMax || 0,
-      ratingAverage: e.ratingAverage || 4.5,
-      reviewCount: e.reviewCount || 0,
-      durationMinutes: e.durationMinutes,
-      mediaUrls: e.mediaUrls || [],
-      description: e.description,
-      provider: e.provider,
-    }));
+    .map((e) => {
+      const rawUrls = e.mediaUrls && e.mediaUrls.length > 0 ? e.mediaUrls : (e.cover ? [e.cover] : []);
+      return {
+        id: e.id,
+        title: e.title || e.name || 'Local Experience',
+        category: e.category,
+        city: e.city,
+        priceMin: e.priceMin || 0,
+        priceMax: e.priceMax || 0,
+        ratingAverage: e.ratingAverage || 4.5,
+        reviewCount: e.reviewCount || 0,
+        durationMinutes: e.durationMinutes,
+        mediaUrls: rawUrls.map(resolveExperienceImageUrl),
+        description: e.description,
+        provider: e.provider,
+      };
+    });
 }
 
 function formatPrice(min?: number, max?: number): { label: string; value: string } {
@@ -190,8 +194,7 @@ export default async function SeasonalPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {experiences.map((exp) => {
-              const fallbackUrl = 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?auto=format&fit=crop&w=1000&q=80';
-              const imgSrc = (exp.mediaUrls?.[0] || fallbackUrl).replace('thumb.wikimedia.org', 'upload.wikimedia.org');
+              const imgSrc = resolveExperienceImageUrl(exp.mediaUrls?.[0]);
 
               return (
                 <Link key={exp.id} href={`/experiences/${exp.id}`} className="group">

@@ -6,6 +6,7 @@ import { Star, ShieldCheck, Clock, Camera } from 'lucide-react';
 
 import { useState } from 'react';
 import { PlaceRatingWidget } from '@/components/PlaceRatingWidget';
+import { resolveExperienceImageUrl } from '@/lib/image-utils';
 
 interface ItineraryStopCardProps {
   id?: string;
@@ -69,7 +70,7 @@ export function ItineraryStopCard({
       {mediaUrl && (
         <div className="relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-[#F5F1E6] border border-[#D4CFC0] hidden sm:block">
           <Image
-            src={mediaUrl}
+            src={resolveExperienceImageUrl(mediaUrl)}
             alt={title}
             fill
             sizes="64px"

@@ -38,6 +38,18 @@ function isPublishEligible(fields: {
   );
 }
 
+const SUPABASE_CDN_PREFIX =
+  (process.env.SUPABASE_URL || 'https://mvsnmwznonupjypacswj.supabase.co') +
+  '/storage/v1/object/public/catalog-images';
+
+export function ensureCdnUrl(u?: string): string {
+  if (!u || typeof u !== 'string') return '';
+  const clean = u.trim();
+  if (clean.startsWith('http://') || clean.startsWith('https://')) return clean;
+  const sub = clean.replace(/^\/?catalog-images\//, '');
+  return `${SUPABASE_CDN_PREFIX}/${sub}`;
+}
+
 @Injectable()
 export class ExperiencesService {
   constructor(private readonly prisma: PrismaService) {}
@@ -396,7 +408,10 @@ export class ExperiencesService {
       ...queryArgs,
     );
 
-    return results;
+    return results.map((r: any) => ({
+      ...r,
+      mediaUrls: Array.isArray(r.mediaUrls) ? r.mediaUrls.map(ensureCdnUrl) : [],
+    }));
   }
 
   /**
@@ -555,11 +570,10 @@ export class ExperiencesService {
       }),
     ]);
 
-    const ensureSlash = (u?: string) => (u && typeof u === 'string' && u.startsWith('catalog-images/') ? '/' + u : u || '');
     const mapped = data.map((exp: any) => {
       const meta = (exp.metadata as any) || {};
-      const coverUrl = ensureSlash(meta.cover || exp.mediaUrls?.[0] || '');
-      const mediaList = (exp.mediaUrls || []).map(ensureSlash);
+      const coverUrl = ensureCdnUrl(meta.cover || exp.mediaUrls?.[0] || '');
+      const mediaList = (exp.mediaUrls || []).map(ensureCdnUrl);
       if (coverUrl && !mediaList.includes(coverUrl)) {
         mediaList.unshift(coverUrl);
       }
@@ -624,10 +638,9 @@ export class ExperiencesService {
       throw new NotFoundException('Experience not found');
     }
 
-    const ensureSlash = (u?: string) => (u && typeof u === 'string' && u.startsWith('catalog-images/') ? '/' + u : u || '');
     const meta = (experience.metadata as any) || {};
-    const coverUrl = ensureSlash(meta.cover || experience.mediaUrls?.[0] || '');
-    const mediaList = (experience.mediaUrls || []).map(ensureSlash);
+    const coverUrl = ensureCdnUrl(meta.cover || experience.mediaUrls?.[0] || '');
+    const mediaList = (experience.mediaUrls || []).map(ensureCdnUrl);
     if (coverUrl && !mediaList.includes(coverUrl)) {
       mediaList.unshift(coverUrl);
     }
