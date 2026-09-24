@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
 import { CuratedDirectory } from '@/components/CuratedDirectory';
 import { API_BASE } from '@/lib/api-client';
 
@@ -96,14 +95,6 @@ export default async function ExplorePage() {
               Dawn walks through centuries-old ateliers. Culinary traditions held in family kitchens since the Mughal courts. Each experience verified in person, on site.
             </p>
           </div>
-
-          <Link
-            href="/add-place"
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] font-mono text-xs uppercase tracking-wider font-bold shadow-md shadow-[#347F8C]/20 transition-all shrink-0 self-start md:self-auto"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add a Place</span>
-          </Link>
         </div>
       </section>
 

@@ -253,11 +253,11 @@ export default function AddPlacePage() {
         {/* Top Back Nav */}
         <div className="mb-6 flex items-center justify-between">
           <Link
-            href="/explore"
+            href="/profile"
             className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[#5C6460] hover:text-[#2C2C2C] transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Explore</span>
+            <span>Back to Profile</span>
           </Link>
           <div className="text-[11px] font-mono uppercase tracking-widest text-[#347F8C] font-semibold flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
@@ -295,10 +295,10 @@ export default function AddPlacePage() {
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
                 <Link
-                  href="/explore"
+                  href="/profile"
                   className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] font-mono text-xs uppercase tracking-wider font-bold shadow-md shadow-[#347F8C]/20 transition-all"
                 >
-                  Explore Places
+                  View in Profile
                 </Link>
                 <button
                   type="button"

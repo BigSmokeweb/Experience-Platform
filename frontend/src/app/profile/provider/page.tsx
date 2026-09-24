@@ -7,6 +7,7 @@ import { ProfileHeader } from '../components/ProfileHeader';
 import { ProviderBusinessCard } from '../components/ProviderBusinessCard';
 import { ProviderListingsGrid } from '../components/ProviderListingsGrid';
 import { ProviderAnalyticsPanel } from '../components/ProviderAnalyticsPanel';
+import { DiscoveredPlacesSection } from '../components/DiscoveredPlacesSection';
 
 interface ProviderData {
   id: string;
@@ -207,6 +208,9 @@ export default function ProviderProfilePage() {
 
         {/* Hosted Listings Grid */}
         <ProviderListingsGrid />
+
+        {/* Places You Discovered */}
+        <DiscoveredPlacesSection />
       </main>
     </div>
   );

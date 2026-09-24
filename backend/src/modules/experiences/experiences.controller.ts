@@ -91,6 +91,16 @@ export class ExperiencesController {
     return this.matchPreviewService.buildPreview(dto);
   }
 
+  /**
+   * User: fetch own submitted spots (discovered places or self-added spots)
+   * IDOR-safe: strictly scoped to CurrentUser.
+   */
+  @Get('my-submissions')
+  @UseGuards(AuthGuard('jwt'))
+  async mySubmissions(@CurrentUser('id') userId: string) {
+    return this.experiencesService.getUserSubmissions(userId);
+  }
+
   @Get(':id')
   async getById(@Param('id') id: string) {
     return this.experiencesService.getExperienceById(id);

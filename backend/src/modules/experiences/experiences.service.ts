@@ -712,4 +712,40 @@ export class ExperiencesService {
       }),
     }));
   }
+
+  /**
+   * Get all spots submitted / discovered by a specific user.
+   * Scoped to submittedByUserId = userId.
+   */
+  async getUserSubmissions(userId: string) {
+    const experiences = await this.prisma.experience.findMany({
+      where: { submittedByUserId: userId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        category: true,
+        city: true,
+        state: true,
+        address: true,
+        latitude: true,
+        longitude: true,
+        budgetBand: true,
+        priceMin: true,
+        priceMax: true,
+        mediaUrls: true,
+        published: true,
+        createdAt: true,
+        submittedByRole: true,
+      },
+    });
+
+    return experiences.map((exp) => ({
+      ...exp,
+      cover: exp.mediaUrls?.[0] ? ensureCdnUrl(exp.mediaUrls[0]) : null,
+      mediaUrls: (exp.mediaUrls || []).map(ensureCdnUrl),
+    }));
+  }
 }
+
