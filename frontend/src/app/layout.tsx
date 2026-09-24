@@ -39,13 +39,35 @@ const luxuriousScript = Luxurious_Script({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://experienceplatform.in'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://experience-platform-sigma.vercel.app'),
   title: {
     default: 'Journi — Smarter Journeys. Better Choices.',
     template: '%s | Journi',
   },
   description: 'Journi — Smarter journeys. Better choices. Deterministic discovery platform for authentic culinary, cultural, artisan, and adventure experiences across India.',
   keywords: ['Journi', 'Maharashtra Travel', 'Local Experiences', 'Authentic Food Tours', 'Artisan Workshops', 'Culture Walk', 'Mumbai', 'Thane', 'Navi Mumbai', 'Panvel', 'Powai'],
+  openGraph: {
+    type: 'website',
+    locale: 'en_IN',
+    url: 'https://experience-platform-sigma.vercel.app',
+    siteName: 'Journi',
+    title: 'Journi — Smarter Journeys. Better Choices.',
+    description: 'Private culinary lineages, master ateliers, centuries of living craft. Deterministic discovery platform for authentic experiences across India.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Journi — Private culinary lineages, master ateliers, centuries of living craft',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Journi — Smarter Journeys. Better Choices.',
+    description: 'Private culinary lineages, master ateliers, centuries of living craft. Deterministic discovery platform for authentic experiences across India.',
+    images: ['/og-image.png'],
+  },
   icons: {
     icon: '/images/Journi-bg-rm.png',
     apple: '/images/Journi-bg-rm.png',
