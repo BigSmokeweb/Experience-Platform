@@ -19,10 +19,10 @@ export function resolveExperienceImageUrl(url?: string | null): string {
     return clean;
   }
 
-  // If seasonal-images
+  // If seasonal-images (served via Supabase CDN in production and local)
   if (clean.includes('seasonal-images/')) {
     const subPath = clean.slice(clean.indexOf('seasonal-images/'));
-    return `/${subPath.replace(/^\/+/, '')}`;
+    return `${SUPABASE_CDN_PREFIX}/${subPath}`;
   }
 
   // If relative path like "/catalog-images/..." or "catalog-images/..."

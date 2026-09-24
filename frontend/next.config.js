@@ -20,6 +20,10 @@ const nextConfig = {
         destination: 'https://mvsnmwznonupjypacswj.supabase.co/storage/v1/object/public/catalog-images/:path*',
       },
       {
+        source: '/seasonal-images/:path*',
+        destination: 'https://mvsnmwznonupjypacswj.supabase.co/storage/v1/object/public/catalog-images/seasonal-images/:path*',
+      },
+      {
         source: '/trip-memories/:path*',
         destination: 'https://mvsnmwznonupjypacswj.supabase.co/storage/v1/object/public/trip-memories/:path*',
       },

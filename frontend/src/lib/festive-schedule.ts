@@ -8,6 +8,9 @@ export interface FestiveSeason {
   bannerImage: string;
 }
 
+const SUPABASE_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mvsnmwznonupjypacswj.supabase.co';
+const GANPATI_BANNER_URL = `${SUPABASE_BASE}/storage/v1/object/public/catalog-images/images/ganpati-banner.jpg`;
+
 export const FESTIVE_SEASONS: Record<string, FestiveSeason> = {
   'ganesh-chaturthi': {
     id: 'ganesh-chaturthi',
@@ -16,7 +19,7 @@ export const FESTIVE_SEASONS: Record<string, FestiveSeason> = {
     headline: 'Ganesh Utsav Pandal Trails & Celebrations',
     tagline: 'Iconic pandals, artisan murti ateliers & traditional Dhol-Tasha processions across Mumbai MMR.',
     badgeLabel: 'Ganesh Chaturthi Utsav',
-    bannerImage: '/images/ganpati-banner.jpg',
+    bannerImage: GANPATI_BANNER_URL,
   },
   navaratri: {
     id: 'navaratri',
@@ -25,7 +28,7 @@ export const FESTIVE_SEASONS: Record<string, FestiveSeason> = {
     headline: 'Navaratri Garba Nights & Folk Celebrations',
     tagline: 'Nine nights of vibrant folk Dandiya, live Gujarati orchestras & illuminated community grounds.',
     badgeLabel: 'Navaratri & Garba Utsav',
-    bannerImage: '/images/ganpati-banner.jpg',
+    bannerImage: GANPATI_BANNER_URL,
   },
   diwali: {
     id: 'diwali',
@@ -34,7 +37,7 @@ export const FESTIVE_SEASONS: Record<string, FestiveSeason> = {
     headline: 'Deepavali Festival of Lights & Night Bazaars',
     tagline: 'Luminous light trails, artisanal faral sweet markets & festive night bazaars across the city.',
     badgeLabel: 'Diwali Festivities',
-    bannerImage: '/images/ganpati-banner.jpg',
+    bannerImage: GANPATI_BANNER_URL,
   },
 };
 
