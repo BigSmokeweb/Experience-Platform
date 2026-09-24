@@ -139,8 +139,8 @@ async function getExperience(id: string) {
       : ['https://images.unsplash.com/photo-1596178065887-1198b6148b2b?auto=format&fit=crop&w=1200&q=80'];
 
   const otherMedia = rawMediaList
-    .map(resolveExperienceImageUrl)
-    .filter((u) => u !== resolvedCover);
+    .map((item: any) => resolveExperienceImageUrl(item))
+    .filter((u: string) => u !== resolvedCover);
   const mediaList = [resolvedCover, ...otherMedia];
 
   const imagesList = (
@@ -148,8 +148,8 @@ async function getExperience(id: string) {
       ? rawExp.images
       : rawMediaList
   )
-    .map(resolveExperienceImageUrl)
-    .filter((u) => u !== resolvedCover);
+    .map((item: any) => resolveExperienceImageUrl(item))
+    .filter((u: string) => u !== resolvedCover);
 
   return {
     ...rawExp,
