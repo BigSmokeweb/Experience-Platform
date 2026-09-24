@@ -25,6 +25,12 @@ export function resolveExperienceImageUrl(url?: string | null): string {
     return `${SUPABASE_CDN_PREFIX}/${subPath}`;
   }
 
+  if (clean.includes('trip-memories/')) {
+    const subPath = clean.slice(clean.indexOf('trip-memories/') + 'trip-memories/'.length);
+    const supabaseBase = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mvsnmwznonupjypacswj.supabase.co';
+    return `${supabaseBase}/storage/v1/object/public/trip-memories/${subPath}`;
+  }
+
   if (clean.startsWith('/')) {
     return clean;
   }

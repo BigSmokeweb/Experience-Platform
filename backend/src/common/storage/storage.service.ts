@@ -48,20 +48,20 @@ export class StorageService {
     const storageKey = `${subfolder}/${crypto.randomUUID()}.${ext}`;
 
     if (this.supabase) {
-      const buckets = ['trip-memories', 'catalog-images'];
-      for (const bucket of buckets) {
-        try {
-          const { error } = await this.supabase.storage.from(bucket).upload(storageKey, buffer, {
-            contentType: mimeType,
-            upsert: true,
-          });
-          if (!error) {
-            const { data } = this.supabase.storage.from(bucket).getPublicUrl(storageKey);
-            return { publicUrl: data.publicUrl, storageKey: `${bucket}/${storageKey}` };
-          }
-        } catch {
-          // Try next bucket
+      const bucket = 'trip-memories';
+      try {
+        const { error } = await this.supabase.storage.from(bucket).upload(storageKey, buffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
+        if (error) {
+          this.logger.error(`Supabase upload failed: ${error.message}`);
+        } else {
+          const { data } = this.supabase.storage.from(bucket).getPublicUrl(storageKey);
+          return { publicUrl: data.publicUrl, storageKey: `${bucket}/${storageKey}` };
         }
+      } catch (err) {
+        this.logger.error(`Supabase upload exception: ${err}`);
       }
     }
 

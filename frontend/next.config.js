@@ -19,6 +19,10 @@ const nextConfig = {
         source: '/catalog-images/:path*',
         destination: 'https://mvsnmwznonupjypacswj.supabase.co/storage/v1/object/public/catalog-images/:path*',
       },
+      {
+        source: '/trip-memories/:path*',
+        destination: 'https://mvsnmwznonupjypacswj.supabase.co/storage/v1/object/public/trip-memories/:path*',
+      },
     ];
   },
   async headers() {
