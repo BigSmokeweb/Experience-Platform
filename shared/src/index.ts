@@ -198,6 +198,22 @@ export const CreateExperienceSchema = z.object({
 
 export type CreateExperienceDto = z.infer<typeof CreateExperienceSchema>;
 
+export const AddPlaceSchema = z.object({
+  title: z.string().min(3, 'Name must be at least 3 characters').max(150),
+  category: z.nativeEnum(Category),
+  address: z.string().min(3, 'Address is required'),
+  city: z.string().min(2, 'City is required'),
+  state: z.string().optional().default('Maharashtra'),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
+  description: z.string().min(20, 'Description must be at least 20 characters').max(4000),
+  photoUrl: z.string().url().optional().or(z.literal('')).nullable(),
+  costTier: z.enum(['FREE', 'BUDGET', 'MODERATE', 'PREMIUM']).optional().default('MODERATE'),
+  isOwner: z.boolean().default(false),
+});
+
+export type AddPlaceDto = z.infer<typeof AddPlaceSchema>;
+
 export const UpdateExperienceSchema = CreateExperienceSchema.partial();
 export type UpdateExperienceDto = z.infer<typeof UpdateExperienceSchema>;
 

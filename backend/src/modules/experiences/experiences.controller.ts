@@ -21,6 +21,8 @@ import {
   Role,
   CreateExperienceSchema,
   CreateExperienceDto,
+  AddPlaceSchema,
+  AddPlaceDto,
   UpdateExperienceSchema,
   UpdateExperienceDto,
   SearchExperiencesQuerySchema,
@@ -92,6 +94,16 @@ export class ExperiencesController {
   @Get(':id')
   async getById(@Param('id') id: string) {
     return this.experiencesService.getExperienceById(id);
+  }
+
+  @Post('add-place')
+  @UseGuards(AuthGuard('jwt'))
+  @UsePipes(new ZodValidationPipe(AddPlaceSchema))
+  async addPlace(
+    @CurrentUser('id') userId: string,
+    @Body() dto: AddPlaceDto,
+  ) {
+    return this.experiencesService.addPlace(userId, dto);
   }
 
   @Post()

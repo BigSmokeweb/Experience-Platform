@@ -84,6 +84,7 @@ model User {
   interactions    Interaction[]
   tripSessions    TripSession[]
   tripMemories    TripMemory[]
+  submittedExperiences Experience[] @relation("SubmittedExperiences")
 
   @@map("users")
 }
@@ -127,7 +128,9 @@ model ProviderProfile {
 
 model Experience {
   id                 String                               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  providerId         String                               @map("provider_id") @db.Uuid
+  providerId         String?                              @map("provider_id") @db.Uuid
+  submittedByUserId  String?                              @map("submitted_by_user_id") @db.Uuid
+  submittedByRole    Role?                                @map("submitted_by_role")
   title              String
   description        String
   category           Category
@@ -158,7 +161,8 @@ model Experience {
   createdAt          DateTime                             @default(now()) @map("created_at")
   updatedAt          DateTime                             @updatedAt @map("updated_at")
 
-  provider     ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  provider     ProviderProfile? @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  submittedByUser User?         @relation("SubmittedExperiences", fields: [submittedByUserId], references: [id], onDelete: SetNull)
   reviews      Review[]
   interactions Interaction[]
   tripMemoryPhotos TripMemoryPhoto[]
@@ -166,6 +170,8 @@ model Experience {
   @@index([city])
   @@index([category])
   @@index([budgetBand])
+  @@index([submittedByUserId])
+  @@index([submittedByRole])
   @@map("experiences")
 }
 

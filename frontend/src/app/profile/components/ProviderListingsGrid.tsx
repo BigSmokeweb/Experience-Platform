@@ -96,13 +96,22 @@ export function ProviderListingsGrid() {
           </p>
         </div>
 
-        <Link
-          href="/provider/portal"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-semibold text-xs transition-all shadow-sm shadow-amber-500/20 shrink-0 self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          Create New Experience
-        </Link>
+        <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
+          <Link
+            href="/add-place"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-amber-600/30 bg-amber-50 hover:bg-amber-100 text-amber-900 font-semibold text-xs transition-all shadow-xs"
+          >
+            <Plus className="w-3.5 h-3.5 text-amber-600" />
+            Quick Add Place
+          </Link>
+          <Link
+            href="/provider/portal"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-semibold text-xs transition-all shadow-sm shadow-amber-500/20"
+          >
+            <Plus className="w-4 h-4" />
+            Full Listing Wizard
+          </Link>
+        </div>
       </div>
 
       {listings.length === 0 ? (

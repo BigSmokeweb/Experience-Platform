@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { BookOpen, User, LogOut, ChevronDown, Compass, Handshake, LogIn, Menu, X } from 'lucide-react';
+import { BookOpen, User, LogOut, ChevronDown, Compass, Handshake, LogIn, Menu, X, Plus } from 'lucide-react';
 import { NearbyCitiesDropdown } from '@/components/NearbyCitiesDropdown';
 import { CollectionDrawer } from '@/components/CollectionDrawer';
 import { useCollection } from '@/lib/collection-store';
@@ -113,7 +113,7 @@ export function Navbar() {
               <NearbyCitiesDropdown isHome={isHome} scrolled={scrolled} />
             </div>
 
-            {/* My Journal link — replaces the old Journal slide-over button */}
+            {/* My Journal link */}
             <Link
               href="/journal"
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition-all duration-200 ${
@@ -126,6 +126,20 @@ export function Navbar() {
               <span>My Journal</span>
             </Link>
           </nav>
+
+          {/* Action: Add a Place (Shared fast entry point for Travelers & Hosts) */}
+          <Link
+            href="/add-place"
+            className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 active:scale-95 border ${
+              isDarkNav
+                ? 'bg-amber-400/20 hover:bg-amber-400/30 border-amber-300/40 text-amber-200 backdrop-blur-sm'
+                : 'bg-amber-500/15 hover:bg-amber-500/25 border-amber-600/30 text-amber-900 shadow-xs'
+            }`}
+          >
+            <Plus className="w-3.5 h-3.5 text-amber-500" />
+            <span className="hidden sm:inline">Add</span>
+            <span>Place</span>
+          </Link>
 
           {/* Action 1: Plan Journey */}
           <Link
@@ -184,6 +198,14 @@ export function Navbar() {
                   <div className="px-3 py-2 border-b border-[#D4CFC0]/50 text-[11px] font-mono text-[#2C2C2C]/60 truncate">
                     Signed in as <b className="text-[#2C2C2C] block truncate">{userName}</b>
                   </div>
+                  <Link
+                    href="/add-place"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2 text-xs rounded-xl hover:bg-[#F5F1E6] transition font-mono font-bold text-amber-700"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Add a Place</span>
+                  </Link>
                   <Link
                     href="/profile"
                     onClick={() => setIsUserMenuOpen(false)}
@@ -271,6 +293,18 @@ export function Navbar() {
             >
               <span>The Collection</span>
               <span className="text-[10px] font-mono text-[#5C6460]">Experiences</span>
+            </Link>
+
+            <Link
+              href="/add-place"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-sm font-semibold text-amber-900 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Plus className="w-4 h-4 text-amber-600" />
+                <span>Add a Place</span>
+              </div>
+              <span className="text-[10px] font-mono text-amber-700">Fast Submit</span>
             </Link>
 
             <Link

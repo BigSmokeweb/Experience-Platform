@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Plus } from 'lucide-react';
 import { CuratedDirectory } from '@/components/CuratedDirectory';
 import { API_BASE } from '@/lib/api-client';
 
@@ -82,17 +83,27 @@ export default async function ExplorePage() {
     <div className="bg-[#F5F1E6] text-[#2C2C2C] min-h-screen pt-28 pb-24 selection:bg-[#8B7355]/30 selection:text-[#2C2C2C]">
       {/* ─── Editorial Header ─── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-        <div className="border-b border-[#C4A265] pb-10">
-          <div className="inline-flex items-center gap-2 text-[#347F8C] font-mono text-xs tracking-[0.28em] uppercase mb-4 sm:mb-5">
-            <span className="w-2 h-2 rounded-full bg-[#A69B80]" />
-            Our Curated Registry
+        <div className="border-b border-[#C4A265] pb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <div className="inline-flex items-center gap-2 text-[#347F8C] font-mono text-xs tracking-[0.28em] uppercase mb-4 sm:mb-5">
+              <span className="w-2 h-2 rounded-full bg-[#A69B80]" />
+              Our Curated Registry
+            </div>
+            <h1 className="font-edu-cursive font-normal text-4xl sm:text-5xl lg:text-[60px] tracking-wide text-[#2C2C2C] leading-normal py-1">
+              A Living Catalogue
+            </h1>
+            <p className="text-[#5C6460] text-sm sm:text-base mt-4 max-w-2xl font-light leading-relaxed">
+              Dawn walks through centuries-old ateliers. Culinary traditions held in family kitchens since the Mughal courts. Each experience verified in person, on site.
+            </p>
           </div>
-          <h1 className="font-edu-cursive font-normal text-4xl sm:text-5xl lg:text-[60px] tracking-wide text-[#2C2C2C] leading-normal py-1">
-            A Living Catalogue
-          </h1>
-          <p className="text-[#5C6460] text-sm sm:text-base mt-5 sm:mt-6 max-w-2xl font-light leading-relaxed">
-            Dawn walks through centuries-old ateliers. Culinary traditions held in family kitchens since the Mughal courts. Each experience verified in person, on site.
-          </p>
+
+          <Link
+            href="/add-place"
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] font-mono text-xs uppercase tracking-wider font-bold shadow-md shadow-[#347F8C]/20 transition-all shrink-0 self-start md:self-auto"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add a Place</span>
+          </Link>
         </div>
       </section>
 

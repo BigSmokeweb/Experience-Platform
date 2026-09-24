@@ -7,11 +7,13 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { ContentSanitizer } from '../../common/utils/sanitizer.util';
 import {
   CreateExperienceDto,
+  AddPlaceDto,
   UpdateExperienceDto,
   SearchExperiencesQueryDto,
   PaginatedResult,
   Category,
   BudgetBand,
+  Role,
 } from '@experience-platform/shared';
 import { computeListingNudges } from './listing-nudges.util';
 
@@ -70,25 +72,27 @@ export class ExperiencesService {
       const experience = await this.prisma.$queryRawUnsafe<any[]>(
         `
         INSERT INTO "experiences" (
-          "id", "provider_id", "title", "description", "category",
+          "id", "provider_id", "submitted_by_user_id", "submitted_by_role", "title", "description", "category",
           "location", "latitude", "longitude", "address", "city", "state", "country",
           "price_min", "price_max", "currency", "budget_band", "accessibility_tags",
           "media_urls", "availability_rules", "duration_minutes", "published", "updated_at"
         ) VALUES (
-          gen_random_uuid(), $1::uuid, $2, $3, $4::"Category",
-          ST_SetSRID(ST_MakePoint($5, $6), 4326)::geography, $6, $5, $7, $8, $9, $10,
-          $11, $12, $13, $14::"BudgetBand", $15::text[],
-          $16::text[], $17::jsonb, $18, $19, NOW()
+          gen_random_uuid(), $1::uuid, $2::uuid, $3::"Role", $4, $5, $6::"Category",
+          ST_SetSRID(ST_MakePoint($7, $8), 4326)::geography, $8, $7, $9, $10, $11, $12,
+          $13, $14, $15, $16::"BudgetBand", $17::text[],
+          $18::text[], $19::jsonb, $20, $21, NOW()
         )
         RETURNING
-          "id", "provider_id" AS "providerId", "title", "description", "category",
-          "latitude", "longitude", "address", "city", "state", "country",
+          "id", "provider_id" AS "providerId", "submitted_by_user_id" AS "submittedByUserId", "submitted_by_role" AS "submittedByRole",
+          "title", "description", "category", "latitude", "longitude", "address", "city", "state", "country",
           "price_min" AS "priceMin", "price_max" AS "priceMax", "currency",
           "budget_band" AS "budgetBand", "accessibility_tags" AS "accessibilityTags",
           "media_urls" AS "mediaUrls", "availability_rules" AS "availabilityRules",
           "duration_minutes" AS "durationMinutes", "published", "updated_at" AS "updatedAt";
         `,
         provider.id,
+        userId,
+        Role.PROVIDER,
         sanitizedTitle,
         sanitizedDescription,
         dto.category,
@@ -112,6 +116,156 @@ export class ExperiencesService {
       return experience[0];
     } catch (dbError: any) {
       console.error('[ExperiencesService.createExperience] Error inserting experience:', dbError);
+      throw dbError;
+    }
+  }
+
+  /**
+   * Add a Place (Single-screen shared entry point for Travelers & Owners)
+   */
+  async addPlace(userId: string, dto: AddPlaceDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { providerProfile: true },
+    });
+    if (!user) {
+      throw new NotFoundException('User profile not found');
+    }
+
+    let providerId: string | null = null;
+    let submittedByRole: Role = Role.TRAVELER;
+    let published = false; // Travelers go to moderation queue (published = false)
+
+    if (dto.isOwner) {
+      submittedByRole = Role.PROVIDER;
+      published = true; // Auto-publish for business owners submitting their own place
+
+      if (user.providerProfile) {
+        providerId = user.providerProfile.id;
+      } else {
+        // Automatically create a minimal ProviderProfile for the owner if they don't have one yet
+        const newProvider = await this.prisma.providerProfile.create({
+          data: {
+            userId: user.id,
+            businessName: dto.title.trim(),
+            businessType: 'Local Business',
+            phone: '+910000000000',
+            city: dto.city.trim(),
+          },
+        });
+        providerId = newProvider.id;
+
+        // Ensure user role reflects PROVIDER
+        if (user.role !== Role.ADMIN) {
+          await this.prisma.user.update({
+            where: { id: user.id },
+            data: { role: Role.PROVIDER },
+          });
+        }
+      }
+    } else {
+      // Traveler submission
+      submittedByRole = Role.TRAVELER;
+      published = false;
+      // If the user already happens to have a provider profile, we still keep providerId null or linked
+      if (user.providerProfile) {
+        providerId = user.providerProfile.id;
+      }
+    }
+
+    const sanitizedTitle = ContentSanitizer.stripAll(dto.title);
+    const sanitizedDescription = ContentSanitizer.sanitize(dto.description);
+
+    // Map costTier to price ranges and budgetBand
+    let priceMin = 0;
+    let priceMax = 500;
+    let budgetBand = BudgetBand.BUDGET;
+
+    switch (dto.costTier) {
+      case 'FREE':
+        priceMin = 0;
+        priceMax = 0;
+        budgetBand = BudgetBand.BUDGET;
+        break;
+      case 'BUDGET':
+        priceMin = 50;
+        priceMax = 500;
+        budgetBand = BudgetBand.BUDGET;
+        break;
+      case 'MODERATE':
+        priceMin = 500;
+        priceMax = 1500;
+        budgetBand = BudgetBand.MODERATE;
+        break;
+      case 'PREMIUM':
+        priceMin = 1500;
+        priceMax = 4000;
+        budgetBand = BudgetBand.PREMIUM;
+        break;
+      default:
+        priceMin = 100;
+        priceMax = 1000;
+        budgetBand = BudgetBand.MODERATE;
+    }
+
+    const mediaUrls = dto.photoUrl && dto.photoUrl.trim() ? [dto.photoUrl.trim()] : [];
+    const defaultAvailabilityRules = [
+      { daysOfWeek: [0, 1, 2, 3, 4, 5, 6], openTime: '09:00', closeTime: '21:00', slotDurationMinutes: 60, maxCapacityPerSlot: 10 },
+    ];
+
+    try {
+      const experience = await this.prisma.$queryRawUnsafe<any[]>(
+        `
+        INSERT INTO "experiences" (
+          "id", "provider_id", "submitted_by_user_id", "submitted_by_role", "title", "description", "category",
+          "location", "latitude", "longitude", "address", "city", "state", "country",
+          "price_min", "price_max", "currency", "budget_band", "accessibility_tags",
+          "media_urls", "availability_rules", "duration_minutes", "published", "updated_at"
+        ) VALUES (
+          gen_random_uuid(), $1::uuid, $2::uuid, $3::"Role", $4, $5, $6::"Category",
+          ST_SetSRID(ST_MakePoint($7, $8), 4326)::geography, $8, $7, $9, $10, $11, $12,
+          $13, $14, $15, $16::"BudgetBand", $17::text[],
+          $18::text[], $19::jsonb, $20, $21, NOW()
+        )
+        RETURNING
+          "id", "provider_id" AS "providerId", "submitted_by_user_id" AS "submittedByUserId", "submitted_by_role" AS "submittedByRole",
+          "title", "description", "category", "latitude", "longitude", "address", "city", "state", "country",
+          "price_min" AS "priceMin", "price_max" AS "priceMax", "currency",
+          "budget_band" AS "budgetBand", "accessibility_tags" AS "accessibilityTags",
+          "media_urls" AS "mediaUrls", "availability_rules" AS "availabilityRules",
+          "duration_minutes" AS "durationMinutes", "published", "updated_at" AS "updatedAt";
+        `,
+        providerId,
+        userId,
+        submittedByRole,
+        sanitizedTitle,
+        sanitizedDescription,
+        dto.category,
+        dto.longitude,
+        dto.latitude,
+        dto.address,
+        dto.city,
+        dto.state || 'Maharashtra',
+        'India',
+        priceMin,
+        priceMax,
+        'INR',
+        budgetBand,
+        [],
+        mediaUrls,
+        JSON.stringify(defaultAvailabilityRules),
+        60,
+        published,
+      );
+
+      return {
+        ...experience[0],
+        message: published
+          ? 'Place successfully listed and published!'
+          : 'Place submitted for community review! It will appear once approved by our curators.',
+      };
+    } catch (dbError: any) {
+      console.error('[ExperiencesService.addPlace] Error inserting place:', dbError);
       throw dbError;
     }
   }
