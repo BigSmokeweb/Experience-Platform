@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Star, Clock, ShieldCheck } from 'lucide-react';
-import { resolveExperienceImageUrl } from '@/lib/image-utils';
+import { resolveExperienceImageUrl, FALLBACK_EXPERIENCE_IMAGE } from '@/lib/image-utils';
 
 interface ExperienceItem {
   id: string;
@@ -129,8 +129,9 @@ function CityExperienceCard({
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
           onError={() => {
-            if (imgSrc !== fallbackUrl) {
-              setImgSrc(fallbackUrl);
+            const fallback = heroImage || FALLBACK_EXPERIENCE_IMAGE;
+            if (imgSrc !== fallback) {
+              setImgSrc(fallback);
             }
           }}
         />
