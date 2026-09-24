@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { StorageService } from '../../common/storage/storage.service';
@@ -10,6 +11,8 @@ import { CreateTripMemoryDto, UpdateTripMemoryDto } from '@experience-platform/s
 
 @Injectable()
 export class TripMemoriesService {
+  private readonly logger = new Logger(TripMemoriesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
@@ -181,42 +184,62 @@ export class TripMemoriesService {
       throw new BadRequestException('Maximum 50 photos allowed per trip memory');
     }
 
-    // If experienceId provided, verify experience exists
+    // If experienceId provided, verify experience exists (silently null if invalid)
     let validExpId: string | null = null;
     if (experienceId) {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(experienceId);
-      if (isUuid) {
-        const exp = await this.prisma.experience.findUnique({
-          where: { id: experienceId },
-        });
-        if (exp) {
-          validExpId = exp.id;
+      try {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(experienceId);
+        if (isUuid) {
+          const exp = await this.prisma.experience.findUnique({
+            where: { id: experienceId },
+          });
+          if (exp) {
+            validExpId = exp.id;
+          }
         }
+      } catch (err) {
+        this.logger.warn(`experienceId validation failed for "${experienceId}": ${err}`);
+        // Silently continue with null experienceId
       }
     }
 
-    const { publicUrl, storageKey } = await this.storageService.uploadPhoto(
-      file.buffer,
-      file.mimetype,
-      file.originalname,
-      `memories/${memoryId}`,
-    );
+    try {
+      const { publicUrl, storageKey } = await this.storageService.uploadPhoto(
+        file.buffer,
+        file.mimetype,
+        file.originalname,
+        `memories/${memoryId}`,
+      );
 
-    return this.prisma.tripMemoryPhoto.create({
-      data: {
-        tripMemoryId: memoryId,
-        experienceId: validExpId,
-        url: publicUrl,
-        storageKey,
-        caption: caption || null,
-        takenAt: takenAt ? new Date(takenAt) : new Date(),
-      },
-      include: {
-        experience: {
-          select: { id: true, title: true, address: true, city: true },
+      // Guard: reject oversized base64 data URIs that would bloat the DB
+      if (publicUrl.startsWith('data:') && publicUrl.length > 500_000) {
+        throw new BadRequestException(
+          'Photo upload to cloud storage failed and the image is too large for fallback storage. Please try a smaller image or try again later.',
+        );
+      }
+
+      return await this.prisma.tripMemoryPhoto.create({
+        data: {
+          tripMemoryId: memoryId,
+          experienceId: validExpId,
+          url: publicUrl,
+          storageKey,
+          caption: caption || null,
+          takenAt: takenAt ? new Date(takenAt) : new Date(),
         },
-      },
-    });
+        include: {
+          experience: {
+            select: { id: true, title: true, address: true, city: true },
+          },
+        },
+      });
+    } catch (err) {
+      this.logger.error(`addPhoto failed for memory ${memoryId}: ${err?.message || err}`);
+      if (err instanceof BadRequestException) throw err;
+      throw new BadRequestException(
+        `Failed to save photo: ${err?.message || 'Unknown storage error'}`,
+      );
+    }
   }
 
   /**

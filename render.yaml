@@ -55,6 +55,12 @@ services:
         value: "7d"
 
       # ── Storage (S3-compatible / Supabase Storage) ─────────────────────────
+      - key: SUPABASE_URL
+        value: "https://mvsnmwznonupjypacswj.supabase.co"
+      - key: SUPABASE_SECRET_KEY
+        value: "sb_secret_wRX81rSUWwag74yg5pFgJg_BP76DuWR"
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        value: "sb_secret_wRX81rSUWwag74yg5pFgJg_BP76DuWR"
       - key: STORAGE_ENDPOINT
         sync: false
       - key: STORAGE_ACCESS_KEY

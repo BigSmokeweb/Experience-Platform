@@ -8,6 +8,7 @@ import { TravelerPreferences } from '../components/TravelerPreferences';
 import { TripHistoryList } from '../components/TripHistoryList';
 import { ProfileRecommendationsSlider } from '../components/ProfileRecommendationsSlider';
 import { DiscoveredPlacesSection } from '../components/DiscoveredPlacesSection';
+import { TripMemoriesProfileSection } from '../components/TripMemoriesProfileSection';
 import Link from 'next/link';
 import { Compass, Sparkles, Plus, MapPin } from 'lucide-react';
 
@@ -266,6 +267,9 @@ export default function TravelerProfilePage() {
 
         {/* Places You Discovered */}
         <DiscoveredPlacesSection />
+
+        {/* Saved Trip Memories & Photo Archive */}
+        <TripMemoriesProfileSection />
 
         {/* Trip History & Active Sessions */}
         <TripHistoryList />

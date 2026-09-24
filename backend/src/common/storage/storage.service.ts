@@ -18,10 +18,13 @@ export class StorageService {
     this.endpoint = this.configService.get<string>('STORAGE_ENDPOINT', 'http://localhost:9000');
     this.signedExpirySeconds = Number(this.configService.get<number>('STORAGE_SIGNED_URL_EXPIRY_SECONDS', 900));
 
-    const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
+    const supabaseUrl =
+      this.configService.get<string>('SUPABASE_URL') ||
+      'https://mvsnmwznonupjypacswj.supabase.co';
     const supabaseKey =
       this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY') ||
-      this.configService.get<string>('SUPABASE_SECRET_KEY');
+      this.configService.get<string>('SUPABASE_SECRET_KEY') ||
+      'sb_secret_wRX81rSUWwag74yg5pFgJg_BP76DuWR';
 
     if (supabaseUrl && supabaseKey) {
       try {
@@ -51,24 +54,28 @@ export class StorageService {
       const bucket = 'trip-memories';
       try {
         const { error } = await this.supabase.storage.from(bucket).upload(storageKey, buffer, {
-          contentType: mimeType,
+          contentType: mimeType || 'image/jpeg',
           upsert: true,
         });
         if (error) {
-          this.logger.error(`Supabase upload failed: ${error.message}`);
+          this.logger.error(`Supabase upload failed: ${error.message} - ${JSON.stringify(error)}`);
         } else {
           const { data } = this.supabase.storage.from(bucket).getPublicUrl(storageKey);
           return { publicUrl: data.publicUrl, storageKey: `${bucket}/${storageKey}` };
         }
-      } catch (err) {
-        this.logger.error(`Supabase upload exception: ${err}`);
+      } catch (err: any) {
+        this.logger.error(`Supabase upload exception: ${err?.message || err}`);
       }
     }
 
-    // Fallback: Base64 data URL
-    const base64 = buffer.toString('base64');
-    const publicUrl = `data:${mimeType};base64,${base64}`;
-    return { publicUrl, storageKey };
+    // Fallback: If buffer is small (< 300KB), allow base64 data URL
+    if (buffer.length < 300 * 1024) {
+      const base64 = buffer.toString('base64');
+      const publicUrl = `data:${mimeType || 'image/jpeg'};base64,${base64}`;
+      return { publicUrl, storageKey };
+    }
+
+    throw new Error('Cloud storage upload failed. Please verify network connectivity and try again.');
   }
 
   /**

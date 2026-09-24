@@ -20,7 +20,7 @@ import {
   UserCheck,
   Plus,
 } from 'lucide-react';
-import { API_BASE } from '@/lib/api-client';
+import { API_BASE, trySilentRefreshToken } from '@/lib/api-client';
 import { LiveCameraModal } from '@/components/LiveCameraModal';
 
 export interface TripMemoryPhotoItem {
@@ -230,7 +230,7 @@ export function TripMemoryGallery({
 
       const compressedBlob = await compressImage(selectedFile);
       const formData = new FormData();
-      formData.append('file', compressedBlob, selectedFile.name || 'memory.jpg');
+      formData.append('file', compressedBlob, selectedFile.name || 'journey-memory.jpg');
       if (selectedExperienceId) {
         formData.append('experienceId', selectedExperienceId);
       }
@@ -239,7 +239,7 @@ export function TripMemoryGallery({
       }
       formData.append('takenAt', new Date().toISOString());
 
-      const res = await fetch(`${API_BASE}/trip-memories/${activeMemoryId}/photos`, {
+      let res = await fetch(`${API_BASE}/trip-memories/${activeMemoryId}/photos`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -247,9 +247,22 @@ export function TripMemoryGallery({
         body: formData,
       });
 
+      if (res.status === 401) {
+        const refreshedToken = await trySilentRefreshToken();
+        if (refreshedToken) {
+          res = await fetch(`${API_BASE}/trip-memories/${activeMemoryId}/photos`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${refreshedToken}`,
+            },
+            body: formData,
+          });
+        }
+      }
+
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to upload photo');
+        throw new Error(errorData.message || `Failed to save photo (Status ${res.status})`);
       }
 
       const newPhoto = await res.json();

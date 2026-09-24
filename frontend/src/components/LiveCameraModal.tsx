@@ -218,14 +218,30 @@ export function LiveCameraModal({
               <p className="text-xs text-rose-300 font-mono leading-relaxed">
                 {error}
               </p>
-              <button
-                type="button"
-                onClick={startCamera}
-                className="cursor-pointer inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-white/20 hover:bg-white/30 text-white text-xs font-mono font-bold rounded-xl transition"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Retry</span>
-              </button>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={startCamera}
+                  className="cursor-pointer inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-white/20 hover:bg-white/30 text-white text-xs font-mono font-bold rounded-xl transition w-full sm:w-auto"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Retry</span>
+                </button>
+                {onFallbackToFilePicker && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      stopTracks();
+                      onClose();
+                      onFallbackToFilePicker();
+                    }}
+                    className="cursor-pointer inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-neutral-900 text-xs font-mono font-bold rounded-xl transition w-full sm:w-auto shadow-sm"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Open Camera App</span>
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             <>
