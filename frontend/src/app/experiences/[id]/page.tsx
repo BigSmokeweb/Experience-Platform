@@ -197,12 +197,22 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   };
 }
 
+// Leaflet CSS is loaded only for experience detail pages via a local <link> in the component.
+// See ExperienceLeafletStyles component below.
+
 export default async function ExperienceDetailPage({ params }: { params: { id: string } }) {
   const exp = await getExperience(params.id);
   if (!exp) notFound();
 
   return (
     <div className="bg-[#F5F1E6] text-[#2C2C2C] min-h-screen pt-28 pb-24 selection:bg-[#8B7355]/30 selection:text-[#2C2C2C]">
+      {/* Leaflet CSS — loaded only on experience detail pages, not globally */}
+      <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossOrigin=""
+      />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <BackButton
           fallbackHref="/#curated-experiences"

@@ -2,7 +2,7 @@
   {
     "id": "6c2402e7-c383-41c2-87cf-b0989fb8be33",
     "title": "Bhaji Bae, Syndicate",
-    "description": "Bhaji Bae, Syndicate in Syndicate, Kalyan, Kalyan-Dombivli. Bustling",
+    "description": "The town square open-air bhaji stall that Kalyan regulars plan their mornings around. Wood-fired pav, seasonal vegetable bhajis straight off the tawa, and a rotating chutney board sourced from neighbourhood home kitchens. Arrive before 9 AM — the fresh batches sell out fast.",
     "category": "FOOD",
     "city": "Kalyan-Dombivli",
     "state": "Maharashtra",
@@ -49,7 +49,7 @@
   {
     "id": "cfb9fbc3-f550-4539-b7a4-f7cc6e9c7cec",
     "title": "Powai's Annapurna Food Van",
-    "description": "Powai's Annapurna Food Van in Orchard Avenue, Powai, Powai. Bustling",
+    "description": "A beloved silver food van parked along Orchard Avenue since the early 2000s, dishing out home-style Maharashtrian meals to IIT students and Hiranandani residents alike. The dal-rice thali served on a steel plate is the reason the queue forms before noon.",
     "category": "FOOD",
     "city": "Powai",
     "state": "Maharashtra",
@@ -94,7 +94,7 @@
   {
     "id": "ea7a6776-72db-448d-8621-6ff54881ebbd",
     "title": "THE STREET KATTA",
-    "description": "THE STREET KATTA in New Panvel East, Panvel. Bustling",
+    "description": "New Panvel East's most animated street-food corner — a packed katta where locals debate cricket over vada pav, masala soda, and freshly fried bhajjias. Best experienced between 5–8 PM when the footpath turns into a spontaneous neighbourhood gathering.",
     "category": "FOOD",
     "city": "Panvel",
     "state": "Maharashtra",
@@ -138,7 +138,7 @@
   {
     "id": "749bf355-17bc-45bb-b366-3f5c57d1b359",
     "title": "Street Bite - King Soda",
-    "description": "Street Bite - King Soda in Khanda Colony, Panvel. Bustling",
+    "description": "Khanda Colony's legendary hand-pumped soda stall serving a rotating menu of jaljeera, raw mango, and tamarind sodas from glass bottles. A ₹50 cold drink and a paper cone of roasted chana is Panvel's unofficial afternoon ritual.",
     "category": "FOOD",
     "city": "Panvel",
     "state": "Maharashtra",
@@ -394,7 +394,7 @@
   {
     "id": "fcdae7f8-a059-412d-8d29-42b552de2a23",
     "title": "Chromatic Melodies",
-    "description": "Chromatic Melodies in New Panvel East, Panvel. Quirky",
+    "description": "A tucked-away stationery and music accessories store in New Panvel East that doubles as a meet-up spot for local musicians. Browse handmade journals, eclectic picks, and locally pressed cassette covers — a quiet creative pocket in an otherwise commercial strip.",
     "category": "SHOPPING",
     "city": "Panvel",
     "state": "Maharashtra",
@@ -440,7 +440,7 @@
   {
     "id": "ee04c470-c5c2-4e0a-892d-9bd5d1c09c4a",
     "title": "The Streetery (Food Truck)",
-    "description": "The Streetery (Food Truck) in Khadakpada, Kalyan, Kalyan-Dombivli. Quirky",
+    "description": "Kalyan's most-photographed food truck, parked in Khadakpada with a rotating menu of fusion street plates — think Mumbai-style frankie meets Korean-inspired slaw. The owners change the menu weekly based on what's in season at the local APMC market.",
     "category": "FOOD",
     "city": "Kalyan-Dombivli",
     "state": "Maharashtra",
@@ -486,7 +486,7 @@
   {
     "id": "8eeb183c-4a40-4de8-8fb4-aa35b4ae638c",
     "title": "Escapeverse",
-    "description": "Escapeverse in Manpada, Thane West, Thane. Adventurous",
+    "description": "A live escape-room venue in Manpada, Thane West, running narrative-heavy mystery rooms built by a team of local theatre writers and set designers. Groups of 4–6 have 60 minutes to untangle storylines rooted in Mumbai's urban folklore and Sahyadri mythology.",
     "category": "ADVENTURE",
     "city": "Thane",
     "state": "Maharashtra",
@@ -535,7 +535,7 @@
   {
     "id": "28258ae6-49eb-466a-a780-2969e3a2361f",
     "title": "Sairaj Farm",
-    "description": "Sairaj Farm in Chikhale, Panvel. Relaxing",
+    "description": "A working mango and cashew farm in Chikhale, Panvel, open for half-day farm visits during harvest season. Walk the orchard rows with the family, pick fruit directly off the trees, and sit down to a Konkan-style farm lunch cooked on a wood-burning stove.",
     "category": "ADVENTURE",
     "city": "Panvel",
     "state": "Maharashtra",
@@ -581,7 +581,7 @@
   {
     "id": "e9d4045f-fb16-4624-a74f-8bb198cebe35",
     "title": "Fantasy The Cake Shop",
-    "description": "Fantasy The Cake Shop in BSNL Colony, Powai, Powai. Cozy",
+    "description": "A neighbourhood bakery in BSNL Colony, Powai, known for its no-fuss European-style cakes and flaky croissants baked fresh each morning. The glass counter changes daily — regulars know to call ahead if they want the signature dark-chocolate hazelnut gateau.",
     "category": "FOOD",
     "city": "Powai",
     "state": "Maharashtra",
@@ -718,7 +718,7 @@
   {
     "id": "9caf4026-b79e-44af-92ff-37122ef00e78",
     "title": "Pinka Bake House",
-    "description": "Pinka Bake House in Hiranandani Gardens, Powai, Powai. Cozy",
+    "description": "A compact, sunny bake house tucked into Hiranandani Gardens, run by a home baker turned professional. The sourdough loaves and cardamom-rose tea cakes sell out by 10 AM on weekends — follow their Instagram stories to know what's out of the oven each day.",
     "category": "FOOD",
     "city": "Powai",
     "state": "Maharashtra",
