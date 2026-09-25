@@ -121,7 +121,7 @@ export function HeroParallaxVideo() {
         loop
         muted
         playsInline
-        preload="auto"
+        preload="metadata"
         poster="/images/hero-bg.png"
         aria-label="Scenic travel landscape background video"
         className="w-full h-full object-cover object-center"

@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://experienceplatform.in';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://experience-platform-sigma.vercel.app';
   const cities = ['mumbai', 'thane', 'navi-mumbai', 'powai', 'panvel', 'kalyan-dombivli', 'kanjur-marg'];
   const categories = ['FOOD', 'CULTURE', 'WORKSHOPS', 'ADVENTURE', 'HIDDEN_GEMS', 'NIGHTLIFE'];
 

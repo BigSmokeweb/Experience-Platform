@@ -149,14 +149,14 @@ const ExperienceCard = memo(function ExperienceCard({
           <h3 className={`font-cormorant font-bold normal-case ${compact ? 'text-lg sm:text-xl line-clamp-2' : 'text-xl sm:text-2xl line-clamp-2'} tracking-normal text-[#2C2C2C] group-hover:text-[#347F8C] transition-colors leading-snug`}>
             {exp.title}
           </h3>
-          <p className={`text-[#5C6460] ${compact ? 'text-xs line-clamp-2 mt-2' : 'text-xs sm:text-sm line-clamp-3 mt-3'} leading-relaxed font-light`}>
+          <p className={`text-[#3D4441] ${compact ? 'text-xs line-clamp-2 mt-2' : 'text-xs sm:text-sm line-clamp-3 mt-3'} leading-relaxed font-light`}>
             {exp.description || 'Authentic regional immersion hosted by generational craft and heritage lineage keepers.'}
           </p>
         </div>
 
         <div className={`${compact ? 'mt-4 pt-3' : 'mt-8 pt-5'} border-t border-[#D4CFC0] flex items-center justify-between`}>
           <div>
-            <span className="text-[9px] font-mono uppercase tracking-widest text-[#7C8581] block">
+            <span className="text-[9px] font-mono uppercase tracking-widest text-[#555E5A] block">
               {isFreePublic ? 'Admission' : 'Est. Spend'}
             </span>
             <p className="font-bold font-cormorant oldstyle-nums text-[#2C2C2C] text-base sm:text-lg tracking-wide">
