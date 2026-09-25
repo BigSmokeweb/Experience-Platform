@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Locate, Compass, Navigation, ExternalLink, Car, Footprints, ChevronDown, ChevronUp, ArrowUpRight, Train } from 'lucide-react';
 import { SelectedExperience, RecommendationItem, sanitizeExperienceCoordinates } from '@/lib/trip-session-store';
-import { calculateRealRoadRoute, RouteResult } from '@/lib/a-star-router';
+import { calculateRealRoadRoute, findShortestAStarOrder, RouteResult } from '@/lib/a-star-router';
 import { calculateMumbaiTrainPlan, MultimodalRouteResult } from '@/lib/mumbai-train-router';
 
 interface RealAreaMapProps {
@@ -51,6 +51,7 @@ export function TripAreaMap({
   const [routeTelemetry, setRouteTelemetry] = useState<RouteResult | null>(null);
   const [trainRouteTelemetry, setTrainRouteTelemetry] = useState<MultimodalRouteResult | null>(null);
   const [isRouting, setIsRouting] = useState<boolean>(false);
+  const [optimizeFromMyLocation, setOptimizeFromMyLocation] = useState<boolean>(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -93,9 +94,9 @@ export function TripAreaMap({
     );
   }
 
-  // Auto-locate once if no userLat provided
+  // Auto-locate member coordinates on mount
   useEffect(() => {
-    if (typeof window !== 'undefined' && navigator.geolocation && !initialUserLat) {
+    if (typeof window !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           setUserLocation({
@@ -104,10 +105,10 @@ export function TripAreaMap({
           });
         },
         () => {},
-        { enableHighAccuracy: false, timeout: 5000 }
+        { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
       );
     }
-  }, [initialUserLat]);
+  }, []);
 
   // Leaflet Map Initialization and Layer Updates
   useEffect(() => {
@@ -154,7 +155,10 @@ export function TripAreaMap({
 
       const routePoints: [number, number][] = [[userLocation.lat, userLocation.lng]];
 
-      // 1. User Location Pulse Marker
+      // 1. User / Member Location Pulse Marker
+      const currentUserName = typeof window !== 'undefined' ? localStorage.getItem('userName') : null;
+      const userDotLabel = currentUserName ? `${currentUserName} (Your Location)` : 'Your Live Location';
+
       const userIcon = L.divIcon({
         className: 'custom-map-pin',
         html: `
@@ -171,14 +175,22 @@ export function TripAreaMap({
       const userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: userIcon });
       userMarker.bindPopup(`
         <div style="padding: 6px; font-family: monospace; font-size: 11px;">
-          <strong style="color: #347F8C; text-transform: uppercase;">You Are Here</strong>
-          <div style="color: #2C2C2C; opacity: 0.8; margin-top: 2px;">${userLocation.lat.toFixed(4)}°N, ${userLocation.lng.toFixed(4)}°E</div>
+          <div style="color: #347F8C; font-weight: 700; text-transform: uppercase; margin-bottom: 2px;">
+            ● ${userDotLabel}
+          </div>
+          <div style="color: #2C2C2C; opacity: 0.8;">${userLocation.lat.toFixed(4)}°N, ${userLocation.lng.toFixed(4)}°E</div>
+          <div style="font-size: 9.5px; color: #8B7355; margin-top: 4px; font-weight: 600;">
+            A* Shortest Route Origin Point
+          </div>
         </div>
       `);
       layerGroup.addLayer(userMarker);
 
+      // Order of stops to visit: optionally optimized via A* from member location
+      const orderedStops = optimizeFromMyLocation ? findShortestAStarOrder(userLocation, stops) : stops;
+
       // 2. Add Stop Markers
-      stops.forEach((stop, idx) => {
+      orderedStops.forEach((stop, idx) => {
         const coords = sanitizeExperienceCoordinates({
           ...stop,
           city: city || stop.city,
@@ -490,7 +502,7 @@ export function TripAreaMap({
           }
         } else {
           setTrainRouteTelemetry(null);
-          const destinationPoints = stops.map((s, idx) => {
+          const destinationPoints = orderedStops.map((s, idx) => {
             const coords = sanitizeExperienceCoordinates({
               ...s,
               city: city || s.city,
@@ -580,7 +592,7 @@ export function TripAreaMap({
     return () => {
       isSubscribed = false;
     };
-  }, [isMounted, userLocation, stops, candidateStops, onAddStop, travelMode]);
+  }, [isMounted, userLocation, stops, candidateStops, onAddStop, travelMode, optimizeFromMyLocation]);
 
   // Cleanup map on unmount
   useEffect(() => {
@@ -660,6 +672,22 @@ export function TripAreaMap({
               <span>Walk</span>
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setOptimizeFromMyLocation(!optimizeFromMyLocation)}
+            title="Compute shortest route from your location to all decided spots using A* graph search"
+            className={`inline-flex items-center gap-1.5 text-[11px] font-mono font-semibold uppercase tracking-wider px-2.5 py-1.5 rounded-xl transition cursor-pointer active:scale-95 border ${
+              optimizeFromMyLocation
+                ? 'bg-[#8B7355] text-white border-[#8B7355] shadow-xs'
+                : 'text-[#8B7355] hover:text-[#725E45] bg-[#8B7355]/10 hover:bg-[#8B7355]/20 border-[#8B7355]/25'
+            }`}
+          >
+            <Navigation className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">
+              {optimizeFromMyLocation ? 'A* Shortest Active' : 'A* Shortest Route'}
+            </span>
+          </button>
 
           <button
             type="button"

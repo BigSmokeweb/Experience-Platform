@@ -7,8 +7,9 @@ import Image from 'next/image';
 import { API_BASE } from '@/lib/api-client';
 import { ItineraryStopCard } from '@/components/ItineraryStopCard';
 import { TripAreaMap } from '@/components/TripAreaMap';
-import { ArrowLeft, Share2, Check, Copy, MessageCircle, AlertTriangle, Loader2, Camera, BookOpen } from 'lucide-react';
+import { ArrowLeft, Share2, Check, Copy, MessageCircle, AlertTriangle, Loader2, Camera, BookOpen, UserPlus } from 'lucide-react';
 import { saveEntry, JournalEntry } from '@/lib/journal-store';
+import { AddMemberModal } from '@/components/AddMemberModal';
 
 import {
   fetchTripSession,
@@ -41,6 +42,7 @@ function TripSessionContent() {
   const [selectingId, setSelectingId] = useState<string | null>(null);
   const isSelectingRef = useRef(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
 
   const getAuthToken = () => {
     if (typeof window !== 'undefined') {
@@ -629,34 +631,6 @@ function TripSessionContent() {
           </div>
         )}
 
-        {/* Wrap-Up Advisory Banner */}
-        {wrapUpPrompt && !isCompleted && (
-          <div className="mb-6 bg-[#A69B80]/15 border border-[#A69B80]/40 rounded-2xl p-4 sm:p-5 text-[#2C2C2C] shadow-sm">
-            <div className="flex items-start gap-3">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#A69B80] mt-1 flex-shrink-0" />
-              <div className="flex-1">
-                <h4 className="font-mono font-bold text-xs uppercase tracking-wider text-[#347F8C]">Budget / Temporal Threshold Approaching</h4>
-                <p className="text-xs text-[#2C2C2C]/80 mt-1 font-light">{wrapUpPrompt.message}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    onClick={handleComplete}
-                    className="bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] text-xs font-mono font-bold uppercase tracking-wider px-4 py-2 rounded-xl transition shadow-sm"
-                  >
-                    Finalize Journey Now
-                  </button>
-                  {wrapUpPrompt.quickResponses?.map((qr, i) => (
-                    <span
-                      key={i}
-                      className="inline-flex items-center text-[11px] font-mono bg-white border border-[#D4CFC0] text-[#2C2C2C]/80 px-3 py-1.5 rounded-xl"
-                    >
-                      {qr}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Inline Completion Screen */}
         {isCompleted ? (
@@ -674,14 +648,6 @@ function TripSessionContent() {
 
               {/* Share With Travel Companions Action Bar */}
               <div className="mt-6 inline-flex flex-wrap items-center justify-center gap-3 p-2 bg-[#F5F1E6] rounded-2xl border border-[#D4CFC0] shadow-xs">
-                <Link
-                  href={`/journal/${sessionId}/memories`}
-                  className="inline-flex items-center gap-2 bg-[#8B7355] hover:bg-[#725E45] text-[#F5F1E6] font-mono font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl transition cursor-pointer shadow-sm active:scale-95"
-                >
-                  <Camera className="w-4 h-4" />
-                  <span>Trip Memories & Photos</span>
-                </Link>
-
                 <button
                   type="button"
                   onClick={handleCopyShareLink}
@@ -698,6 +664,15 @@ function TripSessionContent() {
                 >
                   <MessageCircle className="w-4 h-4" />
                   <span>Share via WhatsApp</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAddMemberModal(true)}
+                  className="inline-flex items-center gap-2 bg-[#8B7355] hover:bg-[#725E45] text-[#F5F1E6] font-mono font-bold text-xs uppercase tracking-wider px-4 py-2.5 rounded-xl transition cursor-pointer shadow-sm active:scale-95"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Add Member</span>
                 </button>
               </div>
               {copiedShareLink && (
@@ -737,6 +712,7 @@ function TripSessionContent() {
                       mediaUrl={stop.mediaUrls?.[0]}
                       showRateAction={true}
                       sessionId={sessionId}
+                      onRemove={() => handleRemoveStop(stop.id)}
                     />
                   ))}
                 </div>
@@ -1011,6 +987,13 @@ function TripSessionContent() {
           </div>
         </div>
         )}
+        {/* Add Travel Member Modal */}
+        <AddMemberModal
+          sessionId={sessionId}
+          isOpen={showAddMemberModal}
+          onClose={() => setShowAddMemberModal(false)}
+          onMemberUpdated={() => loadSessionAndRecommendations(false)}
+        />
       </main>
     </div>
   );

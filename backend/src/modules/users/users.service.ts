@@ -55,4 +55,35 @@ export class UsersService {
       },
     });
   }
+
+  /**
+   * Search registered users by name or email (excluding current user)
+   */
+  async searchUsers(query: string, currentUserId: string) {
+    const q = (query || '').trim();
+    if (!q) return [];
+
+    return this.prisma.user.findMany({
+      where: {
+        id: { not: currentUserId },
+        OR: [
+          { name: { contains: q, mode: 'insensitive' } },
+          { email: { contains: q, mode: 'insensitive' } },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        travelerProfile: {
+          select: {
+            homeCity: true,
+          },
+        },
+      },
+      take: 10,
+    });
+  }
 }
+

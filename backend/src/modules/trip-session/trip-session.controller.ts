@@ -22,6 +22,10 @@ import {
   AddSelectionDto,
   RejectCandidateSchema,
   RejectCandidateDto,
+  InviteMemberSchema,
+  InviteMemberDto,
+  RespondInvitationSchema,
+  RespondInvitationDto,
 } from '@experience-platform/shared';
 
 @UseGuards(AuthGuard('jwt'))
@@ -152,5 +156,46 @@ export class TripSessionController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.tripSessionService.markAbandoned(id, user.id);
+  }
+
+  /**
+   * POST /trip-sessions/:id/members
+   * Invite a registered user by username or email
+   */
+  @Post(':id/members')
+  @HttpCode(HttpStatus.CREATED)
+  inviteMember(
+    @CurrentUser() user: { id: string },
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodValidationPipe(InviteMemberSchema)) dto: InviteMemberDto,
+  ) {
+    return this.tripSessionService.inviteMember(id, user.id, dto.identifier);
+  }
+
+  /**
+   * GET /trip-sessions/:id/members
+   * List trip members and pending invites
+   */
+  @Get(':id/members')
+  listMembers(
+    @CurrentUser() user: { id: string },
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.tripSessionService.listMembers(id, user.id);
+  }
+
+  /**
+   * PATCH /trip-sessions/:id/members/:memberId/respond
+   * Accept or reject a trip invitation
+   */
+  @Patch(':id/members/:memberId/respond')
+  @HttpCode(HttpStatus.OK)
+  respondInvitation(
+    @CurrentUser() user: { id: string },
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('memberId', ParseUUIDPipe) memberId: string,
+    @Body(new ZodValidationPipe(RespondInvitationSchema)) dto: RespondInvitationDto,
+  ) {
+    return this.tripSessionService.respondInvitation(id, memberId, user.id, dto.action);
   }
 }

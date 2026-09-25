@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Patch, Body, UseGuards, UsePipes } from '@nestjs/common';
+import { Controller, Get, Put, Patch, Body, Query, UseGuards, UsePipes } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -12,6 +12,14 @@ import {
 @UseGuards(AuthGuard('jwt'))
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Get('search')
+  async searchUsers(
+    @CurrentUser('id') userId: string,
+    @Query('q') query: string,
+  ) {
+    return this.usersService.searchUsers(query, userId);
+  }
 
   @Get('me')
   async getMyProfile(@CurrentUser('id') userId: string) {

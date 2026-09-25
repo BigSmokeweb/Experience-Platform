@@ -88,3 +88,87 @@ export async function calculateRealRoadRoute(
     steps: [],
   };
 }
+
+/**
+ * A* Pathfinding to find the shortest traversal order from a member's location through all decided spots.
+ * Uses A* graph search with Euclidean/Haversine distance and admissible MST/nearest-neighbor heuristic.
+ */
+export function findShortestAStarOrder<T extends { candidateLat?: number; candidateLng?: number; latitude?: number; longitude?: number }>(
+  start: LatLngPoint,
+  stops: T[],
+): T[] {
+  if (!stops || stops.length <= 1) return stops;
+
+  const getCoords = (s: T): LatLngPoint => ({
+    lat: s.candidateLat ?? s.latitude ?? 0,
+    lng: s.candidateLng ?? s.longitude ?? 0,
+  });
+
+  const dist = (p1: LatLngPoint, p2: LatLngPoint) => {
+    const dLat = (p2.lat - p1.lat) * 111;
+    const dLng = (p2.lng - p1.lng) * 111 * Math.cos((p1.lat * Math.PI) / 180);
+    return Math.hypot(dLat, dLng);
+  };
+
+  const n = stops.length;
+  interface SearchNode {
+    currPos: LatLngPoint;
+    mask: number; // bitmask of visited stops
+    g: number; // cost so far (km)
+    f: number; // g + h
+    path: number[]; // indices of stops visited in order
+  }
+
+  // Heuristic: distance to nearest unvisited stop
+  function heuristic(pos: LatLngPoint, mask: number): number {
+    let minDist = Infinity;
+    for (let i = 0; i < n; i++) {
+      if ((mask & (1 << i)) === 0) {
+        const d = dist(pos, getCoords(stops[i]));
+        if (d < minDist) minDist = d;
+      }
+    }
+    return minDist === Infinity ? 0 : minDist;
+  }
+
+  const startNode: SearchNode = {
+    currPos: start,
+    mask: 0,
+    g: 0,
+    f: heuristic(start, 0),
+    path: [],
+  };
+
+  const openList: SearchNode[] = [startNode];
+  const targetMask = (1 << n) - 1;
+
+  while (openList.length > 0) {
+    openList.sort((a, b) => a.f - b.f);
+    const node = openList.shift()!;
+
+    if (node.mask === targetMask) {
+      return node.path.map((idx) => stops[idx]);
+    }
+
+    for (let i = 0; i < n; i++) {
+      if ((node.mask & (1 << i)) === 0) {
+        const nextPos = getCoords(stops[i]);
+        const stepDist = dist(node.currPos, nextPos);
+        const newG = node.g + stepDist;
+        const newMask = node.mask | (1 << i);
+        const newF = newG + heuristic(nextPos, newMask);
+
+        openList.push({
+          currPos: nextPos,
+          mask: newMask,
+          g: newG,
+          f: newF,
+          path: [...node.path, i],
+        });
+      }
+    }
+  }
+
+  return stops;
+}
+

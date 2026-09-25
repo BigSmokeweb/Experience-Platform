@@ -16,6 +16,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { TripSessionModule } from './modules/trip-session/trip-session.module';
 import { TripMemoriesModule } from './modules/trip-memories/trip-memories.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   controllers: [HealthController],
@@ -46,6 +47,7 @@ import { TripMemoriesModule } from './modules/trip-memories/trip-memories.module
     AdminModule,
     TripSessionModule,
     TripMemoriesModule,
+    NotificationsModule,
   ],
   providers: [
     {

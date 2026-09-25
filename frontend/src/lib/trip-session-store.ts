@@ -715,4 +715,150 @@ export function decodeShareableTrip(shareStr: string, cityParam?: string | null)
   }
 }
 
+export interface TripMemberInfo {
+  id: string;
+  tripSessionId: string;
+  userId: string;
+  invitedById: string;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  role: string;
+  createdAt: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  invitedBy?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+export interface UserNotificationItem {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  message: string;
+  data?: any;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export async function searchRegisteredUsers(
+  query: string,
+): Promise<{ id: string; name: string; email: string; role: string }[]> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  if (!token || !query.trim()) return [];
+
+  try {
+    const res = await fetch(`${API_BASE}/users/search?q=${encodeURIComponent(query.trim())}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('Failed to search users:', err);
+  }
+  return [];
+}
+
+export async function inviteTripMember(sessionId: string, identifier: string): Promise<TripMemberInfo> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  if (!token) throw new Error('Please login to invite companions to your trip.');
+
+  const res = await fetch(`${API_BASE}/trip-sessions/${sessionId}/members`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ identifier }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to send invitation.');
+  }
+  return data;
+}
+
+export async function fetchTripMembers(sessionId: string): Promise<{
+  owner: { id: string; name: string; email: string };
+  members: TripMemberInfo[];
+}> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  if (!token) return { owner: { id: '', name: 'Organizer', email: '' }, members: [] };
+
+  try {
+    const res = await fetch(`${API_BASE}/trip-sessions/${sessionId}/members`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('Failed to fetch trip members:', err);
+  }
+  return { owner: { id: '', name: 'Organizer', email: '' }, members: [] };
+}
+
+export async function respondTripInvitation(
+  sessionId: string,
+  memberId: string,
+  action: 'ACCEPT' | 'REJECT',
+): Promise<TripMemberInfo> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  if (!token) throw new Error('Please login to respond to trip invitation.');
+
+  const res = await fetch(`${API_BASE}/trip-sessions/${sessionId}/members/${memberId}/respond`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ action }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to respond to invitation.');
+  }
+  return data;
+}
+
+export async function fetchUserNotifications(): Promise<UserNotificationItem[]> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  if (!token) return [];
+
+  try {
+    const res = await fetch(`${API_BASE}/notifications`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('Failed to fetch notifications:', err);
+  }
+  return [];
+}
+
+export async function markNotificationAsRead(id: string): Promise<void> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  if (!token) return;
+
+  try {
+    await fetch(`${API_BASE}/notifications/${id}/read`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (err) {
+    console.warn('Failed to mark notification read:', err);
+  }
+}
+
+
 

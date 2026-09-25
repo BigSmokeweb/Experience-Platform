@@ -10,6 +10,7 @@ import { AiReasoningService } from '../ai-reasoning/ai-reasoning.service';
 import { DeterministicScoringEngine } from '../recommendation-engine/deterministic-scoring.engine';
 import { DEFAULT_RECOMMENDATION_WEIGHTS } from '../recommendation-engine/recommendation.config';
 import { WeatherService } from './weather.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   evaluateStopConditions,
   estimateTravelTimeMinutes,
@@ -32,6 +33,7 @@ export class TripSessionService {
     private readonly prisma: PrismaService,
     private readonly aiReasoning: AiReasoningService,
     private readonly weather: WeatherService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ─── Create ───────────────────────────────────────────────────────────────
@@ -98,9 +100,18 @@ export class TripSessionService {
    * Get trip history for user, fetching experience titles and cities for each session.
    */
   async getTripHistory(userId: string) {
+    const acceptedMemberships = await this.prisma.tripMember.findMany({
+      where: { userId, status: 'ACCEPTED' },
+      select: { tripSessionId: true },
+    });
+    const memberSessionIds = acceptedMemberships.map((m) => m.tripSessionId);
+
     const sessions = await this.prisma.tripSession.findMany({
       where: {
-        userId,
+        OR: [
+          { userId },
+          { id: { in: memberSessionIds } },
+        ],
         status: { in: [TripSessionStatus.COMPLETED, TripSessionStatus.ACTIVE] },
       },
       orderBy: { updatedAt: 'desc' },
@@ -139,7 +150,7 @@ export class TripSessionService {
       where: { id: sessionId },
     });
     if (!session) throw new NotFoundException('Trip session not found.');
-    this.assertOwnership(session.userId, userId);
+    await this.assertMembershipOrOwnership(session.id, session.userId, userId);
 
     let selectedExperiences: any[] = [];
     if (session.selectedExperienceIds && session.selectedExperienceIds.length > 0) {
@@ -195,7 +206,7 @@ export class TripSessionService {
       where: { id: sessionId },
     });
     if (!session) throw new NotFoundException('Trip session not found.');
-    this.assertOwnership(session.userId, userId);
+    await this.assertMembershipOrOwnership(session.id, session.userId, userId);
 
     // Extract current lat/lng from PostGIS geography
     const [currentLat, currentLng] = await this.extractLatLng(sessionId, 'current_location');
@@ -373,7 +384,7 @@ export class TripSessionService {
   async addSelection(sessionId: string, userId: string, dto: AddSelectionDto) {
     const session = await this.prisma.tripSession.findUnique({ where: { id: sessionId } });
     if (!session) throw new NotFoundException('Trip session not found.');
-    this.assertOwnership(session.userId, userId);
+    await this.assertMembershipOrOwnership(session.id, session.userId, userId);
 
     const [currentLat, currentLng] = await this.extractLatLng(sessionId, 'current_location');
     const distanceKm = this.haversineDistance(
@@ -416,7 +427,7 @@ export class TripSessionService {
   async rejectCandidate(sessionId: string, userId: string, dto: RejectCandidateDto) {
     const session = await this.prisma.tripSession.findUnique({ where: { id: sessionId } });
     if (!session) throw new NotFoundException('Trip session not found.');
-    this.assertOwnership(session.userId, userId);
+    await this.assertMembershipOrOwnership(session.id, session.userId, userId);
 
     await this.prisma.$queryRawUnsafe(
       `
@@ -438,7 +449,7 @@ export class TripSessionService {
   async removeStop(sessionId: string, userId: string, experienceId: string) {
     const session = await this.prisma.tripSession.findUnique({ where: { id: sessionId } });
     if (!session) throw new NotFoundException('Trip session not found.');
-    this.assertOwnership(session.userId, userId);
+    await this.assertMembershipOrOwnership(session.id, session.userId, userId);
 
     await this.prisma.$queryRawUnsafe(
       `
@@ -480,11 +491,218 @@ export class TripSessionService {
     });
   }
 
+  // ─── Collaborative Membership ──────────────────────────────────────────
+
+  /**
+   * Invite a registered user as a trip member
+   */
+  async inviteMember(sessionId: string, inviterUserId: string, identifier: string) {
+    const session = await this.prisma.tripSession.findUnique({
+      where: { id: sessionId },
+      include: { user: { select: { id: true, name: true, email: true } } },
+    });
+    if (!session) throw new NotFoundException('Trip session not found.');
+
+    await this.assertMembershipOrOwnership(sessionId, session.userId, inviterUserId);
+
+    const trimmed = (identifier || '').trim();
+    if (!trimmed) {
+      throw new ConflictException('Please enter a username or email to invite.');
+    }
+
+    const targetUser = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          { name: { equals: trimmed, mode: 'insensitive' } },
+          { email: { equals: trimmed, mode: 'insensitive' } },
+          ...(trimmed.length === 36 ? [{ id: trimmed }] : []),
+        ],
+      },
+      select: { id: true, name: true, email: true },
+    });
+
+    if (!targetUser) {
+      throw new NotFoundException(`No registered user found with username or email "${trimmed}".`);
+    }
+
+    if (targetUser.id === inviterUserId) {
+      throw new ConflictException('You cannot invite yourself to your own trip.');
+    }
+
+    if (targetUser.id === session.userId) {
+      throw new ConflictException('This user is already the trip organizer.');
+    }
+
+    const existing = await this.prisma.tripMember.findUnique({
+      where: {
+        tripSessionId_userId: {
+          tripSessionId: sessionId,
+          userId: targetUser.id,
+        },
+      },
+    });
+
+    const inviterName = session.user?.name || 'A travel companion';
+
+    if (existing) {
+      if (existing.status === 'ACCEPTED') {
+        throw new ConflictException(`${targetUser.name} is already a member of this trip.`);
+      }
+      if (existing.status === 'PENDING') {
+        throw new ConflictException(`An invitation has already been sent to ${targetUser.name}.`);
+      }
+
+      // If previously rejected, allow re-invitation
+      const reInvited = await this.prisma.tripMember.update({
+        where: { id: existing.id },
+        data: {
+          status: 'PENDING',
+          invitedById: inviterUserId,
+          updatedAt: new Date(),
+        },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+          invitedBy: { select: { id: true, name: true, email: true } },
+        },
+      });
+
+      await this.notifications.createNotification(
+        targetUser.id,
+        'TRIP_INVITATION',
+        'Trip Itinerary Invitation',
+        `${inviterName} invited you to collaborate on their trip itinerary!`,
+        { tripSessionId: sessionId, invitationId: reInvited.id, inviterName },
+      );
+
+      return reInvited;
+    }
+
+    const member = await this.prisma.tripMember.create({
+      data: {
+        tripSessionId: sessionId,
+        userId: targetUser.id,
+        invitedById: inviterUserId,
+        status: 'PENDING',
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        invitedBy: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    await this.notifications.createNotification(
+      targetUser.id,
+      'TRIP_INVITATION',
+      'Trip Itinerary Invitation',
+      `${inviterName} invited you to collaborate on their trip itinerary!`,
+      { tripSessionId: sessionId, invitationId: member.id, inviterName },
+    );
+
+    return member;
+  }
+
+  /**
+   * List members for a trip session
+   */
+  async listMembers(sessionId: string, userId: string) {
+    const session = await this.prisma.tripSession.findUnique({
+      where: { id: sessionId },
+      include: { user: { select: { id: true, name: true, email: true } } },
+    });
+    if (!session) throw new NotFoundException('Trip session not found.');
+
+    await this.assertMembershipOrOwnership(sessionId, session.userId, userId);
+
+    const members = await this.prisma.tripMember.findMany({
+      where: { tripSessionId: sessionId },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        invitedBy: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return {
+      owner: session.user,
+      members,
+    };
+  }
+
+  /**
+   * Accept or reject a trip invitation
+   */
+  async respondInvitation(
+    sessionId: string,
+    memberId: string,
+    userId: string,
+    action: 'ACCEPT' | 'REJECT',
+  ) {
+    const member = await this.prisma.tripMember.findFirst({
+      where: {
+        id: memberId,
+        tripSessionId: sessionId,
+        userId,
+      },
+      include: {
+        user: { select: { id: true, name: true } },
+        invitedBy: { select: { id: true, name: true } },
+      },
+    });
+
+    if (!member) {
+      throw new NotFoundException('Invitation not found or you are not authorized to respond to it.');
+    }
+
+    const updated = await this.prisma.tripMember.update({
+      where: { id: member.id },
+      data: {
+        status: action === 'ACCEPT' ? 'ACCEPTED' : 'REJECTED',
+        updatedAt: new Date(),
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    if (member.invitedById) {
+      await this.notifications.createNotification(
+        member.invitedById,
+        action === 'ACCEPT' ? 'INVITATION_ACCEPTED' : 'INVITATION_REJECTED',
+        action === 'ACCEPT' ? 'Invitation Accepted' : 'Invitation Declined',
+        `${member.user?.name || 'A user'} has ${action === 'ACCEPT' ? 'accepted' : 'declined'} your trip invitation.`,
+        { tripSessionId: sessionId, memberId: member.id },
+      );
+    }
+
+    return updated;
+  }
+
   // ─── Private helpers ──────────────────────────────────────────────────────
 
   private assertOwnership(sessionUserId: string, requestUserId: string) {
     if (sessionUserId !== requestUserId) {
       throw new ForbiddenException('You do not have access to this trip session.');
+    }
+  }
+
+  private async assertMembershipOrOwnership(
+    sessionId: string,
+    sessionOwnerId: string,
+    requestUserId: string,
+  ) {
+    if (sessionOwnerId === requestUserId) return;
+
+    const membership = await this.prisma.tripMember.findUnique({
+      where: {
+        tripSessionId_userId: {
+          tripSessionId: sessionId,
+          userId: requestUserId,
+        },
+      },
+    });
+
+    if (!membership || membership.status !== 'ACCEPTED') {
+      throw new ForbiddenException('You do not have access to this collaborative trip session.');
     }
   }
 

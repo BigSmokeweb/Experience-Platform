@@ -6,11 +6,13 @@ import { TripSessionCleanupService } from './trip-session.cleanup.service';
 import { WeatherService } from './weather.service';
 import { PrismaModule } from '../../common/prisma/prisma.module';
 import { AiReasoningModule } from '../ai-reasoning/ai-reasoning.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     PrismaModule,
     AiReasoningModule,
+    NotificationsModule,
     ScheduleModule.forRoot(),
   ],
   controllers: [TripSessionController],

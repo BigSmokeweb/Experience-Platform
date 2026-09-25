@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { BookOpen, User, LogOut, ChevronDown, Compass, Handshake, LogIn, Menu, X, Plus } from 'lucide-react';
 import { NearbyCitiesDropdown } from '@/components/NearbyCitiesDropdown';
 import { CollectionDrawer } from '@/components/CollectionDrawer';
+import { NotificationBell } from '@/components/NotificationBell';
 import { useCollection } from '@/lib/collection-store';
 
 export function Navbar() {
@@ -162,10 +163,12 @@ export function Navbar() {
 
           {/* Action 3: Login / User Profile */}
           {userName ? (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+            <div className="flex items-center gap-2">
+              <NotificationBell isDarkNav={isDarkNav} />
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full text-xs font-medium transition-all duration-200 active:scale-95 border cursor-pointer ${
                   isDarkNav
                     ? 'border-white/30 text-white hover:bg-white/15 backdrop-blur-sm'
@@ -228,7 +231,8 @@ export function Navbar() {
                 </div>
               )}
             </div>
-          ) : (
+          </div>
+        ) : (
             <Link
               href="/auth/login"
               className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-medium transition-all duration-200 active:scale-95 border ${

@@ -606,3 +606,61 @@ export interface TripMemoryResponse {
     selectedExperienceIds?: string[];
   } | null;
 }
+
+// ==========================================
+// 15. TRIP COLLABORATION & NOTIFICATIONS
+// ==========================================
+
+export const InvitationStatusEnum = z.enum(['PENDING', 'ACCEPTED', 'REJECTED']);
+export type InvitationStatus = z.infer<typeof InvitationStatusEnum>;
+
+export const NotificationTypeEnum = z.enum([
+  'TRIP_INVITATION',
+  'INVITATION_ACCEPTED',
+  'INVITATION_REJECTED',
+  'ITINERARY_STOP_MODIFIED',
+]);
+export type NotificationType = z.infer<typeof NotificationTypeEnum>;
+
+export const InviteMemberSchema = z.object({
+  identifier: z.string().min(1).max(200), // username, name, email or userId
+});
+export type InviteMemberDto = z.infer<typeof InviteMemberSchema>;
+
+export const RespondInvitationSchema = z.object({
+  action: z.enum(['ACCEPT', 'REJECT']),
+});
+export type RespondInvitationDto = z.infer<typeof RespondInvitationSchema>;
+
+export interface TripMemberResponse {
+  id: string;
+  tripSessionId: string;
+  userId: string;
+  invitedById: string;
+  status: InvitationStatus;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  invitedBy?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+export interface NotificationResponse {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  data?: any;
+  isRead: boolean;
+  createdAt: string;
+}
+
