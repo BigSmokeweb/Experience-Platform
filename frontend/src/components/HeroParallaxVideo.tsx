@@ -1,15 +1,35 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export function HeroParallaxVideo() {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
+
+  useEffect(() => {
+    // Only mount and stream heavy 15MB MP4 video on viewports >= 768px (tablets & desktop) or after idle callback
+    if (typeof window !== 'undefined') {
+      const isMobile = window.innerWidth < 768;
+      if (!isMobile) {
+        setShouldLoadVideo(true);
+      } else if ('requestIdleCallback' in window) {
+        // Defer video on mobile until main thread is completely idle
+        const handle = (window as any).requestIdleCallback(
+          () => setShouldLoadVideo(true),
+          { timeout: 4000 }
+        );
+        return () => {
+          if ('cancelIdleCallback' in window) (window as any).cancelIdleCallback(handle);
+        };
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
     const video = videoRef.current;
-    if (!container || !video) return;
+    if (!container || !video || !shouldLoadVideo) return;
 
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) {
@@ -114,32 +134,43 @@ export function HeroParallaxVideo() {
 
   return (
     <div ref={containerRef} className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-      {/* Crystal Clear Video */}
-      <video
-        ref={videoRef}
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="metadata"
-        poster="/images/hero-bg.png"
-        aria-label="Scenic travel landscape background video"
-        className="w-full h-full object-cover object-center"
-        style={{
-          transform: 'none',
-          opacity: 1,
-          imageRendering: '-webkit-optimize-contrast',
-          filter: 'contrast(1.04) brightness(1.01)',
-        }}
-      >
-        <source src="/hero-bg-2.mp4" type="video/mp4" />
-        <track
-          kind="captions"
-          src="data:text/vtt;charset=utf-8,WEBVTT%0A%0A1%0A00:00:00.000%20--%3E%2000:01:00.000%0AAtmospheric%20scenic%20travel%20landscape"
-          srcLang="en"
-          label="English"
+      {/* Crystal Clear Video / Poster Fallback */}
+      {shouldLoadVideo ? (
+        <video
+          ref={videoRef}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          poster="/images/hero-bg.png"
+          aria-label="Scenic travel landscape background video"
+          className="w-full h-full object-cover object-center"
+          style={{
+            transform: 'none',
+            opacity: 1,
+            imageRendering: '-webkit-optimize-contrast',
+            filter: 'contrast(1.04) brightness(1.01)',
+          }}
+        >
+          <source src="/hero-bg-2.mp4" type="video/mp4" />
+          <track
+            kind="captions"
+            src="data:text/vtt;charset=utf-8,WEBVTT%0A%0A1%0A00:00:00.000%20--%3E%2000:01:00.000%0AAtmospheric%20scenic%20travel%20landscape"
+            srcLang="en"
+            label="English"
+          />
+        </video>
+      ) : (
+        <div
+          className="w-full h-full bg-cover bg-center"
+          style={{
+            backgroundImage: "url('/images/hero-bg.png')",
+            filter: 'contrast(1.04) brightness(1.01)',
+          }}
+          aria-label="Scenic travel landscape background"
         />
-      </video>
+      )}
 
       {/* Subtle top header gradient solely for navbar contrast */}
       <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/35 to-transparent pointer-events-none" />
