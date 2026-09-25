@@ -9,6 +9,7 @@ import { SeasonalBanner } from '@/components/SeasonalBanner';
 import { API_BASE } from '@/lib/api-client';
 import { resolveExperienceImageUrl } from '@/lib/image-utils';
 
+// Verified build trigger
 export const metadata: Metadata = {
   title: 'Journi — Smarter Journeys. Better Choices.',
   description: 'Verified culinary walks, master artisan workshops, and historic trails across India with Journi.',
