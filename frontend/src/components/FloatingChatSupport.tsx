@@ -153,7 +153,7 @@ export function FloatingChatSupport() {
         } else if (q.includes('itinerary') || q.includes('trip') || q.includes('plan')) {
           replyText =
             'You can compose a seamless continuous journey with verified master craftspeople using our Itinerary Atelier.';
-          action = { label: 'Launch Itinerary Atelier', href: '/#itinerary' };
+          action = { label: 'Launch Itinerary Atelier', href: '/trip' };
         } else {
           replyText =
             'I maintain direct guild relationships with master sculptors, textile preservers, and culinary lineage keepers across India. Which city or craft calls to you?';
@@ -193,7 +193,7 @@ export function FloatingChatSupport() {
   return (
     <div
       className={`fixed bottom-6 right-6 z-50 pointer-events-none ${
-        isOpen ? 'w-[92vw] sm:w-[384px] h-[510px]' : 'w-28 h-28'
+        isOpen ? 'w-[92vw] sm:w-[384px]' : 'w-28 h-28'
       } ${
         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'
       } transition-[opacity,transform] duration-400 ease-out`}
@@ -206,10 +206,10 @@ export function FloatingChatSupport() {
 
       {/* ─── CHAT MODAL (Anchored to Bottom-Right) ─── */}
       <div
-        className={`absolute inset-0 bg-white/95 backdrop-blur-xl border border-[#D4CFC0] rounded-3xl shadow-[0_24px_50px_-12px_rgba(29,78,86,0.22)] flex flex-col overflow-hidden transition-all duration-400 ease-out ${
+        className={`absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur-xl border border-[#D4CFC0] rounded-3xl shadow-[0_24px_50px_-12px_rgba(29,78,86,0.22)] flex flex-col overflow-hidden transition-all duration-400 ease-out ${
           isOpen
-            ? 'opacity-100 pointer-events-auto visible scale-100'
-            : 'opacity-0 pointer-events-none invisible scale-95'
+            ? 'opacity-100 pointer-events-auto visible scale-100 h-[min(510px,80dvh)]'
+            : 'opacity-0 pointer-events-none invisible scale-95 h-[510px]'
         }`}
       >
         {/* Curated Header */}
