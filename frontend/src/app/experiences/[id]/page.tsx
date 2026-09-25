@@ -175,9 +175,25 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   if (!experience) {
     return { title: 'Experience Not Found' };
   }
+  // Title omits '| Journi' — the root layout template ('%s | Journi') appends it
+  const pageTitle = `${experience.title} — ${experience.city}`;
+  const pageDesc = experience.description?.substring(0, 160) ?? '';
+  const coverImage = experience.cover || experience.mediaUrls?.[0] || '/og-image.png';
   return {
-    title: `${experience.title} — ${experience.city} | Journi`,
-    description: experience.description?.substring(0, 160),
+    title: pageTitle,
+    description: pageDesc,
+    openGraph: {
+      title: experience.title,
+      description: pageDesc,
+      url: `https://experience-platform-sigma.vercel.app/experiences/${experience.id}`,
+      images: [{ url: coverImage, width: 1200, height: 630, alt: experience.title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: experience.title,
+      description: pageDesc,
+      images: [coverImage],
+    },
   };
 }
 
@@ -278,7 +294,7 @@ export default async function ExperienceDetailPage({ params }: { params: { id: s
               </div>
 
               <Link
-                href="/#itinerary"
+                href={`/trip?add=${exp.id}`}
                 className="w-full inline-flex items-center justify-center gap-2 bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] font-mono text-xs uppercase tracking-wider font-bold py-3.5 rounded-xl transition-all duration-300 shadow-md shadow-[#347F8C]/20"
               >
                 <span>Add to Day Plan</span>
@@ -388,7 +404,14 @@ export default async function ExperienceDetailPage({ params }: { params: { id: s
                 Presented By
               </span>
               <h3 className="font-manifold text-xl text-[#2C2C2C] font-bold tracking-wide uppercase">
-                {exp.provider?.businessName ? `Presented by ${exp.provider.businessName}` : 'Presented by a local connoisseur'}
+                {(() => {
+                  const rawName = exp.provider?.businessName;
+                  const displayName =
+                    rawName === 'Local Experience Intelligence — Curated Dataset'
+                      ? 'Curated by Journi'
+                      : rawName;
+                  return displayName ? `Presented by ${displayName}` : 'Presented by a local connoisseur';
+                })()}
               </h3>
               <p className="text-xs font-mono text-[#2C2C2C]/60 mt-1">Based in {exp.provider?.city || exp.city}</p>
               <div className="mt-4 pt-4 border-t border-[#D4CFC0] text-xs text-[#2C2C2C]/75 leading-relaxed font-light">
