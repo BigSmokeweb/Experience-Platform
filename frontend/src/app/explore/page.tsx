@@ -34,6 +34,20 @@ import catalogDataset from '@/lib/catalog-dataset.json';
 
 const EXCLUDED_CITIES = new Set(['jaipur', 'ahmedabad']);
 
+function isSeasonalItem(e: any): boolean {
+  return Boolean(
+    e.isSeasonal === true ||
+    e.metadata?.isSeasonal === true ||
+    (typeof e.id === 'string' && e.id.startsWith('seasonal-')) ||
+    e.category === 'Diwali' ||
+    e.category === 'Ganesh Chaturthi' ||
+    e.category === 'Navaratri' ||
+    e.metadata?.festival ||
+    e.metadata?.seasonalCategory ||
+    (Array.isArray(e.tags) && e.tags.includes('seasonal'))
+  );
+}
+
 async function getAllExperiences(): Promise<ExperienceData[]> {
   try {
     const res = await fetch(`${API_BASE}/experiences/catalog?limit=500`, {
@@ -43,7 +57,7 @@ async function getAllExperiences(): Promise<ExperienceData[]> {
       const data = await res.json();
       if (data?.data && Array.isArray(data.data) && data.data.length > 0) {
         return data.data
-          .filter((e: any) => !EXCLUDED_CITIES.has(e.city?.toLowerCase()))
+          .filter((e: any) => !EXCLUDED_CITIES.has(e.city?.toLowerCase()) && !isSeasonalItem(e))
           .map((e: any) => ({
             ...e,
             title: e.title || e.name || 'Local Experience',
@@ -62,7 +76,7 @@ async function getAllExperiences(): Promise<ExperienceData[]> {
 
   // Server-side dataset fallback (instant on Vercel, zero client bundle bloat)
   return (catalogDataset as any[])
-    .filter((e) => !EXCLUDED_CITIES.has(e.city?.toLowerCase()))
+    .filter((e) => !EXCLUDED_CITIES.has(e.city?.toLowerCase()) && !isSeasonalItem(e))
     .map((e) => ({
       ...e,
       title: e.title || e.name || 'Local Experience',

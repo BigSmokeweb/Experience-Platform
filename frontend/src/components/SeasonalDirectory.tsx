@@ -3,8 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { MapPin, Star, Clock, Camera, ChevronRight, Navigation } from 'lucide-react';
-import { BookmarkButton } from '@/components/BookmarkButton';
+import { MapPin, Star, Clock, Camera, Navigation } from 'lucide-react';
 import { resolveExperienceImageUrl } from '@/lib/image-utils';
 import { REGIONAL_PRESETS, sortExperiencesByLocation } from '@/lib/geo-distance';
 
@@ -102,55 +101,38 @@ export function SeasonalDirectory({ initialExperiences }: SeasonalDirectoryProps
             : `${item.distanceKm.toFixed(1)} km`;
 
         return (
-          <article
+          <Link
             key={item.id}
-            className="relative bg-white rounded-2xl overflow-hidden flex flex-col h-full border border-[#D4CFC0] hover:border-[#347F8C]/60 hover:shadow-xl hover:shadow-stone-900/5 transition-all duration-300"
+            href={`/experiences/${item.id}`}
+            className="group relative bg-white rounded-2xl overflow-hidden flex flex-col h-full border border-[#D4CFC0] hover:border-[#347F8C]/60 hover:shadow-xl hover:shadow-stone-900/5 transition-all duration-300 block text-inherit no-underline cursor-pointer"
           >
-            {/* Image Container with Link */}
-            <div className="relative h-60 w-full overflow-hidden bg-stone-100 group">
-              <Link href={`/experiences/${item.id}`} className="block w-full h-full">
-                <Image
-                  src={imgSrc}
-                  alt={item.title}
-                  fill
-                  unoptimized
-                  priority={idx < 3}
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              </Link>
+            {/* Image Container */}
+            <div className="relative h-60 w-full overflow-hidden bg-stone-100">
+              <Image
+                src={imgSrc}
+                alt={item.title}
+                fill
+                unoptimized
+                priority={idx < 3}
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-              {/* Top Left: Exact Distance Badge & City */}
+              {/* Top Left: Exact Distance Badge */}
               <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1.5 z-10 pointer-events-none">
                 <span className="bg-[#347F8C] text-white px-2.5 py-1 rounded-full text-[10px] font-mono tracking-wider font-bold shadow-md flex items-center gap-1">
                   <Navigation className="w-2.5 h-2.5" />
                   {formattedDistance} away
                 </span>
-                <span className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-mono tracking-wider text-[#2C2C2C] font-bold border border-[#D4CFC0] uppercase shadow-sm">
-                  {item.city}
-                </span>
               </div>
 
-              {/* Top Right: Rating & Bookmark */}
+              {/* Top Right: Rating */}
               <div className="absolute top-3 right-3 flex items-center gap-2 z-20">
                 <div className="bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full text-[11px] font-medium text-[#2C2C2C] border border-[#D4CFC0] flex items-center gap-1 shadow-sm font-bold">
                   <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
                   <span>{Number(item.ratingAverage || 4.9).toFixed(2)}</span>
                 </div>
-                <BookmarkButton
-                  experience={{
-                    id: item.id,
-                    title: item.title,
-                    city: item.city,
-                    category: item.category,
-                    mediaUrls: item.mediaUrls,
-                    priceMin: 0,
-                    priceMax: 0,
-                    ratingAverage: item.ratingAverage,
-                  }}
-                  size="sm"
-                />
               </div>
 
               {/* Bottom Metadata inside Image */}
@@ -187,11 +169,11 @@ export function SeasonalDirectory({ initialExperiences }: SeasonalDirectoryProps
                 </div>
 
                 {/* Title */}
-                <Link href={`/experiences/${item.id}`} className="block group">
+                <div>
                   <h3 className="font-cormorant font-bold text-xl sm:text-2xl text-[#2C2C2C] group-hover:text-[#347F8C] transition-colors leading-snug">
                     {item.title}
                   </h3>
-                </Link>
+                </div>
 
                 {/* Description */}
                 <p className="text-[#5C6460] text-xs sm:text-sm line-clamp-2 mt-2 leading-relaxed font-light">
@@ -209,17 +191,9 @@ export function SeasonalDirectory({ initialExperiences }: SeasonalDirectoryProps
                     {formattedDistance} away
                   </p>
                 </div>
-
-                <Link
-                  href={`/experiences/${item.id}`}
-                  className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[#F5F1E6] bg-[#347F8C] hover:bg-[#2A6772] font-bold px-3.5 py-1.5 rounded-lg transition-all duration-300 shadow-sm shadow-[#347F8C]/20"
-                >
-                  <span>View Spot</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
               </div>
             </div>
-          </article>
+          </Link>
         );
       })}
     </div>

@@ -57,6 +57,7 @@ export class ExperiencesController {
     @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('seasonal') seasonal?: string,
   ) {
     return this.experiencesService.catalogExperiences({
       city: city || undefined,
@@ -64,6 +65,7 @@ export class ExperiencesController {
       search: search || undefined,
       page: page ? parseInt(page, 10) : 1,
       limit: limit ? parseInt(limit, 10) : 50,
+      seasonal: seasonal === 'true',
     });
   }
 

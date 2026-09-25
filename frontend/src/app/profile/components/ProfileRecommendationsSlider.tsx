@@ -3,8 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef, memo, Component, ErrorInfo, ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Star, Clock, ShieldCheck, Sparkles, SlidersHorizontal } from 'lucide-react';
-import { BookmarkButton } from '@/components/BookmarkButton';
+import { ChevronLeft, ChevronRight, Star, Sparkles, SlidersHorizontal } from 'lucide-react';
 import catalogDataset from '@/lib/catalog-dataset.json';
 
 export interface TravelerPreferencesSummary {
@@ -235,10 +234,11 @@ const RecommendationCard = memo(function RecommendationCard({
     : '4.80';
 
   return (
-    <article
+    <Link
+      href={`/experiences/${exp?.id || ''}`}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={`group relative bg-white rounded-2xl overflow-hidden flex flex-col justify-between h-full transform-gpu transition-all duration-300 ease-out cursor-pointer ${
+      className={`group relative bg-white rounded-2xl overflow-hidden flex flex-col justify-between h-full transform-gpu transition-all duration-300 ease-out cursor-pointer block text-inherit no-underline ${
         isHovered
           ? 'scale-[1.04] -translate-y-2 z-30 shadow-2xl border-2 border-[#347F8C] ring-4 ring-[#347F8C]/25 brightness-105'
           : isFaded
@@ -255,7 +255,7 @@ const RecommendationCard = memo(function RecommendationCard({
           unoptimized
           referrerPolicy="no-referrer"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="object-cover"
+          className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
           onError={() => {
             if (imgSrc !== fallbackUrl) {
               setImgSrc(fallbackUrl);
@@ -264,37 +264,21 @@ const RecommendationCard = memo(function RecommendationCard({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent opacity-80" />
 
-        {/* Top Badges: City + Match Score Pill */}
-        <div className="absolute top-3 left-3 flex items-center gap-1.5">
-          <span className="bg-white/95 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-mono tracking-wider text-[#2C2C2C] font-bold border border-[#D4CFC0] uppercase shadow-sm">
-            {exp?.city || 'Local'}
-          </span>
-          <span className="bg-[#347F8C] text-[#F5F1E6] backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] font-mono tracking-wider font-bold shadow-xs">
-            {exp?.matchScore ?? 90}% Match
-          </span>
-        </div>
+        {/* Top Badges: Match Score Pill */}
+        {exp?.matchScore !== undefined && (
+          <div className="absolute top-3 left-3 flex items-center gap-1.5">
+            <span className="bg-[#347F8C] text-[#F5F1E6] backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] font-mono tracking-wider font-bold shadow-xs">
+              {exp?.matchScore ?? 90}% Match
+            </span>
+          </div>
+        )}
 
-        {/* Top Right: Bookmark + Star Rating */}
+        {/* Top Right: Star Rating */}
         <div className="absolute top-3 right-3 flex items-center gap-1.5 z-20">
-          <BookmarkButton experience={exp} size="sm" />
           <div className="bg-white/95 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-medium text-[#2C2C2C] border border-[#D4CFC0] flex items-center gap-1 shadow-sm font-bold">
             <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
             <span>{rating}</span>
           </div>
-        </div>
-
-        {/* Host Info & Duration */}
-        <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-xs text-white">
-          <span className="text-[10px] font-mono text-zinc-200 flex items-center gap-1 font-medium truncate max-w-[65%]">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#8B7355] shrink-0" />
-            <span className="truncate">
-              {exp?.provider?.businessName || 'Listed by Local Expert'}
-            </span>
-          </span>
-          <span className="text-[10px] font-mono text-zinc-200 flex items-center gap-1 shrink-0">
-            <Clock className="w-3 h-3 text-zinc-300" />
-            {exp?.durationMinutes || 60}m
-          </span>
         </div>
       </div>
 
@@ -330,18 +314,9 @@ const RecommendationCard = memo(function RecommendationCard({
               {formattedPrice}
             </p>
           </div>
-          <Link
-            href={`/experiences/${exp?.id || ''}`}
-            className="group/btn inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[#F5F1E6] bg-[#347F8C] hover:bg-[#2A6772] font-bold px-3.5 py-1.5 rounded-lg transition-all duration-300 active:scale-95 shadow-md shadow-[#347F8C]/20"
-          >
-            <span>Explore</span>
-            <span className="inline-block transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/btn:translate-x-1">
-              &rarr;
-            </span>
-          </Link>
         </div>
       </div>
-    </article>
+    </Link>
   );
 });
 

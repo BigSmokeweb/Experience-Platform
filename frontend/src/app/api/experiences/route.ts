@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
   const search = searchParams.get('search') || '';
   const page = parseInt(searchParams.get('page') || '1', 10);
   const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 500);
+  const seasonal = searchParams.get('seasonal') === 'true' || searchParams.get('isSeasonal') === 'true';
 
   // 1. If remote backend API is available, try it first
   if (API_BASE && !API_BASE.includes('localhost')) {
@@ -31,6 +32,7 @@ export async function GET(request: NextRequest) {
       if (city) params.set('city', city);
       if (category) params.set('category', category);
       if (search) params.set('search', search);
+      if (seasonal) params.set('seasonal', 'true');
       params.set('page', page.toString());
       params.set('limit', limit.toString());
 
@@ -54,7 +56,10 @@ export async function GET(request: NextRequest) {
   }
 
   // 2. Server-side dataset fallback (instant, zero cold-starts, works on Vercel)
-  let filtered = [...(catalogDataset as any[]), ...(seasonalDataset as any[])];
+  // Seasonal experiences are exclusively shown when seasonal=true (e.g. from the seasonal banner / directory)
+  let filtered = seasonal
+    ? [...(seasonalDataset as any[])]
+    : [...(catalogDataset as any[])];
   if (city) {
     const c = city.toLowerCase();
     filtered = filtered.filter((e) => e.city?.toLowerCase() === c);

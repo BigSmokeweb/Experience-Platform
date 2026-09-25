@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { ContentSanitizer } from '../../common/utils/sanitizer.util';
 import {
@@ -464,15 +465,34 @@ export class ExperiencesService {
       ...(query.minRating && { ratingAverage: { gte: query.minRating } }),
     };
 
+    if ((query as any).seasonal === true) {
+      whereClause.metadata = { path: ['isSeasonal'], equals: true };
+    } else {
+      whereClause.AND = [
+        ...(whereClause.AND || []),
+        {
+          OR: [
+            { metadata: { path: ['isSeasonal'], equals: Prisma.AnyNull } },
+            { metadata: { path: ['isSeasonal'], equals: false } },
+          ],
+        },
+      ];
+    }
+
     // Text search support
     if ((query as any).search) {
       const searchTerm = (query as any).search.trim();
       if (searchTerm) {
-        whereClause.OR = [
-          { title: { contains: searchTerm, mode: 'insensitive' } },
-          { description: { contains: searchTerm, mode: 'insensitive' } },
-          { city: { contains: searchTerm, mode: 'insensitive' } },
-          { area: { contains: searchTerm, mode: 'insensitive' } },
+        whereClause.AND = [
+          ...(whereClause.AND || []),
+          {
+            OR: [
+              { title: { contains: searchTerm, mode: 'insensitive' } },
+              { description: { contains: searchTerm, mode: 'insensitive' } },
+              { city: { contains: searchTerm, mode: 'insensitive' } },
+              { area: { contains: searchTerm, mode: 'insensitive' } },
+            ],
+          },
         ];
       }
     }
@@ -515,6 +535,7 @@ export class ExperiencesService {
     search?: string;
     page?: number;
     limit?: number;
+    seasonal?: boolean;
   }): Promise<PaginatedResult<any>> {
     const page = params.page || 1;
     const limit = Math.min(params.limit || 50, 500);
@@ -525,6 +546,20 @@ export class ExperiencesService {
       published: true,
     };
 
+    if (params.seasonal) {
+      whereClause.metadata = { path: ['isSeasonal'], equals: true };
+    } else {
+      whereClause.AND = [
+        ...(whereClause.AND || []),
+        {
+          OR: [
+            { metadata: { path: ['isSeasonal'], equals: Prisma.AnyNull } },
+            { metadata: { path: ['isSeasonal'], equals: false } },
+          ],
+        },
+      ];
+    }
+
     if (params.city) {
       whereClause.city = { equals: params.city, mode: 'insensitive' };
     }
@@ -534,11 +569,16 @@ export class ExperiencesService {
     if (params.search) {
       const s = params.search.trim();
       if (s) {
-        whereClause.OR = [
-          { title: { contains: s, mode: 'insensitive' } },
-          { description: { contains: s, mode: 'insensitive' } },
-          { city: { contains: s, mode: 'insensitive' } },
-          { area: { contains: s, mode: 'insensitive' } },
+        whereClause.AND = [
+          ...(whereClause.AND || []),
+          {
+            OR: [
+              { title: { contains: s, mode: 'insensitive' } },
+              { description: { contains: s, mode: 'insensitive' } },
+              { city: { contains: s, mode: 'insensitive' } },
+              { area: { contains: s, mode: 'insensitive' } },
+            ],
+          },
         ];
       }
     }

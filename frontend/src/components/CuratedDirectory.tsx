@@ -4,9 +4,8 @@ import { Suspense, useState, useEffect, useMemo, useTransition, useRef, memo } f
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Search, MapPin, Clock, Star, ShieldCheck, ArrowRight, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
+import { Search, MapPin, Star, ArrowRight, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { AnimatedCounter } from '@/components/AnimatedCounter';
-import { BookmarkButton } from '@/components/BookmarkButton';
 import { resolveExperienceImageUrl, FALLBACK_EXPERIENCE_IMAGE } from '@/lib/image-utils';
 
 export interface CategoryOption {
@@ -101,10 +100,12 @@ const ExperienceCard = memo(function ExperienceCard({
     : `₹${exp.priceMin?.toLocaleString()} – ₹${exp.priceMax?.toLocaleString()}`;
 
   return (
-    <article
+    <Link
+      href={`/experiences/${exp.id}`}
+      onClick={onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={`group relative bg-white rounded-2xl overflow-hidden flex flex-col justify-between h-full transform-gpu transition-all duration-300 ease-out cursor-pointer ${
+      className={`group relative bg-white rounded-2xl overflow-hidden flex flex-col justify-between h-full transform-gpu transition-all duration-300 ease-out cursor-pointer block text-inherit no-underline ${
         isHovered
           ? 'scale-[1.04] -translate-y-2 z-30 shadow-2xl border-2 border-[#347F8C] ring-4 ring-[#347F8C]/25 brightness-105'
           : isFaded
@@ -121,7 +122,7 @@ const ExperienceCard = memo(function ExperienceCard({
           unoptimized
           referrerPolicy="no-referrer"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="object-cover"
+          className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
           onError={() => {
             if (imgSrc !== FALLBACK_EXPERIENCE_IMAGE) {
               setImgSrc(FALLBACK_EXPERIENCE_IMAGE);
@@ -131,30 +132,11 @@ const ExperienceCard = memo(function ExperienceCard({
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent opacity-80" />
 
         {/* Top Badges */}
-        <div className="absolute top-3 left-3 flex items-center gap-2">
-          <span className="bg-white/95 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-mono tracking-wider text-[#2C2C2C] font-bold border border-[#D4CFC0] uppercase shadow-sm">
-            {exp.city}
-          </span>
-        </div>
-
         <div className="absolute top-3 right-3 flex items-center gap-1.5 z-20">
-          <BookmarkButton experience={exp} size="sm" />
           <div className="bg-white/95 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-medium text-[#2C2C2C] border border-[#D4CFC0] flex items-center gap-1 shadow-sm font-bold">
             <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
             <span>{Number(exp.ratingAverage || 4.9).toFixed(2)}</span>
           </div>
-        </div>
-
-        {/* Host Guild Base Meta */}
-        <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between text-xs text-white">
-          <span className="text-[10px] font-mono text-zinc-200 flex items-center gap-1 font-medium truncate max-w-[65%]">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#8B7355] shrink-0" />
-            <span className="truncate">{exp.provider?.businessName ? `Listed by ${exp.provider.businessName}` : 'Presented by a local connoisseur'}</span>
-          </span>
-          <span className="text-[10px] font-mono text-zinc-200 flex items-center gap-1 shrink-0">
-            <Clock className="w-3 h-3 text-zinc-300" />
-            {exp.durationMinutes || 120}m
-          </span>
         </div>
       </div>
 
@@ -181,17 +163,9 @@ const ExperienceCard = memo(function ExperienceCard({
               {formattedPrice}
             </p>
           </div>
-          <Link
-            href={`/experiences/${exp.id}`}
-            onClick={onClick}
-            className="group/btn inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[#F5F1E6] bg-[#347F8C] hover:bg-[#2A6772] font-bold px-3.5 py-1.5 rounded-lg transition-all duration-300 active:scale-95 shadow-md shadow-[#347F8C]/20"
-          >
-            <span>Explore</span>
-            <span className="inline-block transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/btn:translate-x-1">&rarr;</span>
-          </Link>
         </div>
       </div>
-    </article>
+    </Link>
   );
 });
 
@@ -635,6 +609,21 @@ function CuratedDirectoryContent({
     const EXCLUDED_CITIES = new Set(['jaipur', 'ahmedabad']);
 
     return initialExperiences.filter((exp) => {
+      // 0. Strictly exclude seasonal experiences (only shown when clicking the seasonal banner)
+      if (
+        (exp as any).isSeasonal ||
+        (exp as any).metadata?.isSeasonal ||
+        exp.id?.startsWith('seasonal-') ||
+        exp.category === 'Diwali' ||
+        exp.category === 'Ganesh Chaturthi' ||
+        exp.category === 'Navaratri' ||
+        (exp as any).metadata?.festival ||
+        (exp as any).metadata?.seasonalCategory ||
+        (Array.isArray((exp as any).tags) && (exp as any).tags.includes('seasonal'))
+      ) {
+        return false;
+      }
+
       // 1. Strictly exclude removed cities (Jaipur & Ahmedabad)
       if (exp.city && EXCLUDED_CITIES.has(exp.city.toLowerCase())) {
         return false;
