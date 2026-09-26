@@ -74,9 +74,7 @@ export function NotificationBell({ isDarkNav }: NotificationBellProps) {
 
     setActingId(notification.id);
     try {
-      if (invitationId) {
-        await respondTripInvitation(sessionId, invitationId, action);
-      }
+      await respondTripInvitation(sessionId, invitationId || '', action);
       await markNotificationAsRead(notification.id);
 
       if (action === 'ACCEPT') {

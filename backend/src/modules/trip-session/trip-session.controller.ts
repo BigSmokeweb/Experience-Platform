@@ -198,4 +198,19 @@ export class TripSessionController {
   ) {
     return this.tripSessionService.respondInvitation(id, memberId, user.id, dto.action);
   }
+
+  /**
+   * PATCH /trip-sessions/:id/respond
+   * Direct respond using current user's token and tripSessionId
+   */
+  @Patch(':id/respond')
+  @HttpCode(HttpStatus.OK)
+  respondInvitationDirect(
+    @CurrentUser() user: { id: string },
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodValidationPipe(RespondInvitationSchema)) dto: RespondInvitationDto,
+  ) {
+    return this.tripSessionService.respondInvitation(id, '', user.id, dto.action);
+  }
 }
+

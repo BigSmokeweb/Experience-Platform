@@ -53,6 +53,17 @@ export class TripSessionService {
       );
     }
 
+    const validCategories = new Set([
+      'FOOD', 'CULTURE', 'ADVENTURE', 'HIDDEN_GEMS', 'NIGHTLIFE', 'EVENTS', 'WORKSHOPS', 'SHOPPING'
+    ]);
+    const rawInterests = Array.isArray(dto.interests) ? dto.interests : [];
+    const sanitizedInterests = rawInterests
+      .map((i) => (i || '').toUpperCase().trim().replace(/\s+/g, '_'))
+      .filter((i) => validCategories.has(i));
+    if (sanitizedInterests.length === 0) {
+      sanitizedInterests.push('CULTURE');
+    }
+
     return this.prisma.$queryRawUnsafe<{ id: string }[]>(
       `
       INSERT INTO trip_sessions (
@@ -79,7 +90,7 @@ export class TripSessionService {
       dto.totalBudget,
       dto.groupSize,
       dto.accessibilityRequirements,
-      dto.interests,
+      sanitizedInterests,
       dto.tripDate ? dto.tripDate : null,
       dto.startTimeOfDay ?? null,
       dto.endTimeOfDay ?? null,
@@ -510,12 +521,14 @@ export class TripSessionService {
       throw new ConflictException('Please enter a username or email to invite.');
     }
 
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed);
+
     const targetUser = await this.prisma.user.findFirst({
       where: {
         OR: [
           { name: { equals: trimmed, mode: 'insensitive' } },
           { email: { equals: trimmed, mode: 'insensitive' } },
-          ...(trimmed.length === 36 ? [{ id: trimmed }] : []),
+          ...(isUuid ? [{ id: trimmed }] : []),
         ],
       },
       select: { id: true, name: true, email: true },
@@ -637,17 +650,33 @@ export class TripSessionService {
     userId: string,
     action: 'ACCEPT' | 'REJECT',
   ) {
-    const member = await this.prisma.tripMember.findFirst({
-      where: {
-        id: memberId,
-        tripSessionId: sessionId,
-        userId,
-      },
-      include: {
-        user: { select: { id: true, name: true } },
-        invitedBy: { select: { id: true, name: true } },
-      },
-    });
+    const isMemberUuid = memberId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(memberId);
+    let member = isMemberUuid
+      ? await this.prisma.tripMember.findFirst({
+          where: {
+            id: memberId,
+            tripSessionId: sessionId,
+            userId,
+          },
+          include: {
+            user: { select: { id: true, name: true } },
+            invitedBy: { select: { id: true, name: true } },
+          },
+        })
+      : null;
+
+    if (!member) {
+      member = await this.prisma.tripMember.findFirst({
+        where: {
+          tripSessionId: sessionId,
+          userId,
+        },
+        include: {
+          user: { select: { id: true, name: true } },
+          invitedBy: { select: { id: true, name: true } },
+        },
+      });
+    }
 
     if (!member) {
       throw new NotFoundException('Invitation not found or you are not authorized to respond to it.');

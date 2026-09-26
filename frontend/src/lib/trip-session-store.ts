@@ -770,7 +770,9 @@ export async function ensureBackendTripSession(sessionId: string): Promise<strin
     totalBudget: localData?.totalBudget || 5000,
     totalTimeMinutes: localData?.remainingTimeMinutes || 180,
     groupSize: localData?.groupSize || 2,
-    interests: localData?.selectedCategories || ['FOOD', 'CULTURE'],
+    interests: (localData?.selectedCategories || ['FOOD', 'CULTURE']).map((c: string) =>
+      c.toUpperCase().replace(/\s+/g, '_'),
+    ),
     accessibilityRequirements: [],
   };
 
@@ -798,6 +800,26 @@ export async function ensureBackendTripSession(sessionId: string): Promise<strin
     } else {
       throw new Error('Please sign in to collaborate and invite members to your trip.');
     }
+  }
+
+  // Handle active session conflict (409) gracefully by recovering the existing active session
+  if (res.status === 409) {
+    try {
+      const activeRes = await fetch(`${API_BASE}/trip-sessions/active`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (activeRes.ok) {
+        const activeData = await activeRes.json();
+        if (activeData?.id) {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(`trip_session_${activeData.id}`, JSON.stringify({ ...localData, id: activeData.id }));
+            localStorage.setItem('activeTripSessionId', activeData.id);
+            window.history.replaceState(null, '', `/trip/${activeData.id}`);
+          }
+          return activeData.id;
+        }
+      }
+    } catch {}
   }
 
   if (!res.ok) {
@@ -959,10 +981,15 @@ export async function respondTripInvitation(
   memberId: string,
   action: 'ACCEPT' | 'REJECT',
 ): Promise<TripMemberInfo> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  let token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
   if (!token) throw new Error('Please login to respond to trip invitation.');
 
-  const res = await fetch(`${API_BASE}/trip-sessions/${sessionId}/members/${memberId}/respond`, {
+  const isMemberUuid = memberId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(memberId);
+  const endpoint = isMemberUuid
+    ? `${API_BASE}/trip-sessions/${sessionId}/members/${memberId}/respond`
+    : `${API_BASE}/trip-sessions/${sessionId}/respond`;
+
+  let res = await fetch(endpoint, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -970,6 +997,23 @@ export async function respondTripInvitation(
     },
     body: JSON.stringify({ action }),
   });
+
+  if (res.status === 401) {
+    const newToken = await trySilentRefreshToken();
+    if (newToken) {
+      token = newToken;
+      res = await fetch(endpoint, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${newToken}`,
+        },
+        body: JSON.stringify({ action }),
+      });
+    } else {
+      throw new Error('Your session has expired. Please sign in again.');
+    }
+  }
 
   const data = await res.json();
   if (!res.ok) {

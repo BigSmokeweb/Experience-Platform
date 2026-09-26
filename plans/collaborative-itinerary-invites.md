@@ -1,74 +1,73 @@
-# Plan: Collaborative Itinerary Invitations, Notification Bell Delivery & Companion Routing
+# Plan: Collaborative Itinerary Invites, Notifications & A* Companion Routing
 
 **Branch**: `main`  
-**Status**: Active — Pending User Approval  
+**Status**: Ready for Execution (Pending Approval)
 
-## Goal
-Enable seamless travel companion invitations from `/trip/[sessionId]`, deliver interactive notifications directly to the invited user's top hotbar notification bell, preserve accepted itineraries permanently in the notification bell for instant access, and render the companion's own live location with shortest A* routes from their location to the destination stops on the Leaflet map.
+---
+
+## Root Cause Analysis (Internal Server Error 500)
+
+| Failure Point | Cause | Fix |
+|---|---|---|
+| **Invalid UUID Cast** | `trimmed.length === 36 ? [{ id: trimmed }] : []` in `trip-session.service.ts` treats any 36-char string (e.g. `jaipur.artisan@experienceplatform.in`) as UUID, causing Prisma/Postgres crash `P2023: Error creating UUID`. | Test with strict UUID regex `/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i`. |
+| **Enum Mismatch in SQL** | Raw SQL cast `$8::"Category"[]` in `createSession` fails with Postgres code `22P02` if interests contain lowercase or unmapped tags. | Normalize & filter interests against uppercase `Category` enum values before query. |
+| **Active Session 409 Conflict** | When `ensureBackendTripSession` tries to sync a local session to backend, if an active session already exists, backend returns 409 and invite fails. | If 409 returned, retrieve the existing active session ID and seamlessly continue. |
 
 ---
 
 ## Acceptance Criteria
 
-### 1. Robust Invitation Pipeline & UUID Fix
-- [ ] **No Validation Error**: Clicking "Invite" never fails with `Validation failed (uuid is expected)`.
-- [ ] **Auto-Promotion for Local Sessions**: If a session was created with a local ID (`session_...`), the system automatically syncs it to the backend via `POST /trip-sessions`, acquires a valid database UUID, seamlessly updates the route URL to `/trip/[newUuid]`, and executes the invitation without user friction.
-- [ ] **Unambiguous User Targeting**: The invitation uses unique identifier `u.email || u.id` rather than display name `u.name`, correctly targeting the exact registered user clicked when multiple users share the same name (e.g., "Milind Sahu").
-- [ ] **Timeout Extension**: Replaces premature 1.2s timeout aborts in `trip-session-store.ts` with 10s timeout to prevent unnecessary fallback to offline IDs.
-
-### 2. Notification Bell Delivery & Persistent Itinerary Roster
-- [ ] **Hotbar Bell Integration**: When an invitation is sent, the recipient's notification bell in the top hotbar immediately reflects the invitation (with badge counter and sound/vibration cue if supported).
-- [ ] **Accept & Reject Actions**: Recipient can accept or decline directly inside the notification dropdown.
-- [ ] **Permanent Itinerary Bookmark**: Once accepted, the itinerary **stays in the notification bell** for the invited user, displaying an "Accepted — Joined Itinerary" badge and a direct "View Itinerary →" button to jump back into the live trip anytime.
-- [ ] **Live Polling & Refresh**: Notification bell polls every 10 seconds and automatically updates on window focus and auth state changes.
-
-### 3. Companion Live Location & Personalized A* Navigation
-- [ ] **Companion Geolocation**: When an invited companion views the trip page, the map (`TripAreaMap`) identifies the current user and displays their own live location marker (`● You (Your Location)`).
-- [ ] **Personalized Shortest Route**: The A* road engine (`calculateRealRoadRoute`) and local train planner (`calculateMumbaiTrainPlan`) compute routes starting from the companion's live location to the itinerary's stops.
-- [ ] **Origin Switcher**: Map provides an interactive origin toggle between `📍 My Live Location` and `🚩 Organizer Start Point`, letting the companion view routes from both their spot and the group organizer's starting spot.
-- [ ] **Same Continuous Itinerary**: The companion views the exact same ordered stops, timing, and experience details as the organizer.
+- [ ] **Zero 500 Errors on Invite**: Clicking "Invite" on any registered user (by email, username, or ID) creates pending member & notification without 500 or UUID errors.
+- [ ] **Interactive Notification**: Invited user sees real-time bell badge and dropdown card with `[Accept & View Itinerary]` and `[Decline]`.
+- [ ] **Persistent Itinerary Access**: Accepted itinerary remains accessible in the notification bell with an `[Open Route →]` shortcut.
+- [ ] **Companion Live Location**: When accepted companion opens `/trip/[sessionId]`, map renders their own GPS live location (`● You`).
+- [ ] **A* Shortest Route Calculation**: Road router (`a-star-router.ts`) and railway engine compute shortest path from companion's coordinates to itinerary destination stops.
+- [ ] **Origin Switcher**: Companion can toggle route between `📍 My Location` and `🚩 Organizer Start`.
 
 ---
 
-## Slices
+## Vertical Slices
 
-### Slice 1: Invitation Pipeline Fix & Automatic Session Promotion
+### Slice 1: Fix 500 Server Error & Robust Invite Creation
 - **Class**: Behavior change
 - **Actor**: Trip Organizer
-- **Trigger**: Clicks "Invite" in `AddMemberModal`
-- **Observable Outcome**:
-  - The modal checks if `sessionId` is a valid UUID. If it's a local session (`session_...`), it persists the itinerary to backend `POST /trip-sessions`, receives a real UUID, updates the browser URL, and calls `POST /trip-sessions/:id/members` with `u.email || u.id`.
-  - Removes 1200ms abort timers from `createTripSession`, `fetchTripSession`, and `fetchRecommendations` in `trip-session-store.ts`.
-  - Shows success notification: `"Invitation sent successfully to [email]! They will receive a notification to join."`
-- **Production Path**: `frontend/src/components/AddMemberModal.tsx` -> `frontend/src/lib/trip-session-store.ts` -> backend `trip-session.controller.ts` (`POST /trip-sessions/:id/members`) -> `trip-session.service.ts` -> `notifications.service.ts`.
-- **Acceptance Criteria**: Sending an invite to any registered user creates a pending `tripMember` record and a `TRIP_INVITATION` database notification with zero UUID validation errors.
+- **Trigger**: Clicks "Invite" in [AddMemberModal.tsx](file:///c:/Daily/Work/Projects/Celesthackathon/frontend/src/components/AddMemberModal.tsx)
+- **Path**: `AddMemberModal` → `trip-session-store.ts` (`inviteTripMember`) → `POST /trip-sessions/:id/members` → [trip-session.service.ts](file:///c:/Daily/Work/Projects/Celesthackathon/backend/src/modules/trip-session/trip-session.service.ts)
+- **Changes**:
+  1. Replace `trimmed.length === 36` with strict UUID regex in `trip-session.service.ts`.
+  2. Sanitize `interests` enum mapping in `createSession`.
+  3. In `ensureBackendTripSession`, handle 409 by reusing existing active session.
+- **Criteria**:
+  - Inviting `milindsahu011@gmail.com` or any registered user succeeds immediately.
+  - Success banner: `"Invitation sent successfully to [user]!"`.
 
 ---
 
-### Slice 2: Notification Bell Delivery & Accepted Itinerary Retention
+### Slice 2: Notification Bell Delivery & Accept Flow
 - **Class**: Behavior change
 - **Actor**: Invited Companion
-- **Trigger**: Views top hotbar notification bell and accepts invitation
-- **Observable Outcome**:
-  - Notification bell shows unread count badge.
-  - Dropdown displays trip invitation with inviter name, trip city, and `[Accept & View Route]` / `[Decline]` buttons.
-  - Clicking `[Accept & View Route]` marks the invite accepted and redirects to `/trip/${sessionId}`.
-  - **The notification remains in the bell permanently** with an "Accepted — Joined Itinerary" pill and a "View Itinerary →" button for one-click access.
-  - Notification bell refreshes on `window.focus`, custom event `notification-refresh`, and 10s interval.
-- **Production Path**: `frontend/src/components/NotificationBell.tsx` -> `backend/src/modules/notifications/` & `backend/src/modules/trip-session/trip-session.service.ts` (`respondInvitation`).
-- **Acceptance Criteria**: Accepted invitation stays visible in the bell dropdown with an active navigation link to `/trip/${sessionId}`.
+- **Trigger**: Logs in and checks hotbar notification bell
+- **Path**: [NotificationBell.tsx](file:///c:/Daily/Work/Projects/Celesthackathon/frontend/src/components/NotificationBell.tsx) → `GET /notifications` → `POST /trip-sessions/:id/respond` → [trip-session.service.ts](file:///c:/Daily/Work/Projects/Celesthackathon/backend/src/modules/trip-session/trip-session.service.ts)
+- **Changes**:
+  1. Ensure `respondInvitation` endpoint transitions member to `ACCEPTED` and marks notification read.
+  2. Bell displays `TRIP_INVITATION` card with inviter name, trip destination, and `[Accept & View Itinerary]` / `[Decline]` buttons.
+  3. On click `[Accept]`, updates status and navigates to `/trip/[sessionId]`.
+  4. Keeps accepted card permanently in bell under "Accepted Itineraries" for quick re-entry.
+- **Criteria**:
+  - Companion receives notification, accepts invite, and redirects into the shared itinerary.
 
 ---
 
-### Slice 3: Personalized Map Location & Shortest Route from Companion's Origin
+### Slice 3: Companion Geolocation & A* Navigation to Destinations
 - **Class**: Behavior change
-- **Actor**: Invited Companion on `/trip/[sessionId]`
-- **Trigger**: Loads itinerary page and views Leaflet map
-- **Observable Outcome**:
-  - `TripAreaMap` detects whether the viewer is an accepted member vs organizer.
-  - User's own live coordinates are locked via `navigator.geolocation` or prompt button.
-  - Pulse marker shows `● You (Your Location)` at the companion's actual GPS coordinates.
-  - A* road router and railway router compute shortest paths starting from the companion's coordinates to the destination stops.
-  - Map controls include a toggle to switch origin between `📍 My Location` and `🚩 Organizer Starting Point`.
-- **Production Path**: `frontend/src/app/trip/[sessionId]/page.tsx` -> `frontend/src/components/TripAreaMap.tsx` -> `frontend/src/lib/a-star-router.ts` & `frontend/src/lib/mumbai-train-router.ts`.
-- **Acceptance Criteria**: Companion sees their own live GPS dot on the map and the route navigation starts from their location to the stops.
+- **Actor**: Companion on `/trip/[sessionId]`
+- **Trigger**: Opens shared trip page and map loads
+- **Path**: `/trip/[sessionId]/page.tsx` → [TripAreaMap.tsx](file:///c:/Daily/Work/Projects/Celesthackathon/frontend/src/components/TripAreaMap.tsx) → [a-star-router.ts](file:///c:/Daily/Work/Projects/Celesthackathon/frontend/src/lib/a-star-router.ts)
+- **Changes**:
+  1. Detect companion role in `TripAreaMap` vs organizer.
+  2. Acquire companion live coordinates via `navigator.geolocation` and render `● You (Your Location)` marker.
+  3. Add origin toggle button: `📍 My Location` vs `🚩 Organizer Start`.
+  4. Run A* routing (`calculateRealRoadRoute`) from companion's location to itinerary stops, drawing the polyline and step-by-step navigation.
+- **Criteria**:
+  - Companion sees their own position on the Leaflet map.
+  - A* algorithm generates shortest path connecting companion's live location to the trip stops.
