@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Bell, Check, X, Compass, Loader2 } from 'lucide-react';
+import { Bell, Check, X, Compass, Loader2, ArrowRight } from 'lucide-react';
 import {
   fetchUserNotifications,
   markNotificationAsRead,
@@ -19,6 +19,15 @@ export function NotificationBell({ isDarkNav }: NotificationBellProps) {
   const [notifications, setNotifications] = useState<UserNotificationItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [actingId, setActingId] = useState<string | null>(null);
+  const [acceptedInviteIds, setAcceptedInviteIds] = useState<Set<string>>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('acceptedTripInvites');
+        if (stored) return new Set(JSON.parse(stored));
+      } catch {}
+    }
+    return new Set();
+  });
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
@@ -26,7 +35,13 @@ export function NotificationBell({ isDarkNav }: NotificationBellProps) {
   useEffect(() => {
     loadNotifications();
 
-    const interval = setInterval(loadNotifications, 15000);
+    const interval = setInterval(loadNotifications, 10000);
+
+    const onFocus = () => loadNotifications();
+    const onAuth = () => loadNotifications();
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('auth-change', onAuth);
+    window.addEventListener('notification-refresh', onAuth);
 
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -37,6 +52,9 @@ export function NotificationBell({ isDarkNav }: NotificationBellProps) {
 
     return () => {
       clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('auth-change', onAuth);
+      window.removeEventListener('notification-refresh', onAuth);
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
@@ -60,12 +78,17 @@ export function NotificationBell({ isDarkNav }: NotificationBellProps) {
         await respondTripInvitation(sessionId, invitationId, action);
       }
       await markNotificationAsRead(notification.id);
-      await loadNotifications();
 
       if (action === 'ACCEPT') {
+        const nextSet = new Set(acceptedInviteIds).add(notification.id);
+        setAcceptedInviteIds(nextSet);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('acceptedTripInvites', JSON.stringify(Array.from(nextSet)));
+        }
         setIsOpen(false);
         router.push(`/trip/${sessionId}`);
       }
+      await loadNotifications();
     } catch (err: any) {
       alert(err.message || 'Failed to update invitation status.');
     } finally {
@@ -125,13 +148,15 @@ export function NotificationBell({ isDarkNav }: NotificationBellProps) {
               {notifications.map((n) => {
                 const isInvitation = n.type === 'TRIP_INVITATION';
                 const isActing = actingId === n.id;
+                const isAccepted = acceptedInviteIds.has(n.id) || (isInvitation && n.isRead);
+                const sessionId = n.data?.tripSessionId;
 
                 return (
                   <div
                     key={n.id}
                     className={`p-3 rounded-xl border transition ${
                       n.isRead
-                        ? 'bg-white/70 border-[#EBE5D8]'
+                        ? 'bg-white/80 border-[#EBE5D8]'
                         : 'bg-white border-[#347F8C]/40 shadow-xs'
                     }`}
                   >
@@ -152,32 +177,54 @@ export function NotificationBell({ isDarkNav }: NotificationBellProps) {
                           {n.message}
                         </p>
 
-                        {/* Interactive Accept / Decline for Trip Invitations */}
+                        {/* Interactive Accept / Decline or View Itinerary */}
                         {isInvitation && (
-                          <div className="mt-3 flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleRespond(n, 'ACCEPT')}
-                              disabled={isActing}
-                              className="inline-flex items-center gap-1 bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] text-[10px] font-mono font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg transition shadow-xs cursor-pointer disabled:opacity-50"
-                            >
-                              {isActing ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : (
-                                <Check className="w-3 h-3" />
-                              )}
-                              <span>Accept & View Route</span>
-                            </button>
+                          <div className="mt-3 pt-2.5 border-t border-[#EBE5D8] flex items-center justify-between gap-2">
+                            {isAccepted ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-md border border-emerald-200">
+                                <Check className="w-3 h-3 text-emerald-600" /> Joined Itinerary
+                              </span>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleRespond(n, 'ACCEPT')}
+                                  disabled={isActing}
+                                  className="inline-flex items-center gap-1 bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] text-[10px] font-mono font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg transition shadow-xs cursor-pointer active:scale-95 disabled:opacity-50"
+                                >
+                                  {isActing ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <Check className="w-3 h-3" />
+                                  )}
+                                  <span>Accept & Join</span>
+                                </button>
 
-                            <button
-                              type="button"
-                              onClick={() => handleRespond(n, 'REJECT')}
-                              disabled={isActing}
-                              className="inline-flex items-center gap-1 bg-white hover:bg-neutral-100 text-rose-700 border border-rose-300 text-[10px] font-mono uppercase tracking-wider px-2.5 py-1.5 rounded-lg transition cursor-pointer disabled:opacity-50"
-                            >
-                              <X className="w-3 h-3" />
-                              <span>Decline</span>
-                            </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRespond(n, 'REJECT')}
+                                  disabled={isActing}
+                                  className="inline-flex items-center gap-1 bg-white hover:bg-neutral-100 text-rose-700 border border-rose-300 text-[10px] font-mono uppercase tracking-wider px-2.5 py-1.5 rounded-lg transition cursor-pointer disabled:opacity-50"
+                                >
+                                  <X className="w-3 h-3" />
+                                  <span>Decline</span>
+                                </button>
+                              </div>
+                            )}
+
+                            {sessionId && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsOpen(false);
+                                  router.push(`/trip/${sessionId}`);
+                                }}
+                                className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-[#347F8C] hover:text-[#2A6772] hover:underline cursor-pointer ml-auto"
+                              >
+                                <span>View Itinerary</span>
+                                <ArrowRight className="w-3 h-3" />
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>

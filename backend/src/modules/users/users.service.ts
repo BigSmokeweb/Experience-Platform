@@ -59,18 +59,22 @@ export class UsersService {
   /**
    * Search registered users by name or email (excluding current user)
    */
-  async searchUsers(query: string, currentUserId: string) {
+  async searchUsers(query?: string, currentUserId?: string) {
     const q = (query || '').trim();
-    if (!q) return [];
+
+    const where: any = {};
+    if (currentUserId) {
+      where.id = { not: currentUserId };
+    }
+    if (q) {
+      where.OR = [
+        { name: { contains: q, mode: 'insensitive' } },
+        { email: { contains: q, mode: 'insensitive' } },
+      ];
+    }
 
     return this.prisma.user.findMany({
-      where: {
-        id: { not: currentUserId },
-        OR: [
-          { name: { contains: q, mode: 'insensitive' } },
-          { email: { contains: q, mode: 'insensitive' } },
-        ],
-      },
+      where,
       select: {
         id: true,
         name: true,
@@ -82,7 +86,7 @@ export class UsersService {
           },
         },
       },
-      take: 10,
+      take: 12,
     });
   }
 }

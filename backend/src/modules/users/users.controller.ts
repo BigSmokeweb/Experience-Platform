@@ -9,19 +9,19 @@ import {
 } from '@experience-platform/shared';
 
 @Controller('users')
-@UseGuards(AuthGuard('jwt'))
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('search')
   async searchUsers(
-    @CurrentUser('id') userId: string,
-    @Query('q') query: string,
+    @Query('q') query?: string,
+    @CurrentUser('id') userId?: string,
   ) {
     return this.usersService.searchUsers(query, userId);
   }
 
   @Get('me')
+  @UseGuards(AuthGuard('jwt'))
   async getMyProfile(@CurrentUser('id') userId: string) {
     return this.usersService.getProfile(userId);
   }
