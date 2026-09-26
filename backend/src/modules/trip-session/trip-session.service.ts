@@ -43,15 +43,11 @@ export class TripSessionService {
    * Enforces a one-active-session-per-user rule (ConflictException if violated).
    */
   async createSession(userId: string, dto: CreateTripSessionDto) {
-    // One ACTIVE session per user at a time
-    const existingActive = await this.prisma.tripSession.findFirst({
+    // One ACTIVE session per user at a time - mark previous active as ABANDONED
+    await this.prisma.tripSession.updateMany({
       where: { userId, status: TripSessionStatus.ACTIVE },
+      data: { status: TripSessionStatus.ABANDONED },
     });
-    if (existingActive) {
-      throw new ConflictException(
-        'You already have an active itinerary session. Complete or abandon it before starting a new one.',
-      );
-    }
 
     const validCategories = new Set([
       'FOOD', 'CULTURE', 'ADVENTURE', 'HIDDEN_GEMS', 'NIGHTLIFE', 'EVENTS', 'WORKSHOPS', 'SHOPPING'
@@ -397,6 +393,11 @@ export class TripSessionService {
     if (!session) throw new NotFoundException('Trip session not found.');
     await this.assertMembershipOrOwnership(session.id, session.userId, userId);
 
+    // Prevent duplicate selection
+    if (session.selectedExperienceIds?.includes(dto.experienceId)) {
+      return { success: true, travelMinutesDeducted: 0, totalDeducted: 0 };
+    }
+
     const [currentLat, currentLng] = await this.extractLatLng(sessionId, 'current_location');
     const distanceKm = this.haversineDistance(
       currentLat, currentLng,
@@ -409,9 +410,9 @@ export class TripSessionService {
       `
       UPDATE trip_sessions SET
         selected_experience_ids = array_append(selected_experience_ids, $1::uuid),
-        selected_categories = array_append(selected_categories, (
+        selected_categories = array_append(selected_categories, COALESCE((
           SELECT category FROM experiences WHERE id = $1::uuid LIMIT 1
-        )::"Category"),
+        ), 'CULTURE'::"Category")),
         remaining_budget = remaining_budget - $2,
         remaining_time_minutes = GREATEST(0, remaining_time_minutes - $3),
         current_location = ST_SetSRID(ST_MakePoint($4, $5), 4326)::geography,

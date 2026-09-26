@@ -236,16 +236,53 @@ export function sanitizeExperienceCoordinates(exp: {
 }
 
 export function normalizeSessionStops(session: SessionData): SessionData {
-  if (session.selectedExperiences && session.selectedExperiences.length > 0) {
-    session.selectedExperiences = session.selectedExperiences.map((stop) => {
-      const coords = sanitizeExperienceCoordinates(stop);
-      return {
-        ...stop,
+  const ids = Array.isArray(session.selectedExperienceIds) ? session.selectedExperienceIds : [];
+  const existingList = Array.isArray(session.selectedExperiences) ? session.selectedExperiences : [];
+  const existingMap = new Map(existingList.map((e) => [e.id, e]));
+
+  // If ids is empty but selectedExperiences has items, recover ids
+  if (ids.length === 0 && existingList.length > 0) {
+    session.selectedExperienceIds = existingList.map((e) => e.id);
+  }
+
+  const resolvedExperiences: SelectedExperience[] = [];
+  const targetIds = session.selectedExperienceIds && session.selectedExperienceIds.length > 0
+    ? session.selectedExperienceIds
+    : existingList.map((e) => e.id);
+
+  for (const id of targetIds) {
+    let exp: any = existingMap.get(id);
+    if (!exp) {
+      const catItem = findExperienceById(id);
+      if (catItem) {
+        exp = {
+          id: catItem.id,
+          title: catItem.title,
+          category: catItem.category,
+          city: catItem.city,
+          priceMin: catItem.priceMin,
+          priceMax: catItem.priceMax,
+          ratingAverage: catItem.ratingAverage,
+          reviewCount: catItem.reviewCount,
+          authenticityRating: catItem.authenticityRating,
+          mediaUrls: catItem.mediaUrls,
+          durationMinutes: catItem.durationMinutes,
+          candidateLat: catItem.candidateLat,
+          candidateLng: catItem.candidateLng,
+        };
+      }
+    }
+    if (exp) {
+      const coords = sanitizeExperienceCoordinates(exp);
+      resolvedExperiences.push({
+        ...exp,
         candidateLat: coords.lat,
         candidateLng: coords.lng,
-      };
-    });
+      });
+    }
   }
+
+  session.selectedExperiences = resolvedExperiences;
   return session;
 }
 
@@ -746,10 +783,38 @@ export interface UserNotificationItem {
   createdAt: string;
 }
 
-export async function ensureBackendTripSession(sessionId: string): Promise<string> {
-  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId);
-  if (isUuid) return sessionId;
+export async function syncSessionStopsToBackend(targetSessionId: string, stopsOrIds: any[]): Promise<void> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  if (!token || !targetSessionId || !Array.isArray(stopsOrIds) || stopsOrIds.length === 0) return;
 
+  for (const item of stopsOrIds) {
+    const expId = typeof item === 'string' ? item : item?.id;
+    if (!expId) continue;
+    const fullExp = typeof item === 'object' && item?.title ? item : findExperienceById(expId);
+    const coords = sanitizeExperienceCoordinates(fullExp || { id: expId });
+    const cost = Number(fullExp?.priceMin ?? 0);
+    const duration = Math.max(1, Math.round(Number(fullExp?.durationMinutes ?? 60)));
+
+    try {
+      await fetch(`${API_BASE}/trip-sessions/${targetSessionId}/select`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          experienceId: expId,
+          experienceCost: cost,
+          durationMinutes: duration,
+          nextLatitude: coords.lat,
+          nextLongitude: coords.lng,
+        }),
+      });
+    } catch {}
+  }
+}
+
+export async function ensureBackendTripSession(sessionId: string): Promise<string> {
   let token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
   if (!token) {
     throw new Error('Please log in to your account first so companions can join your trip session.');
@@ -762,6 +827,16 @@ export async function ensureBackendTripSession(sessionId: string): Promise<strin
     if (raw) {
       try { localData = JSON.parse(raw); } catch {}
     }
+  }
+
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId);
+  if (isUuid) {
+    // If session is already UUID, ensure all local stops are safely synced to cloud
+    const stopsToSync = localData?.selectedExperiences || localData?.selectedExperienceIds || [];
+    if (stopsToSync.length > 0) {
+      await syncSessionStopsToBackend(sessionId, stopsToSync);
+    }
+    return sessionId;
   }
 
   const payload = {
@@ -802,6 +877,8 @@ export async function ensureBackendTripSession(sessionId: string): Promise<strin
     }
   }
 
+  let finalSessionId: string | null = null;
+
   // Handle active session conflict (409) gracefully by recovering the existing active session
   if (res.status === 409) {
     try {
@@ -811,49 +888,34 @@ export async function ensureBackendTripSession(sessionId: string): Promise<strin
       if (activeRes.ok) {
         const activeData = await activeRes.json();
         if (activeData?.id) {
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(`trip_session_${activeData.id}`, JSON.stringify({ ...localData, id: activeData.id }));
-            localStorage.setItem('activeTripSessionId', activeData.id);
-            window.history.replaceState(null, '', `/trip/${activeData.id}`);
-          }
-          return activeData.id;
+          finalSessionId = activeData.id;
         }
       }
     } catch {}
+  } else if (res.ok) {
+    const created = await res.json();
+    finalSessionId = created.id;
   }
 
-  if (!res.ok) {
+  if (!finalSessionId) {
     const errData = await res.json().catch(() => ({}));
     throw new Error(errData.message || 'Failed to initialize cloud itinerary session.');
   }
 
-  const created = await res.json();
-  const newId = created.id;
-
-  // Sync selected experiences if any
-  if (localData?.selectedExperienceIds && localData.selectedExperienceIds.length > 0) {
-    for (const expId of localData.selectedExperienceIds) {
-      try {
-        await fetch(`${API_BASE}/trip-sessions/${newId}/select`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ experienceId: expId }),
-        });
-      } catch {}
-    }
+  // Sync selected experiences to the backend session
+  const stopsToSync = localData?.selectedExperiences || localData?.selectedExperienceIds || [];
+  if (stopsToSync.length > 0) {
+    await syncSessionStopsToBackend(finalSessionId, stopsToSync);
   }
 
   // Update localStorage and browser URL seamlessly
   if (typeof window !== 'undefined') {
-    localStorage.setItem(`trip_session_${newId}`, JSON.stringify({ ...localData, id: newId }));
-    localStorage.setItem('activeTripSessionId', newId);
-    window.history.replaceState(null, '', `/trip/${newId}`);
+    localStorage.setItem(`trip_session_${finalSessionId}`, JSON.stringify({ ...localData, id: finalSessionId }));
+    localStorage.setItem('activeTripSessionId', finalSessionId);
+    window.history.replaceState(null, '', `/trip/${finalSessionId}`);
   }
 
-  return newId;
+  return finalSessionId;
 }
 
 export async function searchRegisteredUsers(

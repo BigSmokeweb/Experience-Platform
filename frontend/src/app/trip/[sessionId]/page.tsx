@@ -17,6 +17,8 @@ import {
   saveLocalSession,
   encodeShareableTrip,
   decodeShareableTrip,
+  syncSessionStopsToBackend,
+  ensureBackendTripSession,
   SessionData,
   RecommendationItem,
   RecommendApiResponse,
@@ -74,7 +76,25 @@ function TripSessionContent() {
         }
       }
 
-      const sessionData = await fetchTripSession(sessionId);
+      let sessionData = await fetchTripSession(sessionId);
+
+      // If organizer or companion has local stops for this session not yet in DB, sync them up immediately
+      const token = getAuthToken();
+      if (token && typeof window !== 'undefined') {
+        const rawLocal = localStorage.getItem(`trip_session_${sessionId}`);
+        if (rawLocal) {
+          try {
+            const parsed = JSON.parse(rawLocal);
+            const localStops = parsed.selectedExperiences || parsed.selectedExperienceIds || [];
+            const cloudCount = sessionData.selectedExperiences?.length || 0;
+            if (localStops.length > cloudCount) {
+              await syncSessionStopsToBackend(sessionId, localStops);
+              sessionData = await fetchTripSession(sessionId);
+            }
+          } catch {}
+        }
+      }
+
       setSession(sessionData);
 
       if (sessionData.status === 'COMPLETED') {
@@ -101,6 +121,30 @@ function TripSessionContent() {
   useEffect(() => {
     loadSessionAndRecommendations(true);
   }, [loadSessionAndRecommendations]);
+
+  // Real-time collaborative polling: keep host and invited companions in continuous sync
+  useEffect(() => {
+    if (!sessionId || isCompleted) return;
+
+    const interval = setInterval(() => {
+      // Silently refresh itinerary stops if not currently clicking an action
+      if (!isSelectingRef.current && !selectingId && !isActionLoading) {
+        loadSessionAndRecommendations(false);
+      }
+    }, 4000);
+
+    const onFocus = () => {
+      if (!isSelectingRef.current && !selectingId && !isActionLoading) {
+        loadSessionAndRecommendations(false);
+      }
+    };
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [sessionId, isCompleted, loadSessionAndRecommendations, selectingId, isActionLoading]);
 
   // Generate clean, short shareable URL for travelling companions
   const getShareableUrl = useCallback(() => {
@@ -186,7 +230,14 @@ function TripSessionContent() {
       // 2. Background sync with backend if available
       const token = getAuthToken();
       if (token) {
-        fetch(`${API_BASE}/trip-sessions/${sessionId}/select`, {
+        let activeCloudId = sessionId;
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId);
+        if (!isUuid) {
+          try {
+            activeCloudId = await ensureBackendTripSession(sessionId);
+          } catch {}
+        }
+        fetch(`${API_BASE}/trip-sessions/${activeCloudId}/select`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -197,7 +248,7 @@ function TripSessionContent() {
             nextLatitude: cand.candidateLat ?? 18.922,
             nextLongitude: cand.candidateLng ?? 72.8347,
             experienceCost: cost,
-            durationMinutes: duration,
+            durationMinutes: Math.max(1, Math.round(duration)),
           }),
         }).catch(() => {});
       }
