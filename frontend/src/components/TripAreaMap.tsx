@@ -51,7 +51,6 @@ export function TripAreaMap({
   const [routeTelemetry, setRouteTelemetry] = useState<RouteResult | null>(null);
   const [trainRouteTelemetry, setTrainRouteTelemetry] = useState<MultimodalRouteResult | null>(null);
   const [isRouting, setIsRouting] = useState<boolean>(false);
-  const [optimizeFromMyLocation, setOptimizeFromMyLocation] = useState<boolean>(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -130,10 +129,10 @@ export function TripAreaMap({
           attributionControl: false,
         });
 
-        // OpenStreetMap standard tile layer (100% free, no API key required, global edge CDN)
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // ESRI World Street Map (high-performance global CDN, free, no API key, no volunteer-server 403 block)
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
           maxZoom: 19,
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          attribution: 'Tiles &copy; Esri',
         }).addTo(map);
 
         // Custom position zoom control
@@ -183,14 +182,14 @@ export function TripAreaMap({
           </div>
           <div style="color: #2C2C2C; opacity: 0.8;">${userLocation.lat.toFixed(4)}°N, ${userLocation.lng.toFixed(4)}°E</div>
           <div style="font-size: 9.5px; color: #8B7355; margin-top: 4px; font-weight: 600;">
-            A* Shortest Route Origin Point
+            Route Origin Point
           </div>
         </div>
       `);
       layerGroup.addLayer(userMarker);
 
-      // Order of stops to visit: optionally optimized via A* from member location
-      const orderedStops = optimizeFromMyLocation ? findShortestAStarOrder(userLocation, stops) : stops;
+      // Order of stops to visit
+      const orderedStops = stops;
 
       // 2. Add Stop Markers
       orderedStops.forEach((stop, idx) => {
@@ -598,7 +597,7 @@ export function TripAreaMap({
     return () => {
       isSubscribed = false;
     };
-  }, [isMounted, userLocation, stops, candidateStops, onAddStop, travelMode, optimizeFromMyLocation]);
+  }, [isMounted, userLocation, stops, candidateStops, onAddStop, travelMode]);
 
   // Cleanup map on unmount
   useEffect(() => {
@@ -679,21 +678,6 @@ export function TripAreaMap({
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setOptimizeFromMyLocation(!optimizeFromMyLocation)}
-            title="Compute shortest route from your location to all decided spots using A* graph search"
-            className={`inline-flex items-center gap-1.5 text-[11px] font-mono font-semibold uppercase tracking-wider px-2.5 py-1.5 rounded-xl transition cursor-pointer active:scale-95 border ${
-              optimizeFromMyLocation
-                ? 'bg-[#8B7355] text-white border-[#8B7355] shadow-xs'
-                : 'text-[#8B7355] hover:text-[#725E45] bg-[#8B7355]/10 hover:bg-[#8B7355]/20 border-[#8B7355]/25'
-            }`}
-          >
-            <Navigation className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">
-              {optimizeFromMyLocation ? 'A* Shortest Active' : 'A* Shortest Route'}
-            </span>
-          </button>
 
           <button
             type="button"

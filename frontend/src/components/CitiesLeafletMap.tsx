@@ -72,10 +72,10 @@ export function CitiesLeafletMap({
         scrollWheelZoom: true,
       });
 
-      // OpenStreetMap standard tile layer (100% free, no API key required, global edge CDN)
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      // ESRI World Street Map (high-performance global CDN, free, no API key, no volunteer-server 403 block)
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        attribution: 'Tiles &copy; Esri',
       }).addTo(map);
 
       // Subtle Zoom Control in bottom-right
