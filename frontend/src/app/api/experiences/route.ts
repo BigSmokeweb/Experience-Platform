@@ -4,9 +4,25 @@ import catalogDataset from '@/lib/catalog-dataset.json';
 import seasonalDataset from '@/lib/seasonal-dataset.json';
 import { resolveExperienceImageUrl } from '@/lib/image-utils';
 
+const catalogMap = new Map<string, any>(catalogDataset.map((item: any) => [item.id, item]));
+
 function normalizeItem(e: any) {
-  const rawCover = e.cover || e.metadata?.cover || (e.mediaUrls?.[0] ?? '');
-  const rawMedia = e.mediaUrls && e.mediaUrls.length > 0 ? e.mediaUrls : (e.cover ? [e.cover] : []);
+  const localMatch = catalogMap.get(e.id);
+  const rawCover =
+    e.cover ||
+    e.metadata?.cover ||
+    (e.mediaUrls?.[0] ?? '') ||
+    e.metadata?.coverRow ||
+    localMatch?.cover ||
+    (localMatch?.mediaUrls?.[0] ?? '');
+  const rawMedia =
+    e.mediaUrls && e.mediaUrls.length > 0
+      ? e.mediaUrls
+      : localMatch?.mediaUrls && localMatch.mediaUrls.length > 0
+      ? localMatch.mediaUrls
+      : rawCover
+      ? [rawCover]
+      : [];
   const resolvedCover = resolveExperienceImageUrl(rawCover);
   const resolvedMedia = rawMedia.map(resolveExperienceImageUrl);
   return {

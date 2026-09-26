@@ -89,13 +89,23 @@ const ExperienceCard = memo(function ExperienceCard({
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 }) {
-  const rawTarget = exp.cover || exp.mediaUrls?.[0];
+  const anyExp = exp as any;
+  const rawTarget =
+    exp.cover ||
+    exp.mediaUrls?.[0] ||
+    anyExp.metadata?.coverRow ||
+    anyExp.metadata?.cover;
   const initialUrl = resolveExperienceImageUrl(rawTarget);
   const [imgSrc, setImgSrc] = useState(initialUrl);
 
   useEffect(() => {
-    setImgSrc(resolveExperienceImageUrl(exp.cover || exp.mediaUrls?.[0]));
-  }, [exp.cover, exp.mediaUrls]);
+    const target =
+      exp.cover ||
+      exp.mediaUrls?.[0] ||
+      anyExp.metadata?.coverRow ||
+      anyExp.metadata?.cover;
+    setImgSrc(resolveExperienceImageUrl(target));
+  }, [exp.cover, exp.mediaUrls, anyExp.metadata]);
 
   const isFreePublic = (!exp.priceMin && !exp.priceMax) || (exp.priceMin === 0 && exp.priceMax === 0);
   const formattedPrice = isFreePublic
@@ -127,7 +137,7 @@ const ExperienceCard = memo(function ExperienceCard({
       onMouseLeave={onMouseLeave}
       className={`group relative bg-white rounded-2xl overflow-hidden flex flex-col justify-between h-full transform-gpu transition-all duration-300 ease-out cursor-pointer block text-inherit no-underline ${
         isHovered
-          ? 'scale-[1.04] -translate-y-2 z-30 shadow-2xl border-2 border-[#347F8C] ring-4 ring-[#347F8C]/25 brightness-105'
+          ? 'scale-[1.025] -translate-y-1.5 z-30 shadow-2xl border-2 border-[#347F8C] ring-4 ring-[#347F8C]/25 brightness-105'
           : isFaded
           ? 'scale-[0.96] opacity-50 blur-[1.5px] brightness-90 border border-[#D4CFC0]'
           : 'scale-100 opacity-100 blur-0 border border-[#D4CFC0] hover:border-[#347F8C]/60 hover:shadow-lg'
@@ -490,17 +500,13 @@ function CityExpeditionSection({
           {/* Sideways Scroll Row - 4 cards visible across viewport */}
           <div
             ref={scrollRef}
-            className="flex gap-4 overflow-x-auto pt-7 pb-10 px-6 scroll-pl-6 scroll-pr-6 snap-x scroll-smooth no-scrollbar"
+            className="flex gap-4 overflow-x-auto pt-8 pb-10 px-6 scroll-pl-6 scroll-pr-6 snap-x scroll-smooth no-scrollbar"
             style={{ scrollbarWidth: 'none' }}
           >
             {visibleRemaining.map((exp) => (
               <div
                 key={exp.id}
-                className="w-[calc(25%-12px)] min-w-[270px] max-w-[320px] shrink-0 snap-start p-2.5"
-                style={{
-                  contentVisibility: 'auto',
-                  containIntrinsicSize: '280px 380px',
-                }}
+                className="w-[calc(25%-12px)] min-w-[270px] max-w-[320px] shrink-0 snap-start py-5 px-2.5"
               >
                 <ExperienceCard
                   exp={exp}

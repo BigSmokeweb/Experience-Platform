@@ -109,7 +109,13 @@ function CityExperienceCard({
   isVisible: boolean;
   staggerDelay: string;
 }) {
-  const rawUrl = exp.mediaUrls?.[0] || heroImage;
+  const anyExp = exp as any;
+  const rawUrl =
+    anyExp.cover ||
+    exp.mediaUrls?.[0] ||
+    anyExp.metadata?.coverRow ||
+    anyExp.metadata?.cover ||
+    heroImage;
   const initialUrl = resolveExperienceImageUrl(rawUrl);
   const [imgSrc, setImgSrc] = useState(initialUrl);
 

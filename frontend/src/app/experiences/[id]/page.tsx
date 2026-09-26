@@ -129,7 +129,15 @@ async function getExperience(id: string) {
 
   if (!rawExp) return null;
 
-  const rawCover = rawExp.cover || (rawExp.mediaUrls && rawExp.mediaUrls[0]) || '';
+  const localMatch = (catalogDataset as any[]).find((e) => e.id === id);
+  const rawCover =
+    rawExp.cover ||
+    (rawExp.mediaUrls && rawExp.mediaUrls[0]) ||
+    rawExp.metadata?.coverRow ||
+    rawExp.metadata?.cover ||
+    localMatch?.cover ||
+    (localMatch?.mediaUrls && localMatch.mediaUrls[0]) ||
+    '';
   const resolvedCover = resolveExperienceImageUrl(rawCover);
 
   const rawMediaList =

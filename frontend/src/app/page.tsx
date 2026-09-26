@@ -55,6 +55,8 @@ function isSeasonalItem(e: any): boolean {
   );
 }
 
+const catalogMap = new Map<string, any>((catalogDataset as any[]).map((c: any) => [c.id, c]));
+
 async function getAllExperiences(): Promise<ExperienceData[]> {
   try {
     const res = await fetch(`${API_BASE}/experiences/catalog?limit=500`, {
@@ -66,8 +68,22 @@ async function getAllExperiences(): Promise<ExperienceData[]> {
         return data.data
           .filter((e: any) => !EXCLUDED_CITIES.has(e.city?.toLowerCase()) && !isSeasonalItem(e))
           .map((e: any) => {
-            const rawCover = e.cover || e.metadata?.cover || (e.mediaUrls?.[0] ?? '');
-            const rawMedia = e.mediaUrls && e.mediaUrls.length > 0 ? e.mediaUrls : (e.cover ? [e.cover] : []);
+            const localMatch = catalogMap.get(e.id);
+            const rawCover =
+              e.cover ||
+              e.metadata?.cover ||
+              (e.mediaUrls?.[0] ?? '') ||
+              e.metadata?.coverRow ||
+              localMatch?.cover ||
+              (localMatch?.mediaUrls?.[0] ?? '');
+            const rawMedia =
+              e.mediaUrls && e.mediaUrls.length > 0
+                ? e.mediaUrls
+                : localMatch?.mediaUrls && localMatch.mediaUrls.length > 0
+                ? localMatch.mediaUrls
+                : rawCover
+                ? [rawCover]
+                : [];
             const resolvedCover = resolveExperienceImageUrl(rawCover);
             const resolvedMedia = rawMedia.map(resolveExperienceImageUrl);
             return {

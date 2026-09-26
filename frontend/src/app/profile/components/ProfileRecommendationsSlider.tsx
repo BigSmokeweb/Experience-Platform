@@ -205,18 +205,18 @@ const RecommendationCard = memo(function RecommendationCard({
   onMouseLeave: () => void;
 }) {
   const fallbackUrl = 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?auto=format&fit=crop&w=1000&q=80';
-  const rawUrl = Array.isArray(exp?.mediaUrls) && typeof exp.mediaUrls[0] === 'string' && exp.mediaUrls[0].trim()
-    ? exp.mediaUrls[0].trim()
-    : fallbackUrl;
-  const initialUrl = rawUrl.replace('thumb.wikimedia.org', 'upload.wikimedia.org');
+  const getCoverTarget = (e: any) =>
+    (typeof e?.cover === 'string' && e.cover.trim()) ||
+    (Array.isArray(e?.mediaUrls) && typeof e.mediaUrls[0] === 'string' && e.mediaUrls[0].trim()) ||
+    (typeof (e?.metadata as any)?.coverRow === 'string' && (e?.metadata as any).coverRow.trim()) ||
+    (typeof (e?.metadata as any)?.cover === 'string' && (e?.metadata as any).cover.trim()) ||
+    fallbackUrl;
+  const initialUrl = getCoverTarget(exp).replace('thumb.wikimedia.org', 'upload.wikimedia.org');
   const [imgSrc, setImgSrc] = useState(initialUrl);
 
   useEffect(() => {
-    const nextRaw = Array.isArray(exp?.mediaUrls) && typeof exp.mediaUrls[0] === 'string' && exp.mediaUrls[0].trim()
-      ? exp.mediaUrls[0].trim()
-      : fallbackUrl;
-    setImgSrc(nextRaw.replace('thumb.wikimedia.org', 'upload.wikimedia.org'));
-  }, [exp?.mediaUrls]);
+    setImgSrc(getCoverTarget(exp).replace('thumb.wikimedia.org', 'upload.wikimedia.org'));
+  }, [(exp as any)?.cover, exp?.mediaUrls, (exp as any)?.metadata]);
 
   const pMin = typeof exp?.priceMin === 'number' ? exp.priceMin : 0;
   const pMax = typeof exp?.priceMax === 'number' ? exp.priceMax : 0;
@@ -240,7 +240,7 @@ const RecommendationCard = memo(function RecommendationCard({
       onMouseLeave={onMouseLeave}
       className={`group relative bg-white rounded-2xl overflow-hidden flex flex-col justify-between h-full transform-gpu transition-all duration-300 ease-out cursor-pointer block text-inherit no-underline ${
         isHovered
-          ? 'scale-[1.04] -translate-y-2 z-30 shadow-2xl border-2 border-[#347F8C] ring-4 ring-[#347F8C]/25 brightness-105'
+          ? 'scale-[1.025] -translate-y-1.5 z-30 shadow-2xl border-2 border-[#347F8C] ring-4 ring-[#347F8C]/25 brightness-105'
           : isFaded
           ? 'scale-[0.96] opacity-50 blur-[1.5px] brightness-90 border border-[#D4CFC0]'
           : 'scale-100 opacity-100 blur-0 border border-[#D4CFC0] hover:border-[#347F8C]/60 hover:shadow-lg'
@@ -609,17 +609,13 @@ function ProfileRecommendationsSliderInner({
         ) : (
           <div
             ref={scrollRef}
-            className="flex gap-4 overflow-x-auto pt-7 pb-10 px-6 scroll-pl-6 scroll-pr-6 snap-x scroll-smooth no-scrollbar"
+            className="flex gap-4 overflow-x-auto pt-8 pb-10 px-6 scroll-pl-6 scroll-pr-6 snap-x scroll-smooth no-scrollbar"
             style={{ scrollbarWidth: 'none' }}
           >
             {displayedRecommendations.map((exp) => (
               <div
                 key={exp?.id || Math.random()}
-                className="w-[calc(25%-12px)] min-w-[270px] max-w-[320px] shrink-0 snap-start p-2.5"
-                style={{
-                  contentVisibility: 'auto',
-                  containIntrinsicSize: '280px 380px',
-                }}
+                className="w-[calc(25%-12px)] min-w-[270px] max-w-[320px] shrink-0 snap-start py-5 px-2.5"
               >
                 <RecommendationCard
                   exp={exp}

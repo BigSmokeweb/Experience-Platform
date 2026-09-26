@@ -31,6 +31,7 @@ const CITIES = [
 
 import type { ExperienceData } from '@/types/experience';
 import catalogDataset from '@/lib/catalog-dataset.json';
+import { resolveExperienceImageUrl } from '@/lib/image-utils';
 
 const EXCLUDED_CITIES = new Set(['jaipur', 'ahmedabad']);
 
@@ -48,6 +49,8 @@ function isSeasonalItem(e: any): boolean {
   );
 }
 
+const catalogMap = new Map<string, any>((catalogDataset as any[]).map((c: any) => [c.id, c]));
+
 async function getAllExperiences(): Promise<ExperienceData[]> {
   try {
     const res = await fetch(`${API_BASE}/experiences/catalog?limit=500`, {
@@ -58,16 +61,38 @@ async function getAllExperiences(): Promise<ExperienceData[]> {
       if (data?.data && Array.isArray(data.data) && data.data.length > 0) {
         return data.data
           .filter((e: any) => !EXCLUDED_CITIES.has(e.city?.toLowerCase()) && !isSeasonalItem(e))
-          .map((e: any) => ({
-            ...e,
-            title: e.title || e.name || 'Local Experience',
-            provider: e.provider
-              ? {
-                  businessName: e.provider.businessName ?? undefined,
-                  verificationStatus: e.provider.verificationStatus ?? undefined,
-                }
-              : undefined,
-          }));
+          .map((e: any) => {
+            const localMatch = catalogMap.get(e.id);
+            const rawCover =
+              e.cover ||
+              e.metadata?.cover ||
+              (e.mediaUrls?.[0] ?? '') ||
+              e.metadata?.coverRow ||
+              localMatch?.cover ||
+              (localMatch?.mediaUrls?.[0] ?? '');
+            const rawMedia =
+              e.mediaUrls && e.mediaUrls.length > 0
+                ? e.mediaUrls
+                : localMatch?.mediaUrls && localMatch.mediaUrls.length > 0
+                ? localMatch.mediaUrls
+                : rawCover
+                ? [rawCover]
+                : [];
+            const resolvedCover = resolveExperienceImageUrl(rawCover);
+            const resolvedMedia = rawMedia.map(resolveExperienceImageUrl);
+            return {
+              ...e,
+              title: e.title || e.name || 'Local Experience',
+              cover: resolvedCover,
+              mediaUrls: resolvedMedia.length > 0 ? resolvedMedia : [resolvedCover],
+              provider: e.provider
+                ? {
+                    businessName: e.provider.businessName ?? undefined,
+                    verificationStatus: e.provider.verificationStatus ?? undefined,
+                  }
+                : undefined,
+            };
+          });
       }
     }
   } catch (err) {

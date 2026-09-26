@@ -84,6 +84,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 import catalogDataset from '@/lib/catalog-dataset.json';
 
+const catalogMap = new Map<string, any>((catalogDataset as any[]).map((c: any) => [c.id, c]));
+
 async function getCityExperiences(cityName: string, fallbackList: any[]) {
   try {
     const res = await fetch(`${API_BASE}/experiences/catalog?city=${encodeURIComponent(cityName)}&limit=500`, {
@@ -92,7 +94,29 @@ async function getCityExperiences(cityName: string, fallbackList: any[]) {
     if (res.ok) {
       const data = await res.json();
       if (data?.data && Array.isArray(data.data) && data.data.length > 0) {
-        return data.data;
+        return data.data.map((e: any) => {
+          const localMatch = catalogMap.get(e.id);
+          const rawCover =
+            e.cover ||
+            e.metadata?.cover ||
+            (e.mediaUrls?.[0] ?? '') ||
+            e.metadata?.coverRow ||
+            localMatch?.cover ||
+            (localMatch?.mediaUrls?.[0] ?? '');
+          const rawMedia =
+            e.mediaUrls && e.mediaUrls.length > 0
+              ? e.mediaUrls
+              : localMatch?.mediaUrls && localMatch.mediaUrls.length > 0
+              ? localMatch.mediaUrls
+              : rawCover
+              ? [rawCover]
+              : [];
+          return {
+            ...e,
+            cover: rawCover,
+            mediaUrls: rawMedia,
+          };
+        });
       }
     }
   } catch (err) {
