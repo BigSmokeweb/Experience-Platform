@@ -58,6 +58,7 @@ export type RegisterTravelerDto = z.infer<typeof RegisterTravelerSchema>;
 
 export const UpdateTravelerProfileSchema = z.object({
   name: z.string().min(2).optional(),
+  avatarUrl: z.string().nullable().optional(),
   homeCity: z.string().nullable().optional(),
   interests: z.array(z.nativeEnum(Category)).optional(),
   budgetBand: z.nativeEnum(BudgetBand).nullable().optional(),
@@ -133,6 +134,7 @@ export interface AuthTokensResponse {
     email: string;
     role: Role;
     name: string;
+    avatarUrl?: string | null;
     mfaEnabled: boolean;
     verificationStatus?: VerificationStatus;
   };

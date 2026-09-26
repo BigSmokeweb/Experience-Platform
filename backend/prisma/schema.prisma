@@ -72,6 +72,8 @@ model User {
   passwordHash    String            @map("password_hash")
   role            Role              @default(TRAVELER)
   name            String
+  avatarUrl       String?           @map("avatar_url")
+  tripMemoriesData Json?            @default("[]") @map("trip_memories_data")
   mfaEnabled      Boolean           @default(false) @map("mfa_enabled")
   mfaSecret       String?           @map("mfa_secret")
   refreshTokenHash String?          @map("refresh_token_hash")

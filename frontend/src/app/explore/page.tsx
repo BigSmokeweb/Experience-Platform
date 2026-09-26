@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CuratedDirectory } from '@/components/CuratedDirectory';
+import { LivingCatalogueHeader } from '@/components/LivingCatalogueHeader';
 import { API_BASE } from '@/lib/api-client';
 
 export const metadata: Metadata = {
@@ -119,23 +120,8 @@ export default async function ExplorePage() {
 
   return (
     <div className="bg-[#F5F1E6] text-[#2C2C2C] min-h-screen pt-28 pb-24 selection:bg-[#8B7355]/30 selection:text-[#2C2C2C]">
-      {/* ─── Editorial Header ─── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-        <div className="border-b border-[#C4A265] pb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <div className="inline-flex items-center gap-2 text-[#347F8C] font-mono text-xs tracking-[0.28em] uppercase mb-4 sm:mb-5">
-              <span className="w-2 h-2 rounded-full bg-[#A69B80]" />
-              Our Curated Registry
-            </div>
-            <h1 className="font-edu-cursive font-normal text-4xl sm:text-5xl lg:text-[60px] tracking-wide text-[#2C2C2C] leading-normal py-1">
-              A Living Catalogue
-            </h1>
-            <p className="text-[#5C6460] text-sm sm:text-base mt-4 max-w-2xl font-light leading-relaxed">
-              Dawn walks through centuries-old ateliers. Culinary traditions held in family kitchens since the Mughal courts. Each experience verified in person, on site.
-            </p>
-          </div>
-        </div>
-      </section>
+      {/* ─── Editorial Header with Apple-Style Clip-Path Word Reveal ─── */}
+      <LivingCatalogueHeader as="h1" />
 
       {/* ─── Curated Directory with Instant Client-Side Category Buttons ─── */}
       <CuratedDirectory

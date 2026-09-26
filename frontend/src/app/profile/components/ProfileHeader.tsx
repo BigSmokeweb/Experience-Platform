@@ -14,7 +14,9 @@ interface ProfileHeaderProps {
   initialName: string;
   email: string;
   role: string;
+  avatarUrl?: string | null;
   onUpdateName?: (newName: string) => Promise<void>;
+  onUpdateAvatar?: (newAvatarUrl: string | null) => Promise<void>;
   preferences?: TravelerPreferencesSummary | null;
   isPreferencesOpen?: boolean;
   onTogglePreferences?: () => void;
@@ -24,7 +26,9 @@ export function ProfileHeader({
   initialName,
   email,
   role,
+  avatarUrl: initialAvatarUrl,
   onUpdateName,
+  onUpdateAvatar,
   preferences,
   isPreferencesOpen,
   onTogglePreferences,
@@ -34,7 +38,8 @@ export function ProfileHeader({
   const [draftName, setDraftName] = useState(initialName);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl || null);
+  const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Keep name state in sync if initialName changes
@@ -43,21 +48,72 @@ export function ProfileHeader({
     setDraftName(initialName);
   }, [initialName]);
 
-  // Load avatar from localStorage
+  // Sync avatar from DB prop or localStorage
   useEffect(() => {
-    try {
-      const saved =
-        localStorage.getItem(`traveler_avatar_${email}`) ||
-        localStorage.getItem('user_avatar');
-      if (saved) {
-        setAvatarUrl(saved);
+    if (initialAvatarUrl !== undefined && initialAvatarUrl !== null) {
+      setAvatarUrl(initialAvatarUrl);
+      try {
+        localStorage.setItem(`traveler_avatar_${email}`, initialAvatarUrl);
+        localStorage.setItem('user_avatar', initialAvatarUrl);
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
+    } else {
+      try {
+        const saved =
+          localStorage.getItem(`traveler_avatar_${email}`) ||
+          localStorage.getItem('user_avatar');
+        if (saved) {
+          setAvatarUrl(saved);
+        }
+      } catch {
+        // ignore
+      }
     }
-  }, [email]);
+  }, [initialAvatarUrl, email]);
 
-  const handleAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const resizeImageToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+      };
+      img.onload = () => {
+        const maxDimension = 400;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxDimension) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          }
+        } else {
+          if (height > maxDimension) {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(img.src);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = reject;
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -66,42 +122,63 @@ export function ProfileHeader({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image must be under 5MB');
+    if (file.size > 8 * 1024 * 1024) {
+      setError('Image must be under 8MB');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        setAvatarUrl(dataUrl);
-        try {
-          localStorage.setItem(`traveler_avatar_${email}`, dataUrl);
-          localStorage.setItem('user_avatar', dataUrl);
-          window.dispatchEvent(new Event('avatar-change'));
-          window.dispatchEvent(new Event('storage'));
-        } catch {
-          // ignore
-        }
+    setIsUpdatingAvatar(true);
+    setError(null);
+
+    try {
+      const optimizedDataUrl = await resizeImageToDataUrl(file);
+      setAvatarUrl(optimizedDataUrl);
+
+      try {
+        localStorage.setItem(`traveler_avatar_${email}`, optimizedDataUrl);
+        localStorage.setItem('user_avatar', optimizedDataUrl);
+        window.dispatchEvent(new Event('avatar-change'));
+        window.dispatchEvent(new Event('storage'));
+      } catch {
+        // ignore
       }
-    };
-    reader.readAsDataURL(file);
+
+      if (onUpdateAvatar) {
+        await onUpdateAvatar(optimizedDataUrl);
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Failed to update profile picture in database');
+    } finally {
+      setIsUpdatingAvatar(false);
+    }
   };
 
-  const handleRemoveAvatar = (e: React.MouseEvent) => {
+  const handleRemoveAvatar = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setAvatarUrl(null);
+    setIsUpdatingAvatar(true);
+    setError(null);
     try {
-      localStorage.removeItem(`traveler_avatar_${email}`);
-      localStorage.removeItem('user_avatar');
-      window.dispatchEvent(new Event('avatar-change'));
-      window.dispatchEvent(new Event('storage'));
-    } catch {
-      // ignore
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      setAvatarUrl(null);
+      try {
+        localStorage.removeItem(`traveler_avatar_${email}`);
+        localStorage.removeItem('user_avatar');
+        window.dispatchEvent(new Event('avatar-change'));
+        window.dispatchEvent(new Event('storage'));
+      } catch {
+        // ignore
+      }
+
+      if (onUpdateAvatar) {
+        await onUpdateAvatar(null);
+      }
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Failed to remove profile picture');
+    } finally {
+      setIsUpdatingAvatar(false);
     }
   };
 
@@ -179,6 +256,14 @@ export function ProfileHeader({
               <Camera className="w-5 h-5 text-white" />
               <span>Change</span>
             </div>
+
+            {/* Updating spinner overlay */}
+            {isUpdatingAvatar && (
+              <div className="absolute inset-0 bg-neutral-950/70 backdrop-blur-[2px] flex flex-col items-center justify-center text-white text-[10px] font-semibold gap-1">
+                <Loader2 className="w-5 h-5 animate-spin text-amber-400" />
+                <span>Saving...</span>
+              </div>
+            )}
           </button>
 
           {/* Camera upload badge */}

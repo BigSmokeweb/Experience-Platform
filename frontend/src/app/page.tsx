@@ -6,6 +6,7 @@ import { ItineraryBuilder } from '@/components/ItineraryBuilder';
 import { CuratedDirectory } from '@/components/CuratedDirectory';
 import { ScrollToHeroOnRefresh } from '@/components/ScrollToHeroOnRefresh';
 import { SeasonalBanner } from '@/components/SeasonalBanner';
+import { LivingCatalogueHeader } from '@/components/LivingCatalogueHeader';
 import { API_BASE } from '@/lib/api-client';
 import { resolveExperienceImageUrl } from '@/lib/image-utils';
 
@@ -157,21 +158,8 @@ export default async function HomePage() {
         {/* Subtle Ambient Sage/Teal Lighting */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-96 bg-[#A69B80]/10 blur-[120px] rounded-full pointer-events-none" />
 
-        {/* ─── Editorial Header (Exact SS Format) ─── */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
-          <div className="border-b border-[#C4A265] pb-10">
-            <div className="inline-flex items-center gap-2 text-[#347F8C] font-mono text-xs tracking-[0.28em] uppercase mb-4 sm:mb-5">
-              <span className="w-2 h-2 rounded-full bg-[#A69B80]" />
-              Our Curated Registry
-            </div>
-            <h2 className="font-eczar font-bold text-4xl sm:text-5xl lg:text-[60px] tracking-tight text-[#2C2C2C] leading-normal py-1">
-              A Living Catalogue
-            </h2>
-            <p className="text-[#5C6460] text-sm sm:text-base mt-5 sm:mt-6 max-w-2xl font-light leading-relaxed">
-              Dawn walks through centuries-old ateliers. Culinary traditions held in family kitchens since the Mughal courts. Each experience verified in person, on site.
-            </p>
-          </div>
-        </section>
+        {/* ─── Editorial Header with Apple-Style Clip-Path Word Reveal ─── */}
+        <LivingCatalogueHeader />
 
         {/* ─── Curated Directory with Instant Client-Side Category Buttons ─── */}
         <CuratedDirectory

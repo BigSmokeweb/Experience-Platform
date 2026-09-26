@@ -50,7 +50,7 @@ export class TripMemoriesService {
       }
     }
 
-    return this.prisma.tripMemory.create({
+    const memory = await this.prisma.tripMemory.create({
       data: {
         userId,
         tripSessionId: validSessionId,
@@ -63,6 +63,9 @@ export class TripMemoriesService {
         tripSession: true,
       },
     });
+
+    await this.syncUserMemoriesColumn(userId);
+    return memory;
   }
 
   /**
@@ -152,7 +155,7 @@ export class TripMemoriesService {
   async updateMemory(userId: string, id: string, dto: UpdateTripMemoryDto) {
     await this.getMemoryById(userId, id);
 
-    return this.prisma.tripMemory.update({
+    const memory = await this.prisma.tripMemory.update({
       where: { id },
       data: {
         ...(dto.title && { title: dto.title }),
@@ -164,6 +167,9 @@ export class TripMemoriesService {
         tripSession: true,
       },
     });
+
+    await this.syncUserMemoriesColumn(userId);
+    return memory;
   }
 
   /**
@@ -218,7 +224,7 @@ export class TripMemoriesService {
         );
       }
 
-      return await this.prisma.tripMemoryPhoto.create({
+      const photo = await this.prisma.tripMemoryPhoto.create({
         data: {
           tripMemoryId: memoryId,
           experienceId: validExpId,
@@ -233,6 +239,9 @@ export class TripMemoriesService {
           },
         },
       });
+
+      await this.syncUserMemoriesColumn(userId);
+      return photo;
     } catch (err) {
       this.logger.error(`addPhoto failed for memory ${memoryId}: ${err?.message || err}`);
       if (err instanceof BadRequestException) throw err;
@@ -264,6 +273,7 @@ export class TripMemoriesService {
       where: { id: photoId },
     });
 
+    await this.syncUserMemoriesColumn(userId);
     return { success: true };
   }
 
@@ -284,6 +294,39 @@ export class TripMemoriesService {
       where: { id },
     });
 
+    await this.syncUserMemoriesColumn(userId);
     return { success: true };
+  }
+
+  /**
+   * Sync all memories for user to the tripMemoriesData column on the User model
+   */
+  private async syncUserMemoriesColumn(userId: string) {
+    try {
+      const memories = await this.prisma.tripMemory.findMany({
+        where: { userId },
+        include: {
+          photos: {
+            include: {
+              experience: {
+                select: { id: true, title: true, address: true, city: true },
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+          },
+          tripSession: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          tripMemoriesData: memories as any,
+        },
+      });
+    } catch (err: any) {
+      this.logger.warn(`Failed to sync tripMemoriesData for user ${userId}: ${err?.message || err}`);
+    }
   }
 }

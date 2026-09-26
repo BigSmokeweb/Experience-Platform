@@ -17,6 +17,7 @@ interface TravelerData {
     email: string;
     name: string;
     role: string;
+    avatarUrl?: string | null;
     travelerProfile?: {
       id: string;
       homeCity?: string | null;
@@ -24,6 +25,8 @@ interface TravelerData {
       budgetBand?: string | null;
       travelStyle?: string | null;
     } | null;
+    tripMemories?: any[];
+    tripMemoriesData?: any;
   };
 }
 
@@ -93,7 +96,12 @@ export default function TravelerProfilePage() {
       }
 
       const json = await res.json();
-      // Handle both { user: { ... } } and direct { id, email, name, ... } responses
+      const userData = json.user || json;
+      if (userData?.avatarUrl) {
+        localStorage.setItem(`traveler_avatar_${userData.email}`, userData.avatarUrl);
+        localStorage.setItem('user_avatar', userData.avatarUrl);
+        window.dispatchEvent(new Event('avatar-change'));
+      }
       if (json.user) {
         setData(json);
       } else {
@@ -161,6 +169,50 @@ export default function TravelerProfilePage() {
         parsed.name = newName;
         localStorage.setItem('user', JSON.stringify(parsed));
       } catch (e) {}
+    }
+  };
+
+  const handleUpdateAvatar = async (newAvatarUrl: string | null) => {
+    let token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    let res = await fetch(`${API_BASE}/users/me/avatar`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ avatarUrl: newAvatarUrl }),
+    });
+
+    if (res.status === 401) {
+      const refreshed = await trySilentRefreshToken();
+      if (refreshed) {
+        token = refreshed;
+        res = await fetch(`${API_BASE}/users/me/avatar`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${refreshed}`,
+          },
+          body: JSON.stringify({ avatarUrl: newAvatarUrl }),
+        });
+      }
+    }
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.message || 'Failed to save avatar to database');
+    }
+
+    if (data) {
+      setData({
+        ...data,
+        user: {
+          ...data.user,
+          avatarUrl: newAvatarUrl,
+        },
+      });
     }
   };
 
@@ -233,7 +285,9 @@ export default function TravelerProfilePage() {
           initialName={data.user.name || 'Traveler'}
           email={data.user.email}
           role="TRAVELER"
+          avatarUrl={data.user.avatarUrl}
           onUpdateName={handleUpdateName}
+          onUpdateAvatar={handleUpdateAvatar}
           preferences={data.user.travelerProfile}
           isPreferencesOpen={isPreferencesOpen}
           onTogglePreferences={() => setIsPreferencesOpen((prev) => !prev)}

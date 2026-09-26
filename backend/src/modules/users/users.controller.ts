@@ -46,4 +46,13 @@ export class UsersController {
   ) {
     return this.usersService.updateProfile(userId, body);
   }
+
+  @Patch('me/avatar')
+  @UseGuards(AuthGuard('jwt'))
+  async updateAvatar(
+    @CurrentUser('id') userId: string,
+    @Body() body: { avatarUrl?: string | null },
+  ) {
+    return this.usersService.updateAvatar(userId, body?.avatarUrl ?? null);
+  }
 }

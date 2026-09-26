@@ -57,10 +57,19 @@ export default function AuthLoginPage() {
       // Save tokens
       localStorage.setItem('accessToken', data.accessToken);
       localStorage.setItem('refreshToken', data.refreshToken);
+      const userEmail = data.user?.email || email.trim().toLowerCase();
       localStorage.setItem('userRole', data.user?.role || role);
       localStorage.setItem('userName', data.user?.name || (role === 'PROVIDER' ? 'Host' : 'Traveler'));
-      localStorage.setItem('userEmail', data.user?.email || email);
+      localStorage.setItem('userEmail', userEmail);
+      if (data.user?.avatarUrl) {
+        localStorage.setItem(`traveler_avatar_${userEmail}`, data.user.avatarUrl);
+        localStorage.setItem('user_avatar', data.user.avatarUrl);
+      } else {
+        localStorage.removeItem(`traveler_avatar_${userEmail}`);
+        localStorage.removeItem('user_avatar');
+      }
       window.dispatchEvent(new Event('auth-change'));
+      window.dispatchEvent(new Event('avatar-change'));
 
       setSuccess(`Signed in as ${data.user?.name || email}! Redirecting...`);
       setTimeout(() => {

@@ -310,6 +310,7 @@ export class AuthService {
         email: user.email,
         role: user.role,
         name: user.name,
+        avatarUrl: user.avatarUrl ?? null,
         mfaEnabled: user.mfaEnabled,
         verificationStatus: user.providerProfile?.verificationStatus,
       },

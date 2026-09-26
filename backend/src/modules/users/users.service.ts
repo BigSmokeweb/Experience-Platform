@@ -17,7 +17,23 @@ export class UsersService {
         email: true,
         name: true,
         role: true,
+        avatarUrl: true,
         travelerProfile: true,
+        tripMemories: {
+          include: {
+            photos: {
+              include: {
+                experience: {
+                  select: { id: true, title: true, address: true, city: true },
+                },
+              },
+              orderBy: { createdAt: 'desc' },
+            },
+            tripSession: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        tripMemoriesData: true,
         createdAt: true,
       },
     });
@@ -27,14 +43,34 @@ export class UsersService {
   }
 
   /**
+   * Update user avatar directly in database
+   */
+  async updateAvatar(userId: string, avatarUrl: string | null) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        avatarUrl: true,
+      },
+    });
+    return user;
+  }
+
+  /**
    * Update traveler profile with IDOR protection
-   * Updates name on User and preferences on TravelerProfile atomically.
+   * Updates name and avatarUrl on User and preferences on TravelerProfile atomically.
    */
   async updateProfile(userId: string, data: UpdateTravelerProfileDto) {
-    if (data.name) {
+    if (data.name !== undefined || data.avatarUrl !== undefined) {
       await this.prisma.user.update({
         where: { id: userId },
-        data: { name: data.name },
+        data: {
+          ...(data.name && { name: data.name }),
+          ...(data.avatarUrl !== undefined && { avatarUrl: data.avatarUrl }),
+        },
       });
     }
 
@@ -80,6 +116,7 @@ export class UsersService {
         name: true,
         email: true,
         role: true,
+        avatarUrl: true,
         travelerProfile: {
           select: {
             homeCity: true,
