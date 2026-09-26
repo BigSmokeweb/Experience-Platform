@@ -72,15 +72,19 @@ export function CitiesLeafletMap({
         scrollWheelZoom: true,
       });
 
-      // OSM France mirror (free, no API key, no rate limits)
-      L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      // High-performance CartoDB Voyager tiles (global Fastly CDN, matches warm Ivory theme)
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         maxZoom: 19,
-        subdomains: 'abc',
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles: <a href="https://www.hotosm.org/">HOT</a>',
+        subdomains: 'abcd',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       }).addTo(map);
 
       // Subtle Zoom Control in bottom-right
       L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+      // Ensure proper dimensions on mount
+      setTimeout(() => map.invalidateSize(), 150);
+      setTimeout(() => map.invalidateSize(), 500);
 
       const layers = new Map<string, { polygon: any; marker: any }>();
 

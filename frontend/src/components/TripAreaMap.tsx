@@ -130,11 +130,11 @@ export function TripAreaMap({
           attributionControl: false,
         });
 
-        // OSM France mirror (free, no API key, no rate limits)
-        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+        // High-performance CartoDB Voyager tiles (global Fastly CDN, matches warm Ivory theme)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
           maxZoom: 19,
-          subdomains: 'abc',
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles: <a href="https://www.hotosm.org/">HOT</a>',
+          subdomains: 'abcd',
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
         }).addTo(map);
 
         // Custom position zoom control
@@ -143,6 +143,10 @@ export function TripAreaMap({
         const layerGroup = L.layerGroup().addTo(map);
         layerGroupRef.current = layerGroup;
         mapInstanceRef.current = map;
+
+        // Invalidate size to ensure container dimensions are properly registered
+        setTimeout(() => map.invalidateSize(), 150);
+        setTimeout(() => map.invalidateSize(), 500);
       }
 
       const map = mapInstanceRef.current;
@@ -567,6 +571,7 @@ export function TripAreaMap({
           const allBoundsCoords = [...roadCoords, ...routePoints];
           const bounds = L.latLngBounds(allBoundsCoords);
           map.fitBounds(bounds, { padding: [45, 45], maxZoom: 16 });
+          setTimeout(() => map.invalidateSize(), 60);
         }
       } else {
         setRouteTelemetry(null);
@@ -581,8 +586,10 @@ export function TripAreaMap({
         if (validCandCoords.length > 0) {
           const bounds = L.latLngBounds([[userLocation.lat, userLocation.lng], ...validCandCoords]);
           map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+          setTimeout(() => map.invalidateSize(), 60);
         } else {
           map.setView([userLocation.lat, userLocation.lng], 14);
+          setTimeout(() => map.invalidateSize(), 60);
         }
       }
     }
