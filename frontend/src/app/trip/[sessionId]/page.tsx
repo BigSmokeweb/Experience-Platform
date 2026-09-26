@@ -778,13 +778,13 @@ function TripSessionContent() {
                 <span className="w-2 h-2 rounded-full bg-[#A69B80]" />
                 Sequential Route Atelier
               </div>
-              <h1 className="font-edu-cursive font-normal text-4xl sm:text-5xl lg:text-6xl tracking-wide text-[#2C2C2C] leading-normal py-1">
-                Curate Your Journey
-              </h1>
-              <p className="text-[#5C6460] text-sm mt-2 font-light">
-                Select consecutive experiences to construct your continuous verified itinerary.
-              </p>
-            </div>
+                  <h1 className="font-edu-cursive font-normal text-4xl sm:text-5xl lg:text-6xl tracking-wide text-[#2C2C2C] leading-normal py-1">
+                    Curate Your Journey
+                  </h1>
+                  <p className="text-[#5C6460] text-sm mt-2 font-light">
+                    Select consecutive experiences to construct your continuous verified itinerary.
+                  </p>
+                </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Left Column: Recommendations */}
@@ -812,180 +812,180 @@ function TripSessionContent() {
                     <h3 className="font-edu-cursive font-normal text-2xl sm:text-3xl text-[#2C2C2C] leading-normal">
                       No further stops match criteria
                     </h3>
-                  <p className="text-[#2C2C2C]/70 text-xs mt-1.5 font-light">
-                    Your remaining budget or duration window has reached optimal allocation.
-                  </p>
-                  <button
-                    onClick={handleComplete}
-                    className="mt-5 bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] text-xs font-mono font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl transition shadow-sm"
-                  >
-                    Finalize Route ({selectedStops.length} stops)
-                  </button>
-                </div>
-              ) : (
+                    <p className="text-[#2C2C2C]/70 text-xs mt-1.5 font-light">
+                      Your remaining budget or duration window has reached optimal allocation.
+                    </p>
+                    <button
+                      onClick={handleComplete}
+                      className="mt-5 bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] text-xs font-mono font-bold uppercase tracking-wider px-5 py-2.5 rounded-xl transition shadow-sm"
+                    >
+                      Finalize Route ({selectedStops.length} stops)
+                    </button>
+                  </div>
+                ) : (
                 <div className="space-y-4">
-                  {recommendations.map((cand) => (
-                    <div
-                      key={cand.id}
-                      onClick={() => router.push(`/experiences/${cand.id}`)}
+                    {recommendations.map((cand) => (
+                      <div
+                        key={cand.id}
+                        onClick={() => router.push(`/experiences/${cand.id}`)}
                       className="group bg-white border border-[#D4CFC0] hover:border-[#347F8C] p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between cursor-pointer"
                       title="Click anywhere to view full experience details"
-                    >
+                      >
                       <div className="flex gap-4 items-start">
-                        {cand.mediaUrls?.[0] && (
+                          {cand.mediaUrls?.[0] && (
                           <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-[#F5F1E6] border border-[#D4CFC0] flex-shrink-0">
-                            <Image
-                              src={cand.mediaUrls[0]}
-                              alt={cand.title}
-                              fill
+                              <Image
+                                src={cand.mediaUrls[0]}
+                                alt={cand.title}
+                                fill
                               sizes="96px"
-                              className="object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
+                                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                              />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-[10px] font-mono uppercase tracking-wider text-[#347F8C] font-semibold">
                               {(!cand.category || cand.category.toUpperCase().includes('HIDDEN')) ? 'LOCAL EXPERIENCE' : cand.category.replace(/_/g, ' ')}
-                            </span>
+                              </span>
                             <span className="text-[#D4CFC0] text-xs">&bull;</span>
                             <span className="text-[10px] font-mono text-[#2C2C2C]/70 uppercase">{cand.city}</span>
-                          </div>
+                            </div>
                           <h3 className="font-cormorant text-xl sm:text-2xl font-bold tracking-normal text-[#2C2C2C] group-hover:text-[#347F8C] transition-colors leading-snug">
-                            {cand.title}
-                          </h3>
+                              {cand.title}
+                            </h3>
                           <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-mono text-[#2C2C2C]/75">
                             <span>{cand.distanceKm.toFixed(1)} km away</span>
-                            <span className="text-[#D4CFC0]">&bull;</span>
-                            <span>{cand.durationMinutes || 60}m</span>
-                            <span className="text-[#D4CFC0]">&bull;</span>
-                            <span className="text-[#2C2C2C] font-semibold">
-                              {(!cand.priceMin && !cand.priceMax) || (cand.priceMin === 0 && cand.priceMax === 0)
-                                ? 'Free'
-                                : cand.priceMin === 0
-                                ? `Free – ₹${cand.priceMax}`
-                                : `₹${cand.priceMin}–${cand.priceMax}`}
-                            </span>
+                              <span className="text-[#D4CFC0]">&bull;</span>
+                              <span>{cand.durationMinutes || 60}m</span>
+                              <span className="text-[#D4CFC0]">&bull;</span>
+                              <span className="text-[#2C2C2C] font-semibold">
+                                {(!cand.priceMin && !cand.priceMax) || (cand.priceMin === 0 && cand.priceMax === 0)
+                                  ? 'Free'
+                                  : cand.priceMin === 0
+                                  ? `Free – ₹${cand.priceMax}`
+                                  : `₹${cand.priceMin}–${cand.priceMax}`}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div
+                        className="mt-4 pt-3 border-t border-[#D4CFC0] flex items-center justify-between"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Link
+                            href={`/experiences/${cand.id}`}
+                            className="inline-flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider text-[#347F8C] hover:text-[#2A6772] font-semibold hover:underline"
+                          >
+                            <span>Explore Details</span>
+                            <span className="text-xs">&rarr;</span>
+                          </Link>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleReject(cand);
+                              }}
+                              disabled={selectingId === cand.id || isActionLoading}
+                            className="px-3 py-1.5 text-xs font-mono uppercase tracking-wider text-[#2C2C2C]/50 hover:text-red-500 hover:bg-red-50 border border-[#D4CFC0] rounded-xl transition cursor-pointer active:scale-95 disabled:opacity-40"
+                            >
+                              Dismiss
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSelect(cand);
+                              }}
+                              disabled={Boolean(selectingId) || isActionLoading}
+                              className="px-4 py-1.5 text-xs font-mono uppercase font-bold tracking-wider bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] rounded-xl shadow-sm transition active:scale-95 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            >
+                              {selectingId === cand.id ? (
+                                <>
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  <span>Adding…</span>
+                                </>
+                              ) : (
+                                <span>+ Add Stop</span>
+                              )}
+                            </button>
                           </div>
                         </div>
                       </div>
-
-                      {/* Action buttons */}
-                      <div
-                        className="mt-4 pt-3 border-t border-[#D4CFC0] flex items-center justify-between"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Link
-                          href={`/experiences/${cand.id}`}
-                          className="inline-flex items-center gap-1 text-[11px] font-mono uppercase tracking-wider text-[#347F8C] hover:text-[#2A6772] font-semibold hover:underline"
-                        >
-                          <span>Explore Details</span>
-                          <span className="text-xs">&rarr;</span>
-                        </Link>
-
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleReject(cand);
-                            }}
-                            disabled={selectingId === cand.id || isActionLoading}
-                            className="px-3 py-1.5 text-xs font-mono uppercase tracking-wider text-[#2C2C2C]/50 hover:text-red-500 hover:bg-red-50 border border-[#D4CFC0] rounded-xl transition cursor-pointer active:scale-95 disabled:opacity-40"
-                          >
-                            Dismiss
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSelect(cand);
-                            }}
-                            disabled={Boolean(selectingId) || isActionLoading}
-                            className="px-4 py-1.5 text-xs font-mono uppercase font-bold tracking-wider bg-[#347F8C] hover:bg-[#2A6772] text-[#F5F1E6] rounded-xl shadow-sm transition active:scale-95 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                          >
-                            {selectingId === cand.id ? (
-                              <>
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                <span>Adding…</span>
-                              </>
-                            ) : (
-                              <span>+ Add Stop</span>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
             {/* Right Column: Itinerary Built So Far */}
             <div className="lg:col-span-5 space-y-4">
               <div className="flex items-center justify-between border-b border-[#C4A265] pb-4">
                 <h3 className="font-edu-cursive font-normal text-2xl sm:text-3xl tracking-wide text-[#2C2C2C] leading-normal">
-                  Curated Route
-                </h3>
-                <div className="flex items-center gap-2">
-                  {selectedStops.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={handleClearAllStops}
-                      disabled={isActionLoading}
+                    Curated Route
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    {selectedStops.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleClearAllStops}
+                        disabled={isActionLoading}
                       className="text-[11px] font-mono text-rose-600 hover:text-rose-800 hover:bg-rose-50 px-2 py-0.5 rounded border border-rose-200 transition cursor-pointer"
-                      title="Remove all stops and start selection again"
-                    >
-                      Clear All
-                    </button>
-                  )}
+                        title="Remove all stops and start selection again"
+                      >
+                        Clear All
+                      </button>
+                    )}
                   <span className="text-xs font-mono uppercase tracking-wider text-[#347F8C] bg-[#8B7355]/15 border border-[#8B7355]/30 px-2.5 py-0.5 rounded-full font-semibold">
-                    {selectedStops.length} {selectedStops.length === 1 ? 'stop' : 'stops'}
-                  </span>
+                      {selectedStops.length} {selectedStops.length === 1 ? 'stop' : 'stops'}
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              {selectedStops.length === 0 ? (
+                {selectedStops.length === 0 ? (
                 <div className="bg-white rounded-2xl border border-dashed border-[#D4CFC0] p-8 text-center text-[#2C2C2C]/50 shadow-sm">
                   <p className="font-mono text-xs uppercase tracking-wider">No stops added yet.</p>
                   <p className="text-xs text-[#2C2C2C]/60 mt-1 font-light">Select a recommended candidate stop on the left to begin your journey.</p>
-                </div>
-              ) : (
+                  </div>
+                ) : (
                 <div className="space-y-3">
-                  {selectedStops.map((stop, idx) => (
-                    <ItineraryStopCard
-                      key={stop.id}
-                      id={stop.id}
-                      stopNumber={idx + 1}
-                      title={stop.title}
-                      category={stop.category}
-                      city={stop.city}
-                      distanceKm={0}
-                      priceMin={stop.priceMin}
-                      priceMax={stop.priceMax}
-                      ratingAverage={stop.ratingAverage}
-                      authenticityRating={stop.authenticityRating}
-                      mediaUrl={stop.mediaUrls?.[0]}
-                      onRemove={() => handleRemoveStop(stop.id)}
-                    />
-                  ))}
-                </div>
-              )}
+                    {selectedStops.map((stop, idx) => (
+                      <ItineraryStopCard
+                        key={stop.id}
+                        id={stop.id}
+                        stopNumber={idx + 1}
+                        title={stop.title}
+                        category={stop.category}
+                        city={stop.city}
+                        distanceKm={0}
+                        priceMin={stop.priceMin}
+                        priceMax={stop.priceMax}
+                        ratingAverage={stop.ratingAverage}
+                        authenticityRating={stop.authenticityRating}
+                        mediaUrl={stop.mediaUrls?.[0]}
+                        onRemove={() => handleRemoveStop(stop.id)}
+                      />
+                    ))}
+                  </div>
+                )}
 
               {/* Area Map below Curated Route */}
               <div className="pt-2">
-                <TripAreaMap
-                  city={session?.city}
-                  initialUserLat={session?.userLat}
-                  initialUserLng={session?.userLng}
-                  stops={selectedStops}
-                  candidateStops={recommendations}
-                  onAddStop={handleSelect}
-                />
+                  <TripAreaMap
+                    city={session?.city}
+                    initialUserLat={session?.userLat}
+                    initialUserLng={session?.userLng}
+                    stops={selectedStops}
+                    candidateStops={recommendations}
+                    onAddStop={handleSelect}
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
         )}
         {/* Add Travel Member Modal */}
         <AddMemberModal
