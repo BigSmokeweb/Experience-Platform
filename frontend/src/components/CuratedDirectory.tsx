@@ -28,6 +28,7 @@ export interface CuratedExperience {
   durationMinutes?: number;
   priceMin?: number;
   priceMax?: number;
+  budget?: string;
   ratingAverage?: number;
   reviewStars?: number;
   googleReviewStars?: number;
