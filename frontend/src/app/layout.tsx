@@ -1,14 +1,21 @@
 import type { Metadata } from 'next';
-import { Playfair_Display, Cormorant_Garamond, Source_Serif_4, JetBrains_Mono, Luxurious_Script } from 'next/font/google';
+import { Eczar, Fraunces, Cormorant_Garamond, JetBrains_Mono, Luxurious_Script } from 'next/font/google';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { PageTransition } from '@/components/PageTransition';
 import { FloatingChatSupport } from '@/components/FloatingChatSupport';
 import './globals.css';
 
-const playfair = Playfair_Display({
+const eczar = Eczar({
   subsets: ['latin'],
-  variable: '--font-playfair',
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-eczar',
+  display: 'swap',
+});
+
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  variable: '--font-fraunces',
   display: 'swap',
 });
 
@@ -16,12 +23,6 @@ const cormorant = Cormorant_Garamond({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-cormorant',
-  display: 'swap',
-});
-
-const sourceSerif = Source_Serif_4({
-  subsets: ['latin'],
-  variable: '--font-source-serif',
   display: 'swap',
 });
 
@@ -84,7 +85,7 @@ export default function RootLayout({
       <head>
         <meta name="referrer" content="no-referrer" />
       </head>
-      <body suppressHydrationWarning className={`${sourceSerif.className} ${playfair.variable} ${cormorant.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} ${luxuriousScript.variable} bg-[#F5F1E6] text-[#2C2C2C] antialiased selection:bg-[#8B7355]/30 selection:text-[#2C2C2C] overflow-x-hidden`}>
+      <body suppressHydrationWarning className={`${fraunces.className} ${eczar.variable} ${fraunces.variable} ${cormorant.variable} ${jetbrainsMono.variable} ${luxuriousScript.variable} bg-[#F5F1E6] text-[#2C2C2C] antialiased selection:bg-[#8B7355]/30 selection:text-[#2C2C2C] overflow-x-hidden`}>
         <PageTransition />
         <Navbar />
         <main>{children}</main>

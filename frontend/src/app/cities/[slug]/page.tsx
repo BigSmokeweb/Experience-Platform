@@ -173,7 +173,7 @@ export default async function CityDiscoveryPage({ params }: { params: { slug: st
               <MapPin className="w-3.5 h-3.5" />
               Heritage Quarter &bull; {city.state}
             </div>
-            <h1 className="font-edu-cursive font-normal text-5xl sm:text-6xl md:text-7xl tracking-wide leading-normal py-1 text-white">
+            <h1 className="font-eczar font-bold text-5xl sm:text-6xl md:text-7xl tracking-tight leading-normal py-1 text-white">
               {city.name}
             </h1>
             <p className="text-[#F5F1E6]/90 text-sm sm:text-base mt-4 sm:mt-5 max-w-2xl font-light leading-relaxed">
@@ -189,7 +189,7 @@ export default async function CityDiscoveryPage({ params }: { params: { slug: st
               Curated Enclave Archive
             </span>
             <h2 className="font-manifold text-2xl sm:text-3xl uppercase tracking-wider text-[#2C2C2C] font-bold">
-              Experiences in <span className="font-edu-cursive font-normal normal-case text-3xl sm:text-4xl text-[#347F8C]">{city.name}</span>
+              Experiences in <span className="font-eczar font-bold normal-case text-3xl sm:text-4xl text-[#347F8C]">{city.name}</span>
             </h2>
           </div>
           <span className="text-sm font-cormorant font-semibold oldstyle-nums text-[#2C2C2C]/70 tracking-normal">

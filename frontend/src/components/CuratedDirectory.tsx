@@ -189,7 +189,7 @@ const ExperienceCard = memo(function ExperienceCard({
             <span className="text-[9px] font-mono uppercase tracking-widest text-[#555E5A] block">
               {isFreePublic ? 'Admission' : 'Est. Spend'}
             </span>
-            <p className="font-bold font-cormorant oldstyle-nums text-[#2C2C2C] text-base sm:text-lg tracking-wide">
+            <p className="font-eczar font-medium text-[#2C2C2C] text-base sm:text-lg tracking-wide">
               {formattedPrice}
             </p>
           </div>
@@ -435,7 +435,7 @@ function CityExpeditionSection({
             )}
           </div>
           <h3 className="flex items-baseline gap-3 my-1 sm:my-1.5 scroll-fade-ready">
-            <span className="font-edu-cursive font-normal text-3xl sm:text-4xl lg:text-[42px] text-[#2C2C2C] tracking-wide leading-normal">
+            <span className="font-eczar font-bold text-3xl sm:text-4xl lg:text-[42px] text-[#2C2C2C] tracking-wide leading-normal">
               {cityName}
             </span>
             <span className="text-base font-cormorant font-semibold oldstyle-nums text-[#5C6460] tracking-normal">

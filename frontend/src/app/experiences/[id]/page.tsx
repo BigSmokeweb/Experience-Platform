@@ -294,7 +294,7 @@ export default async function ExperienceDetailPage({ params }: { params: { id: s
                   <span className="text-[10px] font-mono uppercase tracking-widest text-[#2C2C2C]/60 block">
                     Starting at
                   </span>
-                  <p className="font-cormorant font-bold oldstyle-nums text-3xl text-[#2C2C2C] tracking-normal mt-0.5">
+                  <p className="font-eczar font-medium text-3xl text-[#2C2C2C] tracking-normal mt-0.5">
                     {(!exp.priceMin && !exp.priceMax) || (exp.priceMin === 0 && exp.priceMax === 0)
                       ? 'Free'
                       : exp.priceMin === 0

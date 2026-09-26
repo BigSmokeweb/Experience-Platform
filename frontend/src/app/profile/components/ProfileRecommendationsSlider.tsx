@@ -310,7 +310,7 @@ const RecommendationCard = memo(function RecommendationCard({
             <span className="text-[9px] font-mono uppercase tracking-widest text-[#7C8581] block">
               Starting at
             </span>
-            <p className="font-bold font-cormorant oldstyle-nums text-[#2C2C2C] text-base sm:text-lg tracking-wide">
+            <p className="font-eczar font-medium text-[#2C2C2C] text-base sm:text-lg tracking-wide">
               {formattedPrice}
             </p>
           </div>

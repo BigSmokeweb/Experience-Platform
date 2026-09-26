@@ -190,7 +190,7 @@ function CityExperienceCard({
             <span className="text-[10px] font-mono uppercase tracking-widest text-[#2C2C2C]/60 block">
               Starting at
             </span>
-            <p className="font-semibold font-cormorant oldstyle-nums text-[#2C2C2C] text-lg tracking-wide">
+            <p className="font-eczar font-medium text-[#2C2C2C] text-lg tracking-wide">
               {(!exp.priceMin && !exp.priceMax) || (exp.priceMin === 0 && exp.priceMax === 0)
                 ? 'Free'
                 : exp.priceMin === 0

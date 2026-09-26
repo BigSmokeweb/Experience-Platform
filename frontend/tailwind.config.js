@@ -8,10 +8,12 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        body: ['var(--font-source-serif)', 'Georgia', 'serif'],
-        serif: ['var(--font-source-serif)', 'Georgia', 'serif'],
-        display: ['var(--font-playfair)', 'Playfair Display', 'Georgia', 'serif'],
-        playfair: ['var(--font-playfair)', 'Playfair Display', 'Georgia', 'serif'],
+        body: ['var(--font-fraunces)', 'Georgia', 'serif'],
+        serif: ['var(--font-fraunces)', 'Georgia', 'serif'],
+        fraunces: ['var(--font-fraunces)', 'Georgia', 'serif'],
+        display: ['var(--font-eczar)', 'Eczar', 'Georgia', 'serif'],
+        eczar: ['var(--font-eczar)', 'Eczar', 'Georgia', 'serif'],
+        playfair: ['var(--font-eczar)', 'Eczar', 'Georgia', 'serif'],
         subheading: ['var(--font-cormorant)', 'Cormorant Garamond', 'Garamond', 'serif'],
         cormorant: ['var(--font-cormorant)', 'Cormorant Garamond', 'Garamond', 'serif'],
         mono: ['var(--font-jetbrains-mono)', 'JetBrains Mono', 'monospace'],

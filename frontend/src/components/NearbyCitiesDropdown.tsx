@@ -439,7 +439,7 @@ export function NearbyCitiesDropdown({ isHome, scrolled }: NearbyCitiesDropdownP
                   {/* City Details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
-                      <h4 className="font-edu-cursive font-normal text-xl text-[#2C2C2C] tracking-wide leading-tight truncate">
+                      <h4 className="font-eczar font-bold text-xl text-[#2C2C2C] tracking-tight leading-tight truncate">
                         {activeCity.name}
                       </h4>
                       {activeCity.distanceKm !== null ? (
@@ -492,7 +492,7 @@ export function NearbyCitiesDropdown({ isHome, scrolled }: NearbyCitiesDropdownP
                       <Sparkles className="w-3 h-3 text-amber-500" />
                       Closest to you
                     </span>
-                    <span className="font-edu-cursive font-normal text-lg text-[#2C2C2C] leading-none">
+                    <span className="font-eczar font-bold text-lg text-[#2C2C2C] leading-none">
                       {nearestCity.name}
                     </span>
                   </div>
@@ -533,7 +533,7 @@ export function NearbyCitiesDropdown({ isHome, scrolled }: NearbyCitiesDropdownP
                       <div className="flex-1 min-w-0 pr-1">
                         <div className="flex items-center justify-between gap-1 mb-0.5">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-edu-cursive font-normal text-lg tracking-wide text-[#2C2C2C] group-hover:text-[#347F8C] transition-colors leading-tight">
+                            <span className="font-eczar font-bold text-lg tracking-tight text-[#2C2C2C] group-hover:text-[#347F8C] transition-colors leading-tight">
                               {city.name}
                             </span>
                             <span className="text-[10px] font-mono text-[#5C6460]/80">

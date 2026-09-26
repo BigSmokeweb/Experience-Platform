@@ -19,6 +19,14 @@
   font-family: 'Cormorant Garamond', var(--font-cormorant), Garamond, Georgia, serif;
 }
 
+.font-eczar {
+  font-family: var(--font-eczar), 'Eczar', Georgia, serif;
+}
+
+.font-fraunces {
+  font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
+}
+
 .font-luxurious-script,
 .font-luxurious {
   font-family: 'Luxurious Script', var(--font-luxurious-script), cursive;
@@ -38,6 +46,8 @@
   --foreground-rgb: 44, 44, 44;
   --background-start-rgb: 245, 241, 230;
   --background-end-rgb: 245, 241, 230;
+  --font-playfair: var(--font-eczar);
+  --font-source-serif: var(--font-fraunces);
 }
 
 html {
@@ -45,7 +55,7 @@ html {
 }
 
 body {
-  font-family: var(--font-source-serif), Georgia, serif;
+  font-family: var(--font-fraunces), Georgia, serif;
   color: #2C2C2C;
   background-color: #F5F1E6;
   background-image: 
@@ -63,8 +73,8 @@ body {
 }
 
 /* Typography Hierarchy */
-h1, h2, h3, .font-display, .font-playfair {
-  font-family: var(--font-playfair), 'Playfair Display', Georgia, serif;
+h1, h2, h3, .font-display, .font-playfair, .font-eczar {
+  font-family: var(--font-eczar), 'Eczar', Georgia, serif;
 }
 
 h4, h5, h6, .font-subheading, .font-cormorant {

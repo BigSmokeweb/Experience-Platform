@@ -231,7 +231,7 @@ export function ItineraryBuilder() {
           </div>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
-              <h2 className="font-edu-cursive font-normal text-4xl sm:text-5xl lg:text-[60px] tracking-wide text-[#2C2C2C] leading-normal py-1">
+              <h2 className="font-eczar font-bold text-4xl sm:text-5xl lg:text-[60px] tracking-tight text-[#2C2C2C] leading-normal py-1">
                 Create Your Itinerary
               </h2>
               <p className="text-[#2C2C2C]/75 text-sm sm:text-base mt-5 sm:mt-6 max-w-2xl font-light leading-relaxed">

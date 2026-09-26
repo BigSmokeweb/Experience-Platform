@@ -164,7 +164,7 @@ export default async function HomePage() {
               <span className="w-2 h-2 rounded-full bg-[#A69B80]" />
               Our Curated Registry
             </div>
-            <h2 className="font-edu-cursive font-normal text-4xl sm:text-5xl lg:text-[60px] tracking-wide text-[#2C2C2C] leading-normal py-1">
+            <h2 className="font-eczar font-bold text-4xl sm:text-5xl lg:text-[60px] tracking-tight text-[#2C2C2C] leading-normal py-1">
               A Living Catalogue
             </h2>
             <p className="text-[#5C6460] text-sm sm:text-base mt-5 sm:mt-6 max-w-2xl font-light leading-relaxed">
