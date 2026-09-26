@@ -11,6 +11,8 @@ export interface ExperienceData {
   priceMax?: number;
   durationMinutes?: number;
   ratingAverage?: number;
+  reviewStars?: number;
+  googleReviewStars?: number;
   authenticityRating?: number;
   authenticityScore?: number;
   candidateLat: number;
@@ -23,6 +25,8 @@ export interface ExperienceData {
   vibe?: string;
   tags?: string[];
   humanTip?: string;
+  openingTime?: string;
+  closingTime?: string;
   operatingHours?: string;
   closedDays?: string;
   bookingType?: string;

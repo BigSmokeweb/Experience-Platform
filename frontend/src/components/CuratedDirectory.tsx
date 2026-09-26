@@ -7,6 +7,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Search, MapPin, Star, ArrowRight, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { AnimatedCounter } from '@/components/AnimatedCounter';
 import { resolveExperienceImageUrl, FALLBACK_EXPERIENCE_IMAGE } from '@/lib/image-utils';
+import { useOperatingStatus } from '@/lib/operating-hours';
 
 export interface CategoryOption {
   label: string;
@@ -28,10 +29,16 @@ export interface CuratedExperience {
   priceMin?: number;
   priceMax?: number;
   ratingAverage?: number;
+  reviewStars?: number;
+  googleReviewStars?: number;
   authenticityRating?: number;
   cover?: string;
   mediaUrls?: string[];
   description?: string;
+  openingTime?: string;
+  closingTime?: string;
+  operatingHours?: string;
+  closedDays?: string;
   provider?: {
     businessName?: string;
     verificationStatus?: string;
@@ -99,6 +106,19 @@ const ExperienceCard = memo(function ExperienceCard({
     ? `₹${exp.priceMin?.toLocaleString()}`
     : `₹${exp.priceMin?.toLocaleString()} – ₹${exp.priceMax?.toLocaleString()}`;
 
+  // Legit rating priority: reviewStars -> googleReviewStars -> ratingAverage -> 4.8
+  const ratingValue = Number(
+    exp.reviewStars ?? exp.googleReviewStars ?? exp.ratingAverage ?? 4.8
+  ).toFixed(2);
+
+  // Live client-side detected timing and operating status
+  const { isOpen } = useOperatingStatus({
+    openingTime: exp.openingTime,
+    closingTime: exp.closingTime,
+    operatingHours: exp.operatingHours,
+    closedDays: exp.closedDays,
+  });
+
   return (
     <Link
       href={`/experiences/${exp.id}`}
@@ -135,7 +155,7 @@ const ExperienceCard = memo(function ExperienceCard({
         <div className="absolute top-3 right-3 flex items-center gap-1.5 z-20">
           <div className="bg-white/95 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-medium text-[#2C2C2C] border border-[#D4CFC0] flex items-center gap-1 shadow-sm font-bold">
             <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-            <span>{Number(exp.ratingAverage || 4.9).toFixed(2)}</span>
+            <span>{ratingValue}</span>
           </div>
         </div>
       </div>
@@ -162,6 +182,35 @@ const ExperienceCard = memo(function ExperienceCard({
             <p className="font-bold font-cormorant oldstyle-nums text-[#2C2C2C] text-base sm:text-lg tracking-wide">
               {formattedPrice}
             </p>
+          </div>
+
+          {/* Bottom Right Corner: Live Open / Closed Tag */}
+          <div className="text-right flex flex-col items-end justify-center">
+            <span className="text-[9px] font-mono uppercase tracking-widest text-[#555E5A] block mb-0.5">
+              Status
+            </span>
+            <div
+              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold tracking-wider transition-all duration-300 border ${
+                isOpen
+                  ? 'bg-emerald-50/90 border-emerald-300/80 text-emerald-700 shadow-[0_1px_4px_rgba(16,185,129,0.12)]'
+                  : 'bg-rose-50/90 border-rose-300/80 text-rose-700 shadow-[0_1px_4px_rgba(244,63,94,0.12)]'
+              }`}
+              title={
+                exp.operatingHours ||
+                (exp.openingTime && exp.closingTime
+                  ? `${exp.openingTime} - ${exp.closingTime}`
+                  : undefined)
+              }
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                  isOpen
+                    ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)] animate-pulse'
+                    : 'bg-rose-500'
+                }`}
+              />
+              <span>{isOpen ? 'Open' : 'Closed'}</span>
+            </div>
           </div>
         </div>
       </div>

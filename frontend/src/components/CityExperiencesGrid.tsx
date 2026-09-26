@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Star } from 'lucide-react';
 import { resolveExperienceImageUrl, FALLBACK_EXPERIENCE_IMAGE } from '@/lib/image-utils';
+import { useOperatingStatus } from '@/lib/operating-hours';
 
 interface ExperienceItem {
   id: string;
@@ -15,6 +16,12 @@ interface ExperienceItem {
   priceMax?: number;
   durationMinutes?: number;
   ratingAverage?: number;
+  reviewStars?: number;
+  googleReviewStars?: number;
+  openingTime?: string;
+  closingTime?: string;
+  operatingHours?: string;
+  closedDays?: string;
   mediaUrls?: string[];
   provider?: { businessName?: string };
 }
@@ -106,6 +113,17 @@ function CityExperienceCard({
   const initialUrl = resolveExperienceImageUrl(rawUrl);
   const [imgSrc, setImgSrc] = useState(initialUrl);
 
+  const ratingValue = Number(
+    exp.reviewStars ?? exp.googleReviewStars ?? exp.ratingAverage ?? 4.8
+  ).toFixed(2);
+
+  const { isOpen } = useOperatingStatus({
+    openingTime: exp.openingTime,
+    closingTime: exp.closingTime,
+    operatingHours: exp.operatingHours,
+    closedDays: exp.closedDays,
+  });
+
   return (
     <Link
       href={`/experiences/${exp.id}`}
@@ -144,9 +162,9 @@ function CityExperienceCard({
           </span>
         </div>
 
-        <div className="absolute top-3.5 right-3.5 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-full text-[11px] font-medium text-[#2C2C2C] border border-[#D4CFC0] flex items-center gap-1 shadow-sm">
+        <div className="absolute top-3.5 right-3.5 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-full text-[11px] font-medium text-[#2C2C2C] border border-[#D4CFC0] flex items-center gap-1 shadow-sm font-bold">
           <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-          <span className="font-semibold">{Number(exp.ratingAverage || 4.9).toFixed(2)}</span>
+          <span>{ratingValue}</span>
         </div>
       </div>
 
@@ -173,6 +191,35 @@ function CityExperienceCard({
                 ? `Free – ₹${exp.priceMax?.toLocaleString()}`
                 : `₹${exp.priceMin?.toLocaleString()} – ₹${exp.priceMax?.toLocaleString()}`}
             </p>
+          </div>
+
+          {/* Bottom Right Corner: Live Open / Closed Tag */}
+          <div className="text-right flex flex-col items-end justify-center">
+            <span className="text-[9px] font-mono uppercase tracking-widest text-[#555E5A] block mb-0.5">
+              Status
+            </span>
+            <div
+              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold tracking-wider transition-all duration-300 border ${
+                isOpen
+                  ? 'bg-emerald-50/90 border-emerald-300/80 text-emerald-700 shadow-[0_1px_4px_rgba(16,185,129,0.12)]'
+                  : 'bg-rose-50/90 border-rose-300/80 text-rose-700 shadow-[0_1px_4px_rgba(244,63,94,0.12)]'
+              }`}
+              title={
+                exp.operatingHours ||
+                (exp.openingTime && exp.closingTime
+                  ? `${exp.openingTime} - ${exp.closingTime}`
+                  : undefined)
+              }
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                  isOpen
+                    ? 'bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)] animate-pulse'
+                    : 'bg-rose-500'
+                }`}
+              />
+              <span>{isOpen ? 'Open' : 'Closed'}</span>
+            </div>
           </div>
         </div>
       </div>

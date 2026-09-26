@@ -17,15 +17,15 @@ interface CornTextProps {
 }
 
 export function CornText({
-  text = 'Explore Platform',
+  text = 'Journi',
   className = '',
   forceFieldRadius = 78,
-  maxLetters = 4,
-  fontSize = '150px',
+  maxLetters = 6,
+  fontSize = '170px',
   viewBoxWidth = 1600,
   viewBoxHeight = 280,
   fontFamily = "'Luxurious Script', var(--font-luxurious-script), cursive",
-  letterSpacing = '0.02em',
+  letterSpacing = '0.04em',
   fontWeight = 400,
   textTransform = 'none',
 }: CornTextProps) {
@@ -35,6 +35,19 @@ export function CornText({
   const textRef = useRef<SVGTextElement>(null);
   const lastTriggerRef = useRef<number[]>(new Array(chars.length).fill(0));
 
+  // Trigger individual letter animation on direct hover
+  const triggerChar = useCallback((index: number) => {
+    const now = performance.now();
+    if (now - lastTriggerRef.current[index] > 600) {
+      lastTriggerRef.current[index] = now;
+      setCharKeys((prev) => {
+        const next = [...prev];
+        next[index] = next[index] + 1;
+        return next;
+      });
+    }
+  }, []);
+
   // Trigger full text animation on click
   const handleTitleClick = useCallback(() => {
     const now = performance.now();
@@ -42,7 +55,7 @@ export function CornText({
     setCharKeys((prev) => prev.map((k) => k + 1));
   }, [chars.length]);
 
-  // Invisible circular cursor force field (calibrated to exactly 4 letters max)
+  // Circular cursor force field: animate characters under/near cursor
   const handleMouseMove = useCallback(
     (e: React.MouseEvent) => {
       if (!svgRef.current) return;
@@ -53,13 +66,12 @@ export function CornText({
       const tspans = svgRef.current.querySelectorAll('tspan');
       if (!tspans || tspans.length === 0) return;
 
-      // Find all characters within the force field radius and take at most 4 nearest
       const candidateIndices: { index: number; dist: number }[] = [];
 
       tspans.forEach((tspan, i) => {
         if (chars[i] === ' ') return;
         const rect = tspan.getBoundingClientRect();
-        if (rect.width === 0 || rect.height === 0) return;
+        if (rect.width === 0 && rect.height === 0) return;
 
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
@@ -70,7 +82,6 @@ export function CornText({
         }
       });
 
-      // Sort by distance to cursor center and cap to exactly 4 letters
       const targetChars = candidateIndices
         .sort((a, b) => a.dist - b.dist)
         .slice(0, maxLetters);
@@ -79,8 +90,7 @@ export function CornText({
       const nextKeys = [...charKeys];
 
       targetChars.forEach(({ index }) => {
-        // Cooldown prevents flickering while mouse hovers
-        if (now - lastTriggerRef.current[index] > 1100) {
+        if (now - lastTriggerRef.current[index] > 700) {
           lastTriggerRef.current[index] = now;
           nextKeys[index] = nextKeys[index] + 1;
           changed = true;
@@ -132,6 +142,7 @@ export function CornText({
                 style={{
                   fill: '#ffffff',
                 }}
+                onMouseEnter={() => triggerChar(index)}
               >
                 {char}
               </tspan>
@@ -142,4 +153,5 @@ export function CornText({
     </h1>
   );
 }
+
 export default CornText;

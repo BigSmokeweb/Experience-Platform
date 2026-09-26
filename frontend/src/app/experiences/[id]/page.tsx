@@ -8,6 +8,7 @@ import { BookmarkButton } from '@/components/BookmarkButton';
 import { BackButton } from '@/components/BackButton';
 import { PlaceRatingWidget } from '@/components/PlaceRatingWidget';
 import { resolveExperienceImageUrl } from '@/lib/image-utils';
+import { OperatingStatusBadge } from '@/components/OperatingStatusBadge';
 
 const FALLBACK_DIRECTORY: Record<string, any> = {
   'exp-1': {
@@ -264,10 +265,10 @@ export default async function ExperienceDetailPage({ params }: { params: { id: s
                 {exp.title}
               </h1>
 
-              <div className="flex items-center gap-4 mt-4 text-xs font-mono text-[#2C2C2C]/75">
+              <div className="flex flex-wrap items-center gap-4 mt-4 text-xs font-mono text-[#2C2C2C]/75">
                 <span className="flex items-center gap-1 text-[#2C2C2C] font-semibold">
                   <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                  {Number(exp.ratingAverage || 4.9).toFixed(2)}
+                  {Number(exp.reviewStars ?? exp.googleReviewStars ?? exp.ratingAverage ?? 4.8).toFixed(2)}
                 </span>
                 <span className="text-[#D4CFC0]">&bull;</span>
                 <span>{exp.reviewCount || 48} verified reviews</span>
@@ -301,6 +302,32 @@ export default async function ExperienceDetailPage({ params }: { params: { id: s
                     {exp.durationMinutes || 120} mins
                   </p>
                 </div>
+              </div>
+
+              {/* Live Operating Status & Timing */}
+              <div className="pt-3.5 pb-4 mb-4 border-t border-[#D4CFC0]/70 flex items-center justify-between">
+                <div>
+                  <span className="text-[9px] font-mono uppercase tracking-widest text-[#555E5A] block mb-1">
+                    Current Status
+                  </span>
+                  <OperatingStatusBadge
+                    openingTime={exp.openingTime}
+                    closingTime={exp.closingTime}
+                    operatingHours={exp.operatingHours}
+                    closedDays={exp.closedDays}
+                    size="sm"
+                  />
+                </div>
+                {(exp.operatingHours || (exp.openingTime && exp.closingTime)) && (
+                  <div className="text-right">
+                    <span className="text-[9px] font-mono uppercase tracking-widest text-[#555E5A] block mb-1">
+                      Operating Hours
+                    </span>
+                    <p className="text-xs font-mono font-semibold text-[#2C2C2C]">
+                      {exp.operatingHours || `${exp.openingTime} – ${exp.closingTime}`}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <Link
