@@ -1,4 +1,5 @@
 import { API_BASE, trySilentRefreshToken } from './api-client';
+import { resolveExperienceImageUrl, getCategoryFallbackImage } from './image-utils';
 
 export interface StopConditionResult {
   shouldStop: boolean;
@@ -522,8 +523,18 @@ export async function fetchRecommendations(
         if (data.recommendations && Array.isArray(data.recommendations)) {
           data.recommendations = data.recommendations.map((cand: any) => {
             const coords = sanitizeExperienceCoordinates(cand);
+            const catItem = findExperienceById(cand.id);
+            let media: string[] = [];
+            if (Array.isArray(cand.mediaUrls) && cand.mediaUrls.length > 0 && cand.mediaUrls[0]) {
+              media = cand.mediaUrls;
+            } else if (Array.isArray(catItem?.mediaUrls) && catItem.mediaUrls.length > 0 && catItem.mediaUrls[0]) {
+              media = catItem.mediaUrls;
+            } else {
+              media = [getCategoryFallbackImage(cand.category || catItem?.category)];
+            }
             return {
               ...cand,
+              mediaUrls: media,
               candidateLat: coords.lat,
               candidateLng: coords.lng,
             };

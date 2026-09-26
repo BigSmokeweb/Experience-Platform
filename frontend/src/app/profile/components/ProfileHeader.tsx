@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { User, Edit2, Check, X, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { User, Edit2, Check, X, Loader2, Camera, Trash2 } from 'lucide-react';
 
 interface TravelerPreferencesSummary {
   homeCity?: string | null;
@@ -34,12 +34,76 @@ export function ProfileHeader({
   const [draftName, setDraftName] = useState(initialName);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Keep name state in sync if initialName changes
   useEffect(() => {
     setName(initialName);
     setDraftName(initialName);
   }, [initialName]);
+
+  // Load avatar from localStorage
+  useEffect(() => {
+    try {
+      const saved =
+        localStorage.getItem(`traveler_avatar_${email}`) ||
+        localStorage.getItem('user_avatar');
+      if (saved) {
+        setAvatarUrl(saved);
+      }
+    } catch {
+      // ignore
+    }
+  }, [email]);
+
+  const handleAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file (PNG, JPG, WebP)');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be under 5MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setAvatarUrl(dataUrl);
+        try {
+          localStorage.setItem(`traveler_avatar_${email}`, dataUrl);
+          localStorage.setItem('user_avatar', dataUrl);
+          window.dispatchEvent(new Event('avatar-change'));
+          window.dispatchEvent(new Event('storage'));
+        } catch {
+          // ignore
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAvatar = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setAvatarUrl(null);
+    try {
+      localStorage.removeItem(`traveler_avatar_${email}`);
+      localStorage.removeItem('user_avatar');
+      window.dispatchEvent(new Event('avatar-change'));
+      window.dispatchEvent(new Event('storage'));
+    } catch {
+      // ignore
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const getInitials = (n: string) => {
     if (!n) return 'U';
@@ -79,17 +143,65 @@ export function ProfileHeader({
   const hasPreferences =
     Boolean(preferences?.homeCity) ||
     (preferences?.interests && preferences.interests.length > 0) ||
-    Boolean(preferences?.budgetBand) ||
     Boolean(preferences?.travelStyle);
 
   return (
     <div className="bg-white/80 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-neutral-200/80 shadow-sm relative">
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-        {/* Avatar */}
+        {/* Avatar with device upload */}
         <div className="relative group shrink-0">
-          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 text-neutral-900 flex items-center justify-center text-2xl sm:text-3xl font-bold shadow-md shadow-amber-500/20 border border-amber-400/40">
-            {getInitials(name)}
-          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleAvatarFile}
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 text-neutral-900 flex items-center justify-center text-2xl sm:text-3xl font-bold shadow-md shadow-amber-500/20 border border-amber-400/40 overflow-hidden relative group/avatar focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+            title="Click to upload profile picture"
+          >
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarUrl}
+                alt={name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span>{getInitials(name)}</span>
+            )}
+
+            {/* Hover overlay */}
+            <div className="absolute inset-0 bg-neutral-950/40 backdrop-blur-[2px] opacity-0 group-hover/avatar:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-semibold gap-1">
+              <Camera className="w-5 h-5 text-white" />
+              <span>Change</span>
+            </div>
+          </button>
+
+          {/* Camera upload badge */}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-neutral-900 text-amber-400 hover:bg-neutral-800 transition-colors shadow-md border-2 border-white cursor-pointer"
+            title="Upload profile picture from device"
+          >
+            <Camera className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Remove custom avatar */}
+          {avatarUrl && (
+            <button
+              type="button"
+              onClick={handleRemoveAvatar}
+              className="absolute -top-1 -right-1 p-1 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors shadow-md border-2 border-white opacity-0 group-hover:opacity-100 cursor-pointer"
+              title="Remove profile picture"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          )}
         </div>
 
         {/* Profile Info */}
@@ -169,17 +281,12 @@ export function ProfileHeader({
 
           <p className="text-sm text-neutral-500 font-medium">{email}</p>
 
-          {/* Preferences Summary Badges shown directly in header card */}
+          {/* Preferences Summary Badges shown directly in header card (budgetBand removed) */}
           {hasPreferences && (
             <div className="pt-2 flex flex-wrap items-center justify-center sm:justify-start gap-2">
               {preferences?.homeCity && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-neutral-100/80 text-neutral-700 border border-neutral-200/60">
                   📍 {preferences.homeCity}
-                </span>
-              )}
-              {preferences?.budgetBand && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-50 text-amber-900 border border-amber-200/60">
-                  💰 {preferences.budgetBand}
                 </span>
               )}
               {preferences?.travelStyle && (

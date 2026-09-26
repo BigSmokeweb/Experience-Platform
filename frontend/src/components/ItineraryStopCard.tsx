@@ -6,7 +6,38 @@ import { Star, ShieldCheck, Clock, Camera } from 'lucide-react';
 
 import { useState } from 'react';
 import { PlaceRatingWidget } from '@/components/PlaceRatingWidget';
-import { resolveExperienceImageUrl } from '@/lib/image-utils';
+import { resolveExperienceImageUrl, getCategoryFallbackImage } from '@/lib/image-utils';
+
+function StopThumbnail({
+  mediaUrl,
+  category,
+  title,
+}: {
+  mediaUrl?: string;
+  category?: string;
+  title: string;
+}) {
+  const fallback = getCategoryFallbackImage(category);
+  const initialUrl = mediaUrl ? resolveExperienceImageUrl(mediaUrl, category) : fallback;
+  const [imgSrc, setImgSrc] = useState(initialUrl);
+
+  return (
+    <Image
+      src={imgSrc}
+      alt={title}
+      fill
+      unoptimized
+      referrerPolicy="no-referrer"
+      sizes="64px"
+      className="object-cover"
+      onError={() => {
+        if (imgSrc !== fallback) {
+          setImgSrc(fallback);
+        }
+      }}
+    />
+  );
+}
 
 interface ItineraryStopCardProps {
   id?: string;
@@ -67,17 +98,9 @@ export function ItineraryStopCard({
       </div>
 
       {/* Thumbnail */}
-      {mediaUrl && (
-        <div className="relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-[#F5F1E6] border border-[#D4CFC0] hidden sm:block">
-          <Image
-            src={resolveExperienceImageUrl(mediaUrl)}
-            alt={title}
-            fill
-            sizes="64px"
-            className="object-cover"
-          />
-        </div>
-      )}
+      <div className="relative flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-[#F5F1E6] border border-[#D4CFC0] hidden sm:block">
+        <StopThumbnail mediaUrl={mediaUrl} category={category} title={title} />
+      </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
