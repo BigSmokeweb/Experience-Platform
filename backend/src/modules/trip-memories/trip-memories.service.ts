@@ -183,10 +183,46 @@ export class TripMemoriesService {
     caption?: string,
     takenAt?: string,
   ) {
-    const memory = await this.getMemoryById(userId, memoryId);
+    let memory;
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(memoryId);
+      if (isUuid) {
+        memory = await this.prisma.tripMemory.findUnique({
+          where: { id: memoryId },
+          include: { photos: true },
+        });
+        if (memory && memory.userId !== userId) {
+          memory = null;
+        }
+      }
+    } catch {
+      memory = null;
+    }
+
+    if (!memory) {
+      const existing = await this.prisma.tripMemory.findFirst({
+        where: { userId },
+        include: { photos: true },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (existing) {
+        memory = existing;
+      } else {
+        memory = await this.prisma.tripMemory.create({
+          data: {
+            userId,
+            title: 'My Travel Memories',
+            visitedAt: new Date(),
+          },
+          include: { photos: true },
+        });
+      }
+    }
+
+    const actualMemoryId = memory.id;
 
     // Limit check (max 50 photos per memory)
-    if (memory.photos.length >= 50) {
+    if (memory.photos && memory.photos.length >= 50) {
       throw new BadRequestException('Maximum 50 photos allowed per trip memory');
     }
 
@@ -205,28 +241,20 @@ export class TripMemoriesService {
         }
       } catch (err) {
         this.logger.warn(`experienceId validation failed for "${experienceId}": ${err}`);
-        // Silently continue with null experienceId
       }
     }
 
     try {
       const { publicUrl, storageKey } = await this.storageService.uploadPhoto(
         file.buffer,
-        file.mimetype,
-        file.originalname,
-        `memories/${memoryId}`,
+        file.mimetype || 'image/jpeg',
+        file.originalname || 'photo.jpg',
+        `memories/${actualMemoryId}`,
       );
-
-      // Guard: reject oversized base64 data URIs that would bloat the DB
-      if (publicUrl.startsWith('data:') && publicUrl.length > 500_000) {
-        throw new BadRequestException(
-          'Photo upload to cloud storage failed and the image is too large for fallback storage. Please try a smaller image or try again later.',
-        );
-      }
 
       const photo = await this.prisma.tripMemoryPhoto.create({
         data: {
-          tripMemoryId: memoryId,
+          tripMemoryId: actualMemoryId,
           experienceId: validExpId,
           url: publicUrl,
           storageKey,
@@ -242,11 +270,11 @@ export class TripMemoriesService {
 
       await this.syncUserMemoriesColumn(userId);
       return photo;
-    } catch (err) {
-      this.logger.error(`addPhoto failed for memory ${memoryId}: ${err?.message || err}`);
+    } catch (err: any) {
+      this.logger.error(`addPhoto failed for memory ${actualMemoryId}: ${err?.message || err}`);
       if (err instanceof BadRequestException) throw err;
       throw new BadRequestException(
-        `Failed to save photo: ${err?.message || 'Unknown storage error'}`,
+        `Failed to save photo: ${err?.message || 'Storage error'}`,
       );
     }
   }

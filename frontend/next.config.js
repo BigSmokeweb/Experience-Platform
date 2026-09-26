@@ -27,6 +27,10 @@ const nextConfig = {
         source: '/trip-memories/:path*',
         destination: 'https://mvsnmwznonupjypacswj.supabase.co/storage/v1/object/public/trip-memories/:path*',
       },
+      {
+        source: '/uploads/:path*',
+        destination: 'http://localhost:4000/uploads/:path*',
+      },
     ];
   },
   async headers() {
@@ -59,7 +63,7 @@ const nextConfig = {
             value: [
               "default-src 'self' blob:",
               "media-src 'self' data: blob: https:",
-              "img-src 'self' data: blob: https: https://*.supabase.co https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://images.unsplash.com https://*.wikimedia.org https://unpkg.com",
+              "img-src 'self' data: blob: https: http://localhost:4000 http://127.0.0.1:4000 https://*.supabase.co https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://images.unsplash.com https://*.wikimedia.org https://unpkg.com",
               "script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com",
               "font-src 'self' https://fonts.gstatic.com data:",

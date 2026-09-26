@@ -32,6 +32,17 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
+  // Static uploads directory for media & trip memories
+  const express = require('express');
+  const path = require('path');
+  const fs = require('fs');
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  app.use('/uploads', express.static(uploadsDir));
+  app.use('/api/v1/uploads', express.static(uploadsDir));
+
   // CORS Configuration
   const defaultOrigins = ['http://localhost:3000', 'https://experience-platform-sigma.vercel.app'];
   const configuredOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()) : [];

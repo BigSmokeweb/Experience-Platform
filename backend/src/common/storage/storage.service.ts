@@ -39,7 +39,7 @@ export class StorageService {
   }
 
   /**
-   * Uploads a trip memory or user photo to Supabase storage with fallback to base64 data URI
+   * Uploads a trip memory or user photo to Supabase storage with fallback to local disk storage
    */
   async uploadPhoto(
     buffer: Buffer,
@@ -47,8 +47,10 @@ export class StorageService {
     originalName: string,
     subfolder = 'memories',
   ): Promise<{ publicUrl: string; storageKey: string }> {
-    const ext = originalName.split('.').pop() || 'jpg';
-    const storageKey = `${subfolder}/${crypto.randomUUID()}.${ext}`;
+    const rawExt = (originalName?.split('.').pop() || 'jpg').replace(/[^a-zA-Z0-9]/g, '');
+    const ext = rawExt || 'jpg';
+    const filename = `${crypto.randomUUID()}.${ext}`;
+    const storageKey = `${subfolder}/${filename}`;
 
     if (this.supabase) {
       const bucket = 'trip-memories';
@@ -58,40 +60,74 @@ export class StorageService {
           upsert: true,
         });
         if (error) {
-          this.logger.error(`Supabase upload failed: ${error.message} - ${JSON.stringify(error)}`);
+          this.logger.warn(`Supabase upload failed: ${error.message}, using local storage fallback.`);
         } else {
           const { data } = this.supabase.storage.from(bucket).getPublicUrl(storageKey);
-          return { publicUrl: data.publicUrl, storageKey: `${bucket}/${storageKey}` };
+          if (data?.publicUrl) {
+            return { publicUrl: data.publicUrl, storageKey: `${bucket}/${storageKey}` };
+          }
         }
       } catch (err: any) {
-        this.logger.error(`Supabase upload exception: ${err?.message || err}`);
+        this.logger.warn(`Supabase upload exception: ${err?.message || err}, using local storage fallback.`);
       }
     }
 
-    // Fallback: If buffer is small (< 300KB), allow base64 data URL
-    if (buffer.length < 300 * 1024) {
-      const base64 = buffer.toString('base64');
-      const publicUrl = `data:${mimeType || 'image/jpeg'};base64,${base64}`;
-      return { publicUrl, storageKey };
+    // Reliable Local Disk Storage Fallback
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const targetDir = path.join(process.cwd(), 'uploads', subfolder);
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+      }
+      const filePath = path.join(targetDir, filename);
+      fs.writeFileSync(filePath, buffer);
+
+      const publicUrl = `/uploads/${subfolder}/${filename}`;
+      return { publicUrl, storageKey: `local:${subfolder}/${filename}` };
+    } catch (fsErr: any) {
+      this.logger.error(`Local storage write failed: ${fsErr?.message || fsErr}`);
     }
 
-    throw new Error('Cloud storage upload failed. Please verify network connectivity and try again.');
+    // Last-resort fallback: Base64 data URI
+    const base64 = buffer.toString('base64');
+    const publicUrl = `data:${mimeType || 'image/jpeg'};base64,${base64}`;
+    return { publicUrl, storageKey: `inline:${filename}` };
   }
 
   /**
    * Deletes a photo from storage
    */
   async deletePhoto(storageKey: string): Promise<boolean> {
-    if (!this.supabase || !storageKey || storageKey.startsWith('data:')) return true;
-    try {
-      const parts = storageKey.split('/');
-      const bucket = parts[0];
-      const filePath = parts.slice(1).join('/');
-      await this.supabase.storage.from(bucket).remove([filePath]);
+    if (!storageKey || storageKey.startsWith('inline:') || storageKey.startsWith('data:')) {
       return true;
-    } catch {
-      return false;
     }
+    if (storageKey.startsWith('local:')) {
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const relative = storageKey.replace('local:', '');
+        const target = path.join(process.cwd(), 'uploads', relative);
+        if (fs.existsSync(target)) {
+          fs.unlinkSync(target);
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    }
+    if (this.supabase) {
+      try {
+        const parts = storageKey.split('/');
+        const bucket = parts[0];
+        const filePath = parts.slice(1).join('/');
+        await this.supabase.storage.from(bucket).remove([filePath]);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+    return true;
   }
 
 

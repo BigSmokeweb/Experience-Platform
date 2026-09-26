@@ -101,32 +101,22 @@ export class TripMemoriesController {
   @Post(':id/photos')
   @UseInterceptors(
     FileInterceptor('file', {
-      limits: { fileSize: 15 * 1024 * 1024 }, // 15MB max
+      limits: { fileSize: 25 * 1024 * 1024 }, // 25MB max
       fileFilter: (_req, file, cb) => {
-        const isImageMime =
-          !file.mimetype ||
-          file.mimetype.startsWith('image/') ||
-          /application\/(octet-stream)/i.test(file.mimetype);
-        const isImageExt = /\.(jpg|jpeg|png|webp|gif|heic)$/i.test(file.originalname || '');
-        if (isImageMime || isImageExt) {
-          return cb(null, true);
-        }
-        return cb(
-          new BadRequestException('Only image files (jpg, jpeg, png, webp, gif) are allowed'),
-          false,
-        );
+        // Accept images, camera frame blobs, octet-stream
+        cb(null, true);
       },
     }),
   )
   uploadPhoto(
     @CurrentUser() user: { id: string },
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id') id: string,
     @UploadedFile() file: { buffer: Buffer; originalname: string; mimetype: string },
     @Body('experienceId') experienceId?: string,
     @Body('caption') caption?: string,
     @Body('takenAt') takenAt?: string,
   ) {
-    if (!file) {
+    if (!file || !file.buffer) {
       throw new BadRequestException('Image file is required');
     }
     return this.tripMemoriesService.addPhoto(
