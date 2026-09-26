@@ -6,7 +6,6 @@ import { API_BASE, trySilentRefreshToken } from '@/lib/api-client';
 import { ProfileHeader } from '../components/ProfileHeader';
 import { TravelerPreferences } from '../components/TravelerPreferences';
 import { TripHistoryList } from '../components/TripHistoryList';
-import { ProfileRecommendationsSlider } from '../components/ProfileRecommendationsSlider';
 import { DiscoveredPlacesSection } from '../components/DiscoveredPlacesSection';
 import { TripMemoriesProfileSection } from '../components/TripMemoriesProfileSection';
 import Link from 'next/link';
@@ -226,9 +225,9 @@ export default function TravelerProfilePage() {
   return (
     <div className="min-h-screen bg-neutral-50/60 pb-24">
       {/* Ambient background decoration */}
-      <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-amber-100/40 via-neutral-50/20 to-transparent -z-10 pointer-events-none" />
+      <div className="absolute top-0 inset-x-0 h-80 bg-gradient-to-b from-amber-100/40 via-neutral-50/20 to-transparent -z-10 pointer-events-none" />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 space-y-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 sm:pt-32 space-y-8">
         {/* Profile Header with integrated Edit Preferences button and summary chips */}
         <ProfileHeader
           initialName={data.user.name || 'Traveler'}
@@ -258,12 +257,6 @@ export default function TravelerProfilePage() {
           />
         </div>
 
-        {/* Dynamic Recommendation Slider Based on Traveler Preferences */}
-        <ProfileRecommendationsSlider
-          preferences={data.user.travelerProfile}
-          userName={data.user.name}
-          onOpenPreferences={() => setIsPreferencesOpen(true)}
-        />
 
         {/* Places You Discovered */}
         <DiscoveredPlacesSection />

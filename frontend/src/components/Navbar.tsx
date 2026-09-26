@@ -16,6 +16,7 @@ export function Navbar() {
   const [isJournalOpen, setIsJournalOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { count } = useCollection();
 
@@ -23,16 +24,22 @@ export function Navbar() {
     const checkAuth = () => {
       const token = localStorage.getItem('accessToken');
       const name = localStorage.getItem('userName');
+      const email = localStorage.getItem('userEmail');
+      const avatar = (email ? localStorage.getItem(`traveler_avatar_${email}`) : null) || localStorage.getItem('user_avatar');
+
       if (token && name) {
         setUserName(name);
+        setUserAvatar(avatar);
       } else {
         setUserName(null);
+        setUserAvatar(null);
       }
     };
 
     checkAuth();
     window.addEventListener('auth-change', checkAuth);
     window.addEventListener('storage', checkAuth);
+    window.addEventListener('avatar-change', checkAuth);
 
     const handleScroll = () => {
       setScrolled(window.scrollY > 40);
@@ -42,6 +49,7 @@ export function Navbar() {
     return () => {
       window.removeEventListener('auth-change', checkAuth);
       window.removeEventListener('storage', checkAuth);
+      window.removeEventListener('avatar-change', checkAuth);
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
@@ -175,8 +183,13 @@ export function Navbar() {
                     : 'border-stone-400/60 text-[#2C2C2C] hover:bg-stone-200/50'
                 }`}
               >
-                <div className="w-5 h-5 rounded-full bg-[#1A2536] text-white flex items-center justify-center text-[10px] font-mono font-bold">
-                  {userName.charAt(0).toUpperCase()}
+                <div className="w-5 h-5 rounded-full bg-[#1A2536] text-white flex items-center justify-center text-[10px] font-mono font-bold overflow-hidden shrink-0">
+                  {userAvatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={userAvatar} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    userName.charAt(0).toUpperCase()
+                  )}
                 </div>
                 <span className="max-w-[70px] sm:max-w-[100px] truncate">{userName}</span>
                 <ChevronDown className={`w-3 h-3 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />

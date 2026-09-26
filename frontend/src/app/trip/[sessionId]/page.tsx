@@ -23,6 +23,45 @@ import {
   RecommendationItem,
   RecommendApiResponse,
 } from '@/lib/trip-session-store';
+import { resolveExperienceImageUrl, getCategoryFallbackImage } from '@/lib/image-utils';
+
+function CandidateThumbnail({
+  title,
+  mediaUrls,
+  category,
+}: {
+  title: string;
+  mediaUrls?: string[];
+  category?: string;
+}) {
+  const fallback = getCategoryFallbackImage(category);
+  const rawUrl = mediaUrls?.[0] ? resolveExperienceImageUrl(mediaUrls[0], category) : fallback;
+  const [imgSrc, setImgSrc] = useState(rawUrl);
+
+  useEffect(() => {
+    const updated = mediaUrls?.[0] ? resolveExperienceImageUrl(mediaUrls[0], category) : fallback;
+    setImgSrc(updated);
+  }, [mediaUrls, category, fallback]);
+
+  return (
+    <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-[#F5F1E6] border border-[#D4CFC0] flex-shrink-0">
+      <Image
+        src={imgSrc}
+        alt={title}
+        fill
+        unoptimized
+        referrerPolicy="no-referrer"
+        sizes="96px"
+        className="object-cover group-hover:scale-105 transition-transform duration-500"
+        onError={() => {
+          if (imgSrc !== fallback) {
+            setImgSrc(fallback);
+          }
+        }}
+      />
+    </div>
+  );
+}
 
 function TripSessionContent() {
   const params = useParams();
@@ -882,18 +921,12 @@ function TripSessionContent() {
                       className="group bg-white border border-[#D4CFC0] hover:border-[#347F8C] p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between cursor-pointer"
                       title="Click anywhere to view full experience details"
                       >
-                      <div className="flex gap-4 items-start">
-                          {cand.mediaUrls?.[0] && (
-                          <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-[#F5F1E6] border border-[#D4CFC0] flex-shrink-0">
-                              <Image
-                                src={cand.mediaUrls[0]}
-                                alt={cand.title}
-                                fill
-                              sizes="96px"
-                                className="object-cover group-hover:scale-105 transition-transform duration-500"
-                              />
-                            </div>
-                          )}
+                        <div className="flex gap-4 items-start">
+                          <CandidateThumbnail
+                            title={cand.title}
+                            mediaUrls={cand.mediaUrls}
+                            category={cand.category}
+                          />
                           <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-[10px] font-mono uppercase tracking-wider text-[#347F8C] font-semibold">
