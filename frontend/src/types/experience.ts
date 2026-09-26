@@ -9,6 +9,8 @@ export interface ExperienceData {
   area: string;
   priceMin?: number;
   priceMax?: number;
+  budget?: string;
+  price?: string;
   durationMinutes?: number;
   ratingAverage?: number;
   reviewStars?: number;

@@ -295,11 +295,13 @@ export default async function ExperienceDetailPage({ params }: { params: { id: s
                     Starting at
                   </span>
                   <p className="font-eczar font-medium text-3xl text-[#2C2C2C] tracking-normal mt-0.5">
-                    {(!exp.priceMin && !exp.priceMax) || (exp.priceMin === 0 && exp.priceMax === 0)
-                      ? 'Free'
-                      : exp.priceMin === 0
-                      ? `Free – ₹${exp.priceMax?.toLocaleString()}`
-                      : `₹${exp.priceMin?.toLocaleString()} – ₹${exp.priceMax?.toLocaleString()}`}
+                    {exp.budget ||
+                      exp.metadata?.budget ||
+                      ((!exp.priceMin && !exp.priceMax) || (exp.priceMin === 0 && exp.priceMax === 0)
+                        ? 'Free'
+                        : exp.priceMin === 0
+                        ? `Free – ₹${exp.priceMax?.toLocaleString()}`
+                        : `₹${exp.priceMin?.toLocaleString()} – ₹${exp.priceMax?.toLocaleString()}`)}
                   </p>
                 </div>
                 <div className="text-right">

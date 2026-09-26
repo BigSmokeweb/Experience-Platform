@@ -107,14 +107,20 @@ const ExperienceCard = memo(function ExperienceCard({
     setImgSrc(resolveExperienceImageUrl(target));
   }, [exp.cover, exp.mediaUrls, anyExp.metadata]);
 
-  const isFreePublic = (!exp.priceMin && !exp.priceMax) || (exp.priceMin === 0 && exp.priceMax === 0);
-  const formattedPrice = isFreePublic
-    ? 'Free Public Spot'
-    : exp.priceMin === 0
-    ? `Free Entry (Items extra)`
-    : exp.priceMin === exp.priceMax
-    ? `₹${exp.priceMin?.toLocaleString()}`
-    : `₹${exp.priceMin?.toLocaleString()} – ₹${exp.priceMax?.toLocaleString()}`;
+  const isFreePublic =
+    exp.budget?.toLowerCase() === 'free' ||
+    (!exp.priceMin && !exp.priceMax) ||
+    (exp.priceMin === 0 && exp.priceMax === 0);
+  const formattedPrice =
+    exp.budget ||
+    anyExp.metadata?.budget ||
+    (isFreePublic
+      ? 'Free Public Spot'
+      : exp.priceMin === 0
+      ? `Free Entry (Items extra)`
+      : exp.priceMin === exp.priceMax
+      ? `₹${exp.priceMin?.toLocaleString()}`
+      : `₹${exp.priceMin?.toLocaleString()} – ₹${exp.priceMax?.toLocaleString()}`);
 
   // Legit rating priority: reviewStars -> googleReviewStars -> ratingAverage -> 4.8
   const ratingValue = Number(
