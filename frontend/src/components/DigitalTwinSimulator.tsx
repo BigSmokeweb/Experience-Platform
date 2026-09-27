@@ -6,13 +6,13 @@ import { CuratedExperience } from '@/components/CuratedDirectory';
 
 interface DigitalTwinSimulatorProps {
   currentCity?: string;
-  selectedStops: CuratedExperience[];
+  selectedStops?: CuratedExperience[];
   onApplyAdaptiveReroute?: (mode: 'indoor' | 'cooler' | 'standard') => void;
 }
 
 export function DigitalTwinSimulator({
   currentCity = 'Mumbai',
-  selectedStops,
+  selectedStops = [],
   onApplyAdaptiveReroute,
 }: DigitalTwinSimulatorProps) {
   const [isOpen, setIsOpen] = useState(false);

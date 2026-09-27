@@ -3,6 +3,7 @@ import { Locate, Compass, Navigation, ExternalLink, Car, Footprints, ChevronDown
 import { SelectedExperience, RecommendationItem, sanitizeExperienceCoordinates } from '@/lib/trip-session-store';
 import { calculateRealRoadRoute, findShortestAStarOrder, RouteResult } from '@/lib/a-star-router';
 import { calculateMumbaiTrainPlan, MultimodalRouteResult } from '@/lib/mumbai-train-router';
+import { fetchOpenMeteoWeather, decodeWmoCode } from '@/lib/weather-service';
 
 interface RealAreaMapProps {
   city?: string;
@@ -51,10 +52,27 @@ export function TripAreaMap({
   const [routeTelemetry, setRouteTelemetry] = useState<RouteResult | null>(null);
   const [trainRouteTelemetry, setTrainRouteTelemetry] = useState<MultimodalRouteResult | null>(null);
   const [isRouting, setIsRouting] = useState<boolean>(false);
+  const [areaWeather, setAreaWeather] = useState<{ icon: string; condition: string; temp: number } | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Fetch weather emoji for this specific map area
+  useEffect(() => {
+    const lat = userLocation.lat || cityDefault.lat;
+    const lng = userLocation.lng || cityDefault.lng;
+    fetchOpenMeteoWeather(lat, lng, city)
+      .then((data) => {
+        const decoded = decodeWmoCode(data.weatherCode);
+        setAreaWeather({
+          icon: decoded.icon,
+          condition: decoded.condition,
+          temp: data.temperature,
+        });
+      })
+      .catch(() => {});
+  }, [userLocation.lat, userLocation.lng, city]);
 
   // Geolocation trigger
   function requestLiveLocation() {
@@ -202,15 +220,24 @@ export function TripAreaMap({
         const stopLng = coords.lng;
         routePoints.push([stopLat, stopLng]);
 
+        // Stop-level weather condition emoji badge
+        const isRainy = areaWeather?.icon.includes('🌧️') || areaWeather?.condition.toLowerCase().includes('rain');
+        const stopWeatherEmoji = isRainy ? '🌧️' : (areaWeather?.icon || '🌤️');
+
         const stopIcon = L.divIcon({
           className: 'custom-map-pin',
           html: `
-            <div style="background-color: #347F8C; color: #F5F1E6; border: 2px solid #FFFFFF; box-shadow: 0 4px 10px rgba(52, 127, 140, 0.4); border-radius: 9999px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-weight: bold; font-size: 12px;">
-              ${idx + 1}
+            <div style="position: relative;">
+              <div style="background-color: #347F8C; color: #F5F1E6; border: 2px solid #FFFFFF; box-shadow: 0 4px 10px rgba(52, 127, 140, 0.4); border-radius: 9999px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-family: monospace; font-weight: bold; font-size: 12px;">
+                ${idx + 1}
+              </div>
+              <div style="position: absolute; top: -8px; right: -8px; font-size: 13px; background: #FFFDF8; border-radius: 9999px; box-shadow: 0 1px 4px rgba(0,0,0,0.25); width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border: 1px solid #D4CFC0;">
+                ${stopWeatherEmoji}
+              </div>
             </div>
           `,
-          iconSize: [28, 28],
-          iconAnchor: [14, 14],
+          iconSize: [32, 32],
+          iconAnchor: [16, 16],
         });
 
         const marker = L.marker([stopLat, stopLng], { icon: stopIcon });
@@ -222,9 +249,15 @@ export function TripAreaMap({
             <strong style="font-size: 12px; font-weight: 700; color: #2C2C2C; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; margin-bottom: 3px;">
               ${stop.title}
             </strong>
-            <div style="font-size: 10px; font-family: monospace; color: #2C2C2C; opacity: 0.75; white-space: nowrap;">
+            <div style="font-size: 10px; font-family: monospace; color: #2C2C2C; opacity: 0.75; white-space: nowrap; margin-bottom: 2px;">
               ₹${stop.priceMin}–₹${stop.priceMax} &bull; ${stop.city}
             </div>
+            ${areaWeather ? `
+              <div style="font-size: 9.5px; font-family: monospace; color: #347F8C; background: #FAF7F0; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; border: 1px solid #D4CFC0;">
+                <span>${stopWeatherEmoji}</span>
+                <span>${areaWeather.condition} (${areaWeather.temp}°C)</span>
+              </div>
+            ` : ''}
           </div>
         `, {
           maxWidth: 250,
@@ -629,9 +662,20 @@ export function TripAreaMap({
             {travelMode === 'train' ? <Train className="w-4 h-4" /> : <Compass className="w-4 h-4" />}
           </div>
           <div>
-            <h4 className="font-manifold text-sm uppercase tracking-wider text-[#2C2C2C] font-bold">
-              {travelMode === 'train' ? 'Mumbai Rail & Track Route' : 'Real Road Navigation'}
-            </h4>
+            <div className="flex items-center gap-2">
+              <h4 className="font-manifold text-sm uppercase tracking-wider text-[#2C2C2C] font-bold">
+                {travelMode === 'train' ? 'Mumbai Rail & Track Route' : 'Real Road Navigation'}
+              </h4>
+              {areaWeather && (
+                <span
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FAF7F0] border border-[#D4CFC0] text-xs font-mono font-bold text-[#2C2C2C]"
+                  title={`Local Weather: ${areaWeather.condition} (${areaWeather.temp}°C)`}
+                >
+                  <span>{areaWeather.icon}</span>
+                  <span className="text-[11px] text-[#8B7355]">{areaWeather.temp}°C</span>
+                </span>
+              )}
+            </div>
             <p className="text-[11px] font-mono text-[#2C2C2C]/70">
               {travelMode === 'train' ? 'Central & Western Suburban Lines' : 'Turn-by-turn road network'} &bull; {city} &bull; {stops.length} stop{stops.length === 1 ? '' : 's'}
             </p>

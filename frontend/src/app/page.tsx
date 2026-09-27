@@ -7,6 +7,7 @@ import { CuratedDirectory } from '@/components/CuratedDirectory';
 import { ScrollToHeroOnRefresh } from '@/components/ScrollToHeroOnRefresh';
 import { SeasonalBanner } from '@/components/SeasonalBanner';
 import { LivingCatalogueHeader } from '@/components/LivingCatalogueHeader';
+import { DigitalTwinSimulator } from '@/components/DigitalTwinSimulator';
 import { API_BASE } from '@/lib/api-client';
 import { resolveExperienceImageUrl } from '@/lib/image-utils';
 
@@ -171,6 +172,11 @@ export default async function HomePage() {
 
       {/* ─── SEASONAL SPOTS BANNER ─── */}
       <SeasonalBanner />
+
+      {/* ─── DIGITAL TWIN WHAT-IF SIMULATION (Between Seasonal Banner & Itinerary) ─── */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-10">
+        <DigitalTwinSimulator currentCity="Mumbai" />
+      </div>
 
       {/* ─── SECTION 3: ITINERARY BUILDER ATELIER ─── */}
       <ItineraryBuilder />
