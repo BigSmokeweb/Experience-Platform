@@ -8,6 +8,7 @@ import { BookOpen, User, LogOut, ChevronDown, Compass, Handshake, LogIn, Menu, X
 import { NearbyCitiesDropdown } from '@/components/NearbyCitiesDropdown';
 import { CollectionDrawer } from '@/components/CollectionDrawer';
 import { NotificationBell } from '@/components/NotificationBell';
+import { LiveWeatherSocialWidget } from '@/components/LiveWeatherSocialWidget';
 import { useCollection } from '@/lib/collection-store';
 
 export function Navbar() {
@@ -135,6 +136,9 @@ export function Navbar() {
               <span>My Journal</span>
             </Link>
           </nav>
+
+          {/* Live Open-Meteo Weather & Traveler Signals Capsule */}
+          <LiveWeatherSocialWidget isDarkNav={isDarkNav} />
 
           {/* Action 1: Plan Journey */}
           <Link
