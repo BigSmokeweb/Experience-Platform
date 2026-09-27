@@ -146,7 +146,7 @@ export function LiveWeatherSocialWidget({ isDarkNav = false }: { isDarkNav?: boo
       <button
         type="button"
         onClick={() => setIsModalOpen(true)}
-        className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 active:scale-95 border cursor-pointer ${
+        className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 active:scale-95 border cursor-pointer ${
           isDarkNav
             ? 'bg-white/10 hover:bg-white/20 border-white/40 text-white shadow-xs backdrop-blur-sm'
             : 'bg-[#347F8C]/10 hover:bg-[#347F8C]/20 border-[#347F8C]/40 text-[#245b64]'
@@ -156,21 +156,6 @@ export function LiveWeatherSocialWidget({ isDarkNav = false }: { isDarkNav?: boo
         <span className="text-sm leading-none">{wmo.icon}</span>
         <span className="font-bold">
           {isLoading ? '...' : `${weatherData?.temperature ?? 28}°C`}
-        </span>
-        <span className={`hidden sm:inline text-[11px] font-medium tracking-wide ${isDarkNav ? 'text-white/80' : 'text-[#347F8C]'}`}>
-          {selectedCity.name.split(' ')[0]}
-        </span>
-        <span className="relative flex h-2 w-2 ml-0.5">
-          <span
-            className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-              weatherData?.isAdverse ? 'bg-amber-400' : 'bg-emerald-400'
-            }`}
-          />
-          <span
-            className={`relative inline-flex rounded-full h-2 w-2 ${
-              weatherData?.isAdverse ? 'bg-amber-500' : 'bg-emerald-500'
-            }`}
-          />
         </span>
       </button>
 
