@@ -42,16 +42,26 @@ export default function AuthLoginPage() {
         }),
       });
 
-      const data = await res.json();
+      let data: any;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
 
       if (!res.ok) {
-        if (res.status === 403 && data.requiresMfa) {
+        if (res.status === 403 && data?.requiresMfa) {
           setRequiresMfa(true);
           setError('6-Digit authenticator code required for this account.');
           setIsLoading(false);
           return;
         }
-        throw new Error(data.message || 'Invalid email or password.');
+        const errorMsg =
+          (data && (data.message || (Array.isArray(data.errors) && data.errors[0]?.message))) ||
+          (res.status === 500
+            ? 'Backend internal server error. Please ensure database and backend services are active.'
+            : res.statusText || 'Invalid email or password.');
+        throw new Error(errorMsg);
       }
 
       // Save tokens

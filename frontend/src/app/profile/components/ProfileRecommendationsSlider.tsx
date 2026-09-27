@@ -214,9 +214,13 @@ const RecommendationCard = memo(function RecommendationCard({
   const initialUrl = getCoverTarget(exp).replace('thumb.wikimedia.org', 'upload.wikimedia.org');
   const [imgSrc, setImgSrc] = useState(initialUrl);
 
+  const expCover = (exp as any)?.cover;
+  const expMediaUrl = Array.isArray(exp?.mediaUrls) ? exp.mediaUrls[0] : undefined;
+  const expMetadataCover = ((exp as any)?.metadata as any)?.coverRow || ((exp as any)?.metadata as any)?.cover;
+
   useEffect(() => {
     setImgSrc(getCoverTarget(exp).replace('thumb.wikimedia.org', 'upload.wikimedia.org'));
-  }, [(exp as any)?.cover, exp?.mediaUrls, (exp as any)?.metadata]);
+  }, [expCover, expMediaUrl, expMetadataCover]);
 
   const pMin = typeof exp?.priceMin === 'number' ? exp.priceMin : 0;
   const pMax = typeof exp?.priceMax === 'number' ? exp.priceMax : 0;

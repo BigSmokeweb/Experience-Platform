@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
+import * as fs from 'fs';
+import * as path from 'path';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 @Injectable()
@@ -74,8 +76,6 @@ export class StorageService {
 
     // Reliable Local Disk Storage Fallback
     try {
-      const fs = require('fs');
-      const path = require('path');
       const targetDir = path.join(process.cwd(), 'uploads', subfolder);
       if (!fs.existsSync(targetDir)) {
         fs.mkdirSync(targetDir, { recursive: true });
@@ -104,8 +104,6 @@ export class StorageService {
     }
     if (storageKey.startsWith('local:')) {
       try {
-        const fs = require('fs');
-        const path = require('path');
         const relative = storageKey.replace('local:', '');
         const target = path.join(process.cwd(), 'uploads', relative);
         if (fs.existsSync(target)) {
