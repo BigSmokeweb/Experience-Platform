@@ -136,6 +136,16 @@ const ExperienceCard = memo(function ExperienceCard({
     closedDays: exp.closedDays,
   });
 
+  // Weather / Social intelligence heuristics
+  const isIndoor =
+    ['CULINARY', 'ARTISAN', 'HERITAGE'].includes(exp.category?.toUpperCase() || '') ||
+    exp.title.toLowerCase().includes('museum') ||
+    exp.title.toLowerCase().includes('cafe') ||
+    exp.title.toLowerCase().includes('workshop') ||
+    exp.title.toLowerCase().includes('gallery') ||
+    exp.title.toLowerCase().includes('indoor');
+  const isSocialTrending = Number(exp.ratingAverage ?? 4.8) >= 4.85;
+
   return (
     <Link
       href={`/experiences/${exp.id}`}
@@ -167,6 +177,20 @@ const ExperienceCard = memo(function ExperienceCard({
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent opacity-80" />
+
+        {/* Top Left Badges: Weather & Social Signals */}
+        <div className="absolute top-3 left-3 flex flex-wrap items-center gap-1 z-20">
+          {isIndoor && (
+            <span className="bg-sky-950/85 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] font-mono font-bold text-sky-200 border border-sky-400/40 shadow-xs flex items-center gap-1">
+              <span>☔</span> Rain-Safe
+            </span>
+          )}
+          {isSocialTrending && (
+            <span className="bg-rose-950/85 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] font-mono font-bold text-rose-200 border border-rose-400/40 shadow-xs flex items-center gap-1">
+              <span>🔥</span> Trending
+            </span>
+          )}
+        </div>
 
         {/* Top Badges */}
         <div className="absolute top-3 right-3 flex items-center gap-1.5 z-20">

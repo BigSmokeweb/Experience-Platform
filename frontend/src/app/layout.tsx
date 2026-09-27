@@ -4,6 +4,7 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { PageTransition } from '@/components/PageTransition';
 import { FloatingChatSupport } from '@/components/FloatingChatSupport';
+import { SmartWeatherSocialToast } from '@/components/SmartWeatherSocialToast';
 import './globals.css';
 
 const eczar = Eczar({
@@ -91,6 +92,7 @@ export default function RootLayout({
         <main>{children}</main>
         <Footer />
         <FloatingChatSupport />
+        <SmartWeatherSocialToast />
       </body>
     </html>
   );

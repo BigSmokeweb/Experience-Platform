@@ -7,9 +7,10 @@ import Image from 'next/image';
 import { API_BASE } from '@/lib/api-client';
 import { ItineraryStopCard } from '@/components/ItineraryStopCard';
 import { TripAreaMap } from '@/components/TripAreaMap';
-import { ArrowLeft, Share2, Check, Copy, MessageCircle, AlertTriangle, Loader2, Camera, BookOpen, UserPlus } from 'lucide-react';
+import { ArrowLeft, Share2, Check, Copy, MessageCircle, AlertTriangle, Loader2, Camera, BookOpen, UserPlus, CloudRain, Radio, Sparkles } from 'lucide-react';
 import { saveEntry, JournalEntry } from '@/lib/journal-store';
 import { AddMemberModal } from '@/components/AddMemberModal';
+import { fetchOpenMeteoWeather, LiveWeatherReport } from '@/lib/weather-service';
 
 import {
   fetchTripSession,
@@ -74,6 +75,7 @@ function TripSessionContent() {
   const [stopCondition, setStopCondition] = useState<RecommendApiResponse['sessionState']['stopCondition'] | null>(null);
   const [wrapUpPrompt, setWrapUpPrompt] = useState<RecommendApiResponse['wrapUpPrompt']>(null);
   const [weatherAdaptPrompt, setWeatherAdaptPrompt] = useState<RecommendApiResponse['weatherAdaptPrompt']>(null);
+  const [liveWeather, setLiveWeather] = useState<LiveWeatherReport | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
@@ -160,6 +162,22 @@ function TripSessionContent() {
   useEffect(() => {
     loadSessionAndRecommendations(true);
   }, [loadSessionAndRecommendations]);
+
+  useEffect(() => {
+    if (!session?.city) return;
+    const city = session.city.toLowerCase();
+    const coords = city.includes('jaipur')
+      ? { lat: 26.9124, lng: 75.7873 }
+      : city.includes('delhi')
+      ? { lat: 28.6139, lng: 77.209 }
+      : city.includes('thane')
+      ? { lat: 19.2183, lng: 72.9781 }
+      : { lat: 18.9445, lng: 72.821 };
+
+    fetchOpenMeteoWeather(coords.lat, coords.lng, session.city)
+      .then((data) => setLiveWeather(data))
+      .catch(() => {});
+  }, [session?.city]);
 
   // Real-time collaborative polling: keep host and invited companions in continuous sync
   useEffect(() => {
@@ -703,8 +721,62 @@ function TripSessionContent() {
           </div>
         )}
 
-        {/* Weather Alert Banner */}
-        {weatherAdaptPrompt && (
+        {/* Live Weather & GDELT Traveler Signals Banner */}
+        {liveWeather && (
+          <div className="mb-6 bg-white/90 border border-[#D4CFC0] rounded-2xl p-4 sm:p-5 text-[#2C2C2C] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  liveWeather.isAdverse
+                    ? 'bg-amber-100 text-amber-700'
+                    : 'bg-[#347F8C]/10 text-[#347F8C]'
+                }`}
+              >
+                {liveWeather.isAdverse ? (
+                  <CloudRain className="w-5 h-5 animate-pulse" />
+                ) : (
+                  <Sparkles className="w-5 h-5 text-[#347F8C]" />
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-manifold font-bold text-sm text-[#2C2C2C]">
+                    Live {liveWeather.city} Weather: {liveWeather.temperature}°C ({liveWeather.condition})
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                      liveWeather.isAdverse
+                        ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                        : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                    }`}
+                  >
+                    {liveWeather.isAdverse ? 'Rain Advisory' : 'Optimal Exploration'}
+                  </span>
+                </div>
+                <p className="text-xs text-[#2C2C2C]/75 mt-1 font-light leading-relaxed">
+                  {liveWeather.socialSignals?.[0]?.text ||
+                    'Real-time transit conditions normal across the city corridors.'}
+                </p>
+                <div className="flex items-center gap-3 mt-1.5 text-[10px] font-mono text-[#2C2C2C]/50">
+                  <span>Open-Meteo Telemetry</span>
+                  <span>•</span>
+                  <span>GDELT Real-Time Signal Index</span>
+                </div>
+              </div>
+            </div>
+
+            {liveWeather.isAdverse && (
+              <div className="shrink-0 md:text-right">
+                <span className="inline-block px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-mono font-bold">
+                  Outdoor itineraries dynamically prioritized with indoor stops
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Backend Weather Adapt Prompt (if any) */}
+        {weatherAdaptPrompt && !liveWeather?.isAdverse && (
           <div className="mb-6 bg-[#8B7355]/10 border border-[#8B7355]/30 rounded-2xl p-4 sm:p-5 text-[#2C2C2C] shadow-sm">
             <div className="flex items-start gap-3">
               <span className="w-2.5 h-2.5 rounded-full bg-[#347F8C] mt-1 flex-shrink-0 animate-pulse" />
