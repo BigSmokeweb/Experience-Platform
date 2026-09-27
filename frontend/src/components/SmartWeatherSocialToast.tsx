@@ -21,15 +21,25 @@ export function SmartWeatherSocialToast() {
 
     async function checkCitySignal() {
       try {
-        // Query local primary travel hub (Mumbai default or user stored)
-        const cachedCity = typeof window !== 'undefined' ? localStorage.getItem('last_viewed_city') || 'Mumbai' : 'Mumbai';
-        const coords = cachedCity.toLowerCase().includes('jaipur')
-          ? { lat: 26.9124, lng: 75.7873, name: 'Jaipur' }
-          : cachedCity.toLowerCase().includes('delhi')
-          ? { lat: 28.6139, lng: 77.209, name: 'Delhi' }
-          : { lat: 18.9445, lng: 72.821, name: 'Mumbai' };
+        let lat = 18.9445;
+        let lng = 72.821;
+        let name = 'Your Location';
 
-        const weather: LiveWeatherReport = await fetchOpenMeteoWeather(coords.lat, coords.lng, coords.name);
+        if (typeof navigator !== 'undefined' && navigator.geolocation) {
+          const pos = await new Promise<GeolocationPosition | null>((resolve) => {
+            navigator.geolocation.getCurrentPosition(
+              (p) => resolve(p),
+              () => resolve(null),
+              { timeout: 4000 }
+            );
+          });
+          if (pos) {
+            lat = Number(pos.coords.latitude.toFixed(4));
+            lng = Number(pos.coords.longitude.toFixed(4));
+          }
+        }
+
+        const weather: LiveWeatherReport = await fetchOpenMeteoWeather(lat, lng, name);
         if (!isMounted) return;
 
         const latestSignal = weather.socialSignals?.[0];

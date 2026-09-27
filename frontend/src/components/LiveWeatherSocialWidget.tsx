@@ -59,8 +59,34 @@ export function LiveWeatherSocialWidget({ isDarkNav = false }: { isDarkNav?: boo
     }
   }, []);
 
+  // Auto-detect traveler's actual GPS location if permission was granted
   useEffect(() => {
-    loadWeather(selectedCity);
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const userLat = Number(pos.coords.latitude.toFixed(4));
+          const userLng = Number(pos.coords.longitude.toFixed(4));
+          // Reverse-geocoded or friendly label
+          const gpsCity = {
+            name: 'My Location',
+            lat: userLat,
+            lng: userLng,
+          };
+          setSelectedCity(gpsCity);
+          loadWeather(gpsCity);
+        },
+        () => {
+          // If denied or timed out, load default
+          loadWeather(selectedCity);
+        },
+        { timeout: 6000, maximumAge: 300000 }
+      );
+    } else {
+      loadWeather(selectedCity);
+    }
+  }, []);
+
+  useEffect(() => {
     const interval = setInterval(() => loadWeather(selectedCity), 10 * 60 * 1000); // 10m refresh
     return () => clearInterval(interval);
   }, [selectedCity, loadWeather]);
@@ -120,18 +146,18 @@ export function LiveWeatherSocialWidget({ isDarkNav = false }: { isDarkNav?: boo
       <button
         type="button"
         onClick={() => setIsModalOpen(true)}
-        className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-mono font-medium transition border shadow-xs ${
+        className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-semibold tracking-wide transition-all duration-200 active:scale-95 border cursor-pointer ${
           isDarkNav
-            ? 'bg-black/30 border-white/20 text-white hover:bg-black/50 hover:border-white/40'
-            : 'bg-[#FFFDF8] border-[#D4CFC0]/80 text-[#2C2C2C] hover:border-[#8B7355] hover:bg-[#F5F1E6]'
+            ? 'bg-white/10 hover:bg-white/20 border-white/40 text-white shadow-xs backdrop-blur-sm'
+            : 'bg-[#347F8C]/10 hover:bg-[#347F8C]/20 border-[#347F8C]/40 text-[#245b64]'
         }`}
         title="Live Weather & Social Signal Updates (Open-Meteo)"
       >
         <span className="text-sm leading-none">{wmo.icon}</span>
-        <span className="font-bold text-[11px] sm:text-xs">
+        <span className="font-bold">
           {isLoading ? '...' : `${weatherData?.temperature ?? 28}°C`}
         </span>
-        <span className="hidden md:inline text-[10px] text-[#8B7355] font-semibold uppercase tracking-wider">
+        <span className={`hidden sm:inline text-[11px] font-medium tracking-wide ${isDarkNav ? 'text-white/80' : 'text-[#347F8C]'}`}>
           {selectedCity.name.split(' ')[0]}
         </span>
         <span className="relative flex h-2 w-2 ml-0.5">

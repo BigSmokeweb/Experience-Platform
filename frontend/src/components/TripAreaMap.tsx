@@ -680,35 +680,7 @@ export function TripAreaMap({
           </div>
 
 
-          {initialUserLat && initialUserLng && (
-            <div className="inline-flex bg-[#F5F1E6] p-0.5 rounded-xl border border-[#D4CFC0]">
-              <button
-                type="button"
-                onClick={requestLiveLocation}
-                className={`text-[10px] font-mono px-2 py-1 rounded-lg transition font-medium cursor-pointer ${
-                  userLocation.lat !== initialUserLat
-                    ? 'bg-[#347F8C] text-[#F5F1E6] shadow-xs font-semibold'
-                    : 'text-[#2C2C2C]/70 hover:text-[#2C2C2C]'
-                }`}
-              >
-                My Location
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setUserLocation({ lat: initialUserLat, lng: initialUserLng });
-                  setLocationStatus('Showing route from Organizer Starting Point.');
-                }}
-                className={`text-[10px] font-mono px-2 py-1 rounded-lg transition font-medium cursor-pointer ${
-                  userLocation.lat === initialUserLat
-                    ? 'bg-[#347F8C] text-[#F5F1E6] shadow-xs font-semibold'
-                    : 'text-[#2C2C2C]/70 hover:text-[#2C2C2C]'
-                }`}
-              >
-                Organizer Origin
-              </button>
-            </div>
-          )}
+
 
           <button
             type="button"
