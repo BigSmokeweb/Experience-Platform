@@ -42,10 +42,13 @@ export function FloatingChatSupport() {
     {
       id: 'welcome',
       sender: 'assistant',
-      text: 'Namaste! I am Celene, your Living Heritage Concierge. Looking for a hidden culinary trail, artisan masterclass, or custom route across Mumbai, Thane, or Navi Mumbai?',
+      text: 'Namaste! I am Nugen, your Living Heritage Concierge. Looking for a hidden culinary trail, artisan masterclass, or custom route across Mumbai, Thane, or Navi Mumbai?',
       timestamp: 'Just now',
     },
   ]);
+
+  // Keep OpenAI-format history for context (exclude welcome)
+  const chatHistoryRef = useRef<{ role: 'user' | 'assistant'; content: string }[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const emojiBoxRef = useRef<HTMLDivElement>(null);
@@ -98,7 +101,7 @@ export function FloatingChatSupport() {
     }
   }, [messages, isOpen]);
 
-  // Handle send message
+  // Handle send message — powered by NuGen model
   async function handleSend(customText?: string, e?: React.FormEvent) {
     if (e) e.preventDefault();
     const query = (customText || inputMessage).trim();
@@ -115,78 +118,81 @@ export function FloatingChatSupport() {
     setInputMessage('');
     setIsTyping(true);
 
+    // Append to OpenAI-format history
+    chatHistoryRef.current = [
+      ...chatHistoryRef.current,
+      { role: 'user', content: query },
+    ];
+
     try {
-      const searchRes = await fetch(
-        `${API_BASE}/experiences/search?q=${encodeURIComponent(query)}&limit=3`,
-        { headers: { 'Content-Type': 'application/json' } }
-      ).catch(() => null);
+      const nugenRes = await fetch('/api/nugen-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: query,
+          history: chatHistoryRef.current.slice(0, -1), // exclude the just-added message
+        }),
+      });
 
       let replyText = '';
       let action: { label: string; href: string } | undefined;
 
-      if (searchRes && searchRes.ok) {
-        const data = await searchRes.json();
-        if (data?.data && data.data.length > 0) {
-          const top = data.data[0];
-          replyText = `I have verified access for "${top.title}" in ${top.city} (${top.category}, ₹${top.priceMin?.toLocaleString()}–₹${top.priceMax?.toLocaleString()}). Guild authenticity rating is ${Math.round((top.authenticityRating || 0.98) * 100)}%.`;
-          action = {
-            label: `Inspect ${top.title}`,
-            href: `/experiences/${top.id}`,
-          };
-        }
+      if (nugenRes.ok) {
+        const data = await nugenRes.json();
+        replyText = data.reply ?? '';
       }
+
+      // Fallback: also try to surface a relevant experience link
+      try {
+        const searchRes = await fetch(
+          `${API_BASE}/experiences/search?q=${encodeURIComponent(query)}&limit=1`,
+          { headers: { 'Content-Type': 'application/json' } }
+        ).catch(() => null);
+        if (searchRes && searchRes.ok) {
+          const searchData = await searchRes.json();
+          if (searchData?.data?.length > 0) {
+            const top = searchData.data[0];
+            action = { label: `Explore ${top.title}`, href: `/experiences/${top.id}` };
+          }
+        }
+      } catch { /* ignore search errors */ }
 
       if (!replyText) {
-        const q = query.toLowerCase();
-        if (q.includes('mumbai') || q.includes('colaba') || q.includes('fisherfolk') || q.includes('bombay')) {
-          replyText =
-            'For Mumbai, I arrange dawn access to Sassoon Dock fisherfolk auctions and the 1930s Art Deco apartment circuit along Oval Maidan.';
-          action = { label: 'Explore Mumbai Circuit', href: '/cities/mumbai' };
-        } else if (q.includes('thane') || q.includes('upvan') || q.includes('lake')) {
-          replyText =
-            'In Thane, explore centuries-old lakeside promenades at Upvan, historic Portuguese churches, and sacred shrines in the foothills.';
-          action = { label: 'Explore Thane Circuit', href: '/cities/thane' };
-        } else if (q.includes('navi') || q.includes('flamingo') || q.includes('panvel')) {
-          replyText =
-            'In Navi Mumbai and Panvel, we guide dawn mangrove boardwalk trails to spot migratory flamingoes and monsoon fort expeditions.';
-          action = { label: 'Explore Navi Mumbai Circuit', href: '/cities/navi-mumbai' };
-        } else if (q.includes('itinerary') || q.includes('trip') || q.includes('plan')) {
-          replyText =
-            'You can compose a seamless continuous journey with verified master craftspeople using our Itinerary Atelier.';
-          action = { label: 'Launch Itinerary Atelier', href: '/trip' };
-        } else {
-          replyText =
-            'I maintain direct guild relationships with master sculptors, textile preservers, and culinary lineage keepers across India. Which city or craft calls to you?';
-          action = { label: 'Browse Verified Expeditions', href: '/explore' };
-        }
+        replyText = 'I can connect you with master craftspeople and dawn heritage walks across Mumbai, Thane, and Navi Mumbai.';
       }
 
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: 'asst-' + Date.now(),
-            sender: 'assistant',
-            text: replyText,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            suggestedAction: action,
-          },
-        ]);
-        setIsTyping(false);
-      }, 650);
+      // Update history with assistant reply
+      chatHistoryRef.current = [
+        ...chatHistoryRef.current,
+        { role: 'assistant', content: replyText },
+      ];
+      // Keep history bounded
+      if (chatHistoryRef.current.length > 20) {
+        chatHistoryRef.current = chatHistoryRef.current.slice(-20);
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: 'asst-' + Date.now(),
+          sender: 'assistant',
+          text: replyText,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          suggestedAction: action,
+        },
+      ]);
+      setIsTyping(false);
     } catch {
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: 'asst-' + Date.now(),
-            sender: 'assistant',
-            text: 'I can connect you directly with master craftspeople and dawn heritage walks across Mumbai, Thane, and Navi Mumbai.',
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          },
-        ]);
-        setIsTyping(false);
-      }, 500);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: 'asst-' + Date.now(),
+          sender: 'assistant',
+          text: 'I can connect you directly with master craftspeople and dawn heritage walks across Mumbai, Thane, and Navi Mumbai.',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
+      setIsTyping(false);
     }
   }
 
@@ -229,7 +235,7 @@ export function FloatingChatSupport() {
 
             <div>
               <h4 className="font-manifold text-xs uppercase tracking-[0.18em] font-bold text-[#F5F1E6]">
-                Celene Concierge
+                Nugen Concierge
               </h4>
               <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#DCE7E5] mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#A69B80] shadow-[0_0_6px_#A69B80]" />
@@ -316,7 +322,7 @@ export function FloatingChatSupport() {
               <span className="w-1.5 h-1.5 rounded-full bg-[#347F8C] animate-bounce" />
               <span className="w-1.5 h-1.5 rounded-full bg-[#347F8C] animate-bounce [animation-delay:0.2s]" />
               <span className="w-1.5 h-1.5 rounded-full bg-[#347F8C] animate-bounce [animation-delay:0.4s]" />
-              <span className="ml-1 text-[10px]">Curating authentic lineages...</span>
+              <span className="ml-1 text-[10px]">Nugen is thinking...</span>
             </div>
           )}
           <div ref={messagesEndRef} />

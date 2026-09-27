@@ -235,7 +235,7 @@ export function FloatingRobotCanvas({
       className={`relative cursor-pointer select-none group flex items-center justify-center active:scale-95 transition-transform ${
         className || 'w-28 h-28 sm:w-32 sm:h-32'
       }`}
-      title={isOpen ? 'Celene Heritage Concierge' : 'Consult Celene AI Concierge'}
+      title={isOpen ? 'Nugen Heritage Concierge' : 'Consult Nugen AI Concierge'}
     >
       {/* Luminous Celestial Blue Hue Aura */}
       <div className="absolute w-24 h-24 rounded-full bg-[#38bdf8]/40 blur-xl pointer-events-none z-0 animate-pulse" />
@@ -256,7 +256,7 @@ export function FloatingRobotCanvas({
             <Sparkles className="w-6 h-6 text-[#F5F1E6]" />
           </div>
           <span className="text-[9px] font-mono text-[#1D4E56] uppercase tracking-[0.2em] font-bold mt-1.5">
-            Celene
+            Nugen
           </span>
         </div>
       )}
@@ -264,7 +264,7 @@ export function FloatingRobotCanvas({
       {/* Hover tooltip when closed */}
       {!isOpen && (
         <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-[#1C4D56] text-[#F5F1E6] font-mono text-[10px] tracking-wider uppercase px-3 py-1.5 rounded-xl whitespace-nowrap shadow-xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none border border-white/15 flex items-center gap-1.5 translate-x-1 group-hover:translate-x-0">
-          <span>Ask Celene</span>
+          <span>Ask Nugen</span>
           <span className="text-[#A69B80] font-bold">&rarr;</span>
         </div>
       )}
