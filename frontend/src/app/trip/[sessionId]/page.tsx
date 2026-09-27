@@ -11,6 +11,7 @@ import { ArrowLeft, Share2, Check, Copy, MessageCircle, AlertTriangle, Loader2, 
 import { saveEntry, JournalEntry } from '@/lib/journal-store';
 import { AddMemberModal } from '@/components/AddMemberModal';
 import { fetchOpenMeteoWeather, LiveWeatherReport } from '@/lib/weather-service';
+import { DigitalTwinSimulator } from '@/components/DigitalTwinSimulator';
 
 import {
   fetchTripSession,
@@ -792,6 +793,31 @@ function TripSessionContent() {
             </div>
           </div>
         )}
+
+        {/* Digital Twin What-If Weather & Route Simulation Panel (Requirement 4) */}
+        <DigitalTwinSimulator
+          currentCity={session?.city || 'Mumbai'}
+          selectedStops={session?.selectedExperiences || []}
+          onApplyAdaptiveReroute={(mode) => {
+            if (session) {
+              const indoorCategories = ['CULINARY', 'ARTISAN', 'HERITAGE'];
+              const filteredStops = (session.selectedExperiences || []).filter((s) =>
+                mode === 'indoor'
+                  ? indoorCategories.includes(s.category?.toUpperCase() || '') ||
+                    !s.title.toLowerCase().includes('sailing')
+                  : true
+              );
+              const updated = {
+                ...session,
+                selectedExperiences: filteredStops,
+                weatherAdapted: true,
+              };
+              setSession(updated);
+              saveLocalSession(updated);
+              loadSessionAndRecommendations(false);
+            }
+          }}
+        />
 
 
         {/* Inline Completion Screen */}
