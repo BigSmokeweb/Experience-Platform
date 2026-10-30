@@ -31,7 +31,7 @@ Thumbs.db
 .idea/
 
 # Office temp files..
-~$\*
+~$*
 *.docx
 *.pptx
 !Journi Platform PPT.pptx
